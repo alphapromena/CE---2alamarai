@@ -3,7 +3,10 @@ import { setRequestLocale } from 'next-intl/server';
 import { requireRole } from '@/lib/auth/guards';
 import { AppShell } from '@/components/features/app/app-shell';
 
-const NAV = [{ href: '/client/dashboard', labelKey: 'Client.nav.dashboard' }];
+const NAV = [
+  { href: '/client/dashboard', labelKey: 'Client.nav.dashboard' },
+  { href: '/client/campaigns', labelKey: 'Client.nav.campaigns' },
+];
 
 export default async function ClientLayout({
   children,

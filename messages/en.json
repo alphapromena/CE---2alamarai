@@ -452,7 +452,25 @@
       "title": "Campaigns",
       "description": "Read-only view of campaigns assigned to your account.",
       "empty_title": "No campaigns yet",
-      "empty_description": "Your assigned campaigns will appear here once your administrator sets them up."
+      "empty_description": "Your assigned campaigns will appear here once your administrator sets them up.",
+      "columns": {
+        "name": "Name",
+        "dates": "Dates",
+        "status": "Status"
+      }
+    },
+    "campaign_detail": {
+      "objectives": "Objectives",
+      "locations": "Locations",
+      "no_locations": "No locations are assigned to this campaign yet.",
+      "skus": "SKUs",
+      "no_skus": "No SKUs have been configured yet.",
+      "sku_columns": {
+        "name": "Name",
+        "unit": "Unit",
+        "target": "Target",
+        "stock": "Stock allocated"
+      }
     }
   },
   "Roles": {
