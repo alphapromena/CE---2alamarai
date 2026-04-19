@@ -62,18 +62,14 @@ create table public.shifts (
   -- shifts are split into two rows by Phase 4 onboarding rather than allowed
   -- here (keeps attendance windowing simple).
   constraint shifts_time_range_check check (end_time > start_time),
-  -- Days_of_week must be non-empty and contain only 0..6 with no duplicates.
+  -- Days_of_week must be non-empty.
   constraint shifts_days_of_week_nonempty
     check (array_length(days_of_week, 1) is not null),
+  -- Range 0..6 enforced via array containment (CHECK-safe, no subquery).
   constraint shifts_days_of_week_range
-    check (not exists (
-      select 1 from unnest(days_of_week) d where d < 0 or d > 6
-    )),
-  constraint shifts_days_of_week_unique
-    check (
-      array_length(days_of_week, 1)
-      = (select count(distinct d) from unnest(days_of_week) d)
-    ),
+    check (days_of_week <@ ARRAY[0,1,2,3,4,5,6]::smallint[]),
+  -- Uniqueness of days_of_week elements is enforced by a BEFORE trigger
+  -- below (PostgreSQL does not allow subqueries in CHECK constraints).
   -- The (campaign, location) pair must already exist in campaign_locations.
   constraint shifts_campaign_location_fk
     foreign key (campaign_id, location_id)
@@ -89,6 +85,37 @@ create index shifts_days_of_week_gin on public.shifts using gin (days_of_week);
 create trigger shifts_set_updated_at
   before update on public.shifts
   for each row execute function public.set_updated_at();
+
+-- ============================================================================
+-- 3. Trigger: enforce uniqueness of days_of_week elements.
+--    CHECK constraints cannot contain subqueries, so we use a BEFORE trigger.
+-- ============================================================================
+create or replace function public.shifts_validate_days_of_week()
+returns trigger
+language plpgsql
+as $$
+declare
+  distinct_count integer;
+begin
+  if new.days_of_week is null then
+    return new;
+  end if;
+
+  select count(distinct d) into distinct_count
+  from unnest(new.days_of_week) d;
+
+  if distinct_count <> coalesce(array_length(new.days_of_week, 1), 0) then
+    raise exception 'shifts.days_of_week must not contain duplicate values: %', new.days_of_week
+      using errcode = '23514';
+  end if;
+
+  return new;
+end;
+$$;
+
+create trigger shifts_validate_days_of_week_trg
+  before insert or update on public.shifts
+  for each row execute function public.shifts_validate_days_of_week();
 
 alter table public.shifts enable row level security;
 
