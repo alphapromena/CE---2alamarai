@@ -1,4 +1,6 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default async function HelloPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
@@ -10,13 +12,14 @@ export default async function HelloPage({ params }: { params: Promise<{ locale: 
       <h1 className="text-3xl font-semibold">{t('title')}</h1>
       <p className="mt-2 text-sm text-fg-secondary">{t('description')}</p>
 
-      <div className="mt-8 flex items-center gap-3">
-        <button
-          type="button"
-          className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-white hover:bg-accent-hover"
-        >
+      <div className="mt-8 flex flex-wrap items-center gap-3">
+        <Button>
           {t('cta')}
-        </button>
+          <ArrowRight className="h-4 w-4" strokeWidth={1.75} />
+        </Button>
+        <Button variant="secondary">Secondary</Button>
+        <Button variant="ghost">Ghost</Button>
+        <Button variant="destructive">Destructive</Button>
         <span className="rounded border border-success-border bg-success-subtle px-2 py-0.5 text-xs font-medium text-success">
           locale: {locale}
         </span>
