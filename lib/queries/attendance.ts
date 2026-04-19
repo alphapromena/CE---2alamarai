@@ -83,6 +83,53 @@ export async function listLiveAttendance(opts?: {
   return (data ?? []) as AttendanceRow[];
 }
 
+export type LiveAttendanceJoined = AttendanceRow & {
+  user_full_name: string | null;
+  campaign_name_i18n: { ar?: string; en?: string } | null;
+  location_name_i18n: { ar?: string; en?: string } | null;
+};
+
+/**
+ * Live attendance rows joined with user + campaign + location names — used by
+ * the supervisor dashboard (shows "who / where / when" without N+1 queries).
+ * RLS still applies so supervisors only see their assigned locations.
+ */
+export async function listLiveAttendanceJoined(opts?: {
+  date?: string;
+  campaignId?: string;
+  locationId?: string;
+}): Promise<LiveAttendanceJoined[]> {
+  const supabase = await createServerSupabase();
+  const date = opts?.date ?? todayLocalDateString();
+  let q = supabase
+    .from('attendance')
+    .select(
+      `${ATTENDANCE_COLS},
+       user:profiles ( full_name ),
+       campaign:campaigns ( name_i18n ),
+       location:locations ( name_i18n )`,
+    )
+    .eq('attendance_date', date);
+  if (opts?.campaignId) q = q.eq('campaign_id', opts.campaignId);
+  if (opts?.locationId) q = q.eq('location_id', opts.locationId);
+  const { data, error } = await q.order('check_in_time', {
+    ascending: false,
+    nullsFirst: false,
+  });
+  if (error) return [];
+  type Raw = AttendanceRow & {
+    user: { full_name: string } | null;
+    campaign: { name_i18n: { ar?: string; en?: string } } | null;
+    location: { name_i18n: { ar?: string; en?: string } } | null;
+  };
+  return (data as unknown as Raw[]).map((r) => ({
+    ...(r as AttendanceRow),
+    user_full_name: r.user?.full_name ?? null,
+    campaign_name_i18n: r.campaign?.name_i18n ?? null,
+    location_name_i18n: r.location?.name_i18n ?? null,
+  }));
+}
+
 /**
  * Single attendance row. Admin client (service role); caller is responsible
  * for authorising access before calling this helper.

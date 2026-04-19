@@ -426,10 +426,64 @@
     }
   },
   "Supervisor": {
-    "nav": { "dashboard": "لوحة التحكم" },
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "attendance": "الحضور",
+      "visits": "زيارات المواقع"
+    },
     "dashboard": {
       "title": "لوحة تحكم المشرف",
       "description": "ستظهر هنا نظرة عامة على عملياتك اليومية."
+    },
+    "attendance": {
+      "title": "الحضور المباشر",
+      "description": "تسجيلات الدخول اليوم عبر المواقع المخصصة لك. تُحدَّث تلقائياً.",
+      "filters_campaign": "الحملة",
+      "filters_location": "الموقع",
+      "filters_date": "التاريخ",
+      "filters_all": "الكل",
+      "filters_reset": "إعادة ضبط",
+      "export_csv": "تصدير CSV",
+      "refresh_now": "تحديث",
+      "live_indicator": "مباشر",
+      "columns": {
+        "promoter": "المروِّج",
+        "campaign": "الحملة",
+        "location": "الموقع",
+        "check_in": "الدخول",
+        "check_out": "الخروج",
+        "distance": "المسافة",
+        "status": "الحالة",
+        "actions": "إجراءات"
+      },
+      "empty_title": "لا توجد تسجيلات حضور بعد",
+      "empty_description": "ستظهر تسجيلات الدخول هنا عند وصول المروِّجين.",
+      "status_checked_in": "داخل الوردية",
+      "status_checked_out": "انتهت الوردية",
+      "status_late": "متأخر",
+      "status_early_leave": "خروج مبكر",
+      "status_missing_checkout": "لم يسجِّل الخروج",
+      "status_absent": "غائب",
+      "within_geofence": "داخل النطاق",
+      "outside_geofence": "خارج النطاق",
+      "override_granted": "تم منح استثناء",
+      "view_photo": "عرض الصورة",
+      "photo_open": "فتح الصورة",
+      "photo_close": "إغلاق",
+      "override_pending": "طلب استثناء مُعلَّق",
+      "approve_override_cta": "اعتماد الاستثناء",
+      "approve_override_title": "اعتماد استثناء النطاق الجغرافي",
+      "approve_override_description": "أكّد هذا الاستثناء. سيتم تعليم صف المروِّج كمعتَمد وإغلاق تنبيه الطلب.",
+      "approve_override_reason_label": "السبب / ملاحظة",
+      "approve_override_submit": "اعتماد",
+      "resolve_alert_cta": "معالجة",
+      "resolve_alert_title": "معالجة التنبيه",
+      "resolve_alert_note_label": "ملاحظة المعالجة (اختيارية)",
+      "resolve_alert_submit": "معالجة",
+      "dismiss_alert_submit": "تجاهل",
+      "open_alerts_title": "تنبيهات مفتوحة",
+      "open_alerts_description": "تنبيهات مرتبطة بحضور اليوم تحتاج إلى انتباهك.",
+      "open_alerts_empty": "لا توجد تنبيهات مفتوحة."
     }
   },
   "Promoter": {

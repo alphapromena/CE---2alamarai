@@ -426,10 +426,64 @@
     }
   },
   "Supervisor": {
-    "nav": { "dashboard": "Dashboard" },
+    "nav": {
+      "dashboard": "Dashboard",
+      "attendance": "Attendance",
+      "visits": "Site visits"
+    },
     "dashboard": {
       "title": "Supervisor dashboard",
       "description": "Your daily operations overview will live here."
+    },
+    "attendance": {
+      "title": "Live attendance",
+      "description": "Today's check-ins across your assigned locations. Refreshes automatically.",
+      "filters_campaign": "Campaign",
+      "filters_location": "Location",
+      "filters_date": "Date",
+      "filters_all": "All",
+      "filters_reset": "Reset",
+      "export_csv": "Export CSV",
+      "refresh_now": "Refresh",
+      "live_indicator": "Live",
+      "columns": {
+        "promoter": "Promoter",
+        "campaign": "Campaign",
+        "location": "Location",
+        "check_in": "Check-in",
+        "check_out": "Check-out",
+        "distance": "Distance",
+        "status": "Status",
+        "actions": "Actions"
+      },
+      "empty_title": "No attendance yet",
+      "empty_description": "Check-ins will appear here as promoters arrive.",
+      "status_checked_in": "Checked in",
+      "status_checked_out": "Checked out",
+      "status_late": "Late",
+      "status_early_leave": "Early leave",
+      "status_missing_checkout": "Missing check-out",
+      "status_absent": "Absent",
+      "within_geofence": "Within",
+      "outside_geofence": "Outside",
+      "override_granted": "Override granted",
+      "view_photo": "View photo",
+      "photo_open": "Open photo",
+      "photo_close": "Close",
+      "override_pending": "Override requested",
+      "approve_override_cta": "Approve override",
+      "approve_override_title": "Approve geofence override",
+      "approve_override_description": "Confirm this exception. The promoter's row will be flagged as overridden and the request alert resolved.",
+      "approve_override_reason_label": "Reason / note",
+      "approve_override_submit": "Approve",
+      "resolve_alert_cta": "Resolve",
+      "resolve_alert_title": "Resolve alert",
+      "resolve_alert_note_label": "Resolution note (optional)",
+      "resolve_alert_submit": "Resolve",
+      "dismiss_alert_submit": "Dismiss",
+      "open_alerts_title": "Open alerts",
+      "open_alerts_description": "Alerts attached to today's attendance that need your attention.",
+      "open_alerts_empty": "No open alerts."
     }
   },
   "Promoter": {
