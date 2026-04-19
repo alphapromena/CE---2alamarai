@@ -484,6 +484,40 @@
       "open_alerts_title": "Open alerts",
       "open_alerts_description": "Alerts attached to today's attendance that need your attention.",
       "open_alerts_empty": "No open alerts."
+    },
+    "visits": {
+      "title": "Site visits",
+      "description": "Your independent validation visits across assigned locations.",
+      "new_cta": "Log new visit",
+      "new_title": "Log a site visit",
+      "new_description": "Take a photo at the location, share your GPS, and note the outcome.",
+      "campaign_location_label": "Campaign & location",
+      "campaign_location_hint": "Only campaigns active at your assigned locations are listed.",
+      "no_targets_title": "No campaigns to visit",
+      "no_targets_description": "You don't have any active campaigns at your assigned locations yet.",
+      "outcome_label": "Outcome",
+      "outcome_ok": "Everything OK",
+      "outcome_issue_found": "Issue found",
+      "outcome_coaching": "Coaching moment",
+      "outcome_other": "Other",
+      "notes_label": "Notes (optional)",
+      "submit_cta": "Log visit",
+      "submit_success": "Visit logged.",
+      "columns": {
+        "visited_at": "Visited at",
+        "campaign": "Campaign",
+        "location": "Location",
+        "distance": "Distance",
+        "outcome": "Outcome",
+        "notes": "Notes",
+        "actions": "Actions"
+      },
+      "empty_title": "No visits yet",
+      "empty_description": "Log your first site visit to start building the independent audit trail.",
+      "view_photo": "View photo",
+      "photo_open": "Visit photo",
+      "within_geofence": "Within",
+      "outside_geofence": "Outside"
     }
   },
   "Promoter": {

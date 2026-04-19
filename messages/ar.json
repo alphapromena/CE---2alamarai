@@ -484,6 +484,40 @@
       "open_alerts_title": "تنبيهات مفتوحة",
       "open_alerts_description": "تنبيهات مرتبطة بحضور اليوم تحتاج إلى انتباهك.",
       "open_alerts_empty": "لا توجد تنبيهات مفتوحة."
+    },
+    "visits": {
+      "title": "زيارات المواقع",
+      "description": "زياراتك المستقلة للتحقق في المواقع المخصصة لك.",
+      "new_cta": "تسجيل زيارة جديدة",
+      "new_title": "تسجيل زيارة موقع",
+      "new_description": "التقط صورة في الموقع، شارك موقعك الجغرافي، ودوِّن نتيجة الزيارة.",
+      "campaign_location_label": "الحملة والموقع",
+      "campaign_location_hint": "تظهر فقط الحملات النشطة في المواقع المخصصة لك.",
+      "no_targets_title": "لا توجد حملات للزيارة",
+      "no_targets_description": "لا توجد لديك حملات نشطة في المواقع المخصصة لك بعد.",
+      "outcome_label": "النتيجة",
+      "outcome_ok": "كل شيء على ما يرام",
+      "outcome_issue_found": "تم رصد مشكلة",
+      "outcome_coaching": "لحظة توجيه",
+      "outcome_other": "أخرى",
+      "notes_label": "ملاحظات (اختياري)",
+      "submit_cta": "تسجيل الزيارة",
+      "submit_success": "تم تسجيل الزيارة.",
+      "columns": {
+        "visited_at": "وقت الزيارة",
+        "campaign": "الحملة",
+        "location": "الموقع",
+        "distance": "المسافة",
+        "outcome": "النتيجة",
+        "notes": "ملاحظات",
+        "actions": "إجراءات"
+      },
+      "empty_title": "لا توجد زيارات بعد",
+      "empty_description": "سجِّل أول زيارة لموقع لبدء بناء سجل التحقق المستقل.",
+      "view_photo": "عرض الصورة",
+      "photo_open": "صورة الزيارة",
+      "within_geofence": "داخل النطاق",
+      "outside_geofence": "خارج النطاق"
     }
   },
   "Promoter": {

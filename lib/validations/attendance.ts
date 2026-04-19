@@ -107,3 +107,32 @@ export const resolveAlertSchema = z
   .strict();
 
 export type ResolveAlertInput = z.infer<typeof resolveAlertSchema>;
+
+export const supervisorVisitOutcomeSchema = z.enum([
+  'ok',
+  'issue_found',
+  'coaching',
+  'other',
+]);
+
+export const supervisorVisitCreateMetadataSchema = z
+  .object({
+    idempotency_key: z.string().uuid(),
+    campaign_id: id,
+    location_id: id,
+    lat: z.number().gte(-90).lte(90),
+    lng: z.number().gte(-180).lte(180),
+    captured_at: z.string().datetime({ offset: true }),
+    outcome: supervisorVisitOutcomeSchema,
+    notes: z
+      .string()
+      .trim()
+      .max(2000)
+      .optional()
+      .or(z.literal('').transform(() => undefined)),
+  })
+  .strict();
+
+export type SupervisorVisitCreateMetadata = z.infer<
+  typeof supervisorVisitCreateMetadataSchema
+>;

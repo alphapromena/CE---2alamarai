@@ -83,6 +83,9 @@ verify_jwt = true
 [functions.geo-validate-checkout]
 verify_jwt = true
 
+[functions.supervisor-visit-create]
+verify_jwt = true
+
 [analytics]
 enabled = false
 
