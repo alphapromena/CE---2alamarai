@@ -7,12 +7,28 @@
   "Common": {
     "cancel": "Cancel",
     "save": "Save",
+    "saving": "Saving…",
     "submit": "Submit",
     "submitting": "Submitting…",
     "loading": "Loading…",
     "back": "Back",
     "required": "Required",
     "confirm": "Confirm",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "view": "View",
+    "search": "Search",
+    "yes": "Yes",
+    "no": "No",
+    "active": "Active",
+    "inactive": "Inactive",
+    "all": "All",
+    "none": "None",
+    "next": "Next",
+    "previous": "Previous",
+    "page_of": "Page {current} of {total}",
+    "results_count": "{count, plural, =0 {No results} one {# result} other {# results}}",
     "error_generic": "Something went wrong. Please try again."
   },
   "Auth": {
@@ -76,7 +92,13 @@
   "Admin": {
     "nav": {
       "dashboard": "Dashboard",
-      "users": "Users"
+      "users": "Users",
+      "clients": "Clients",
+      "campaigns": "Campaigns",
+      "locations": "Locations",
+      "regions": "Regions",
+      "shifts": "Shifts",
+      "assignments": "Assignments"
     },
     "dashboard": {
       "title": "Admin dashboard",
@@ -159,10 +181,19 @@
     }
   },
   "Client": {
-    "nav": { "dashboard": "Dashboard" },
+    "nav": {
+      "dashboard": "Dashboard",
+      "campaigns": "Campaigns"
+    },
     "dashboard": {
       "title": "Client dashboard",
       "description": "Your campaigns and reports will live here."
+    },
+    "campaigns": {
+      "title": "Campaigns",
+      "description": "Read-only view of campaigns assigned to your account.",
+      "empty_title": "No campaigns yet",
+      "empty_description": "Your assigned campaigns will appear here once your administrator sets them up."
     }
   },
   "Roles": {

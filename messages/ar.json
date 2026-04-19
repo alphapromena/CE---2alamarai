@@ -7,12 +7,28 @@
   "Common": {
     "cancel": "إلغاء",
     "save": "حفظ",
+    "saving": "جارٍ الحفظ…",
     "submit": "إرسال",
     "submitting": "جارٍ الإرسال…",
     "loading": "جارٍ التحميل…",
     "back": "رجوع",
     "required": "مطلوب",
     "confirm": "تأكيد",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "create": "إنشاء",
+    "view": "عرض",
+    "search": "بحث",
+    "yes": "نعم",
+    "no": "لا",
+    "active": "مفعَّل",
+    "inactive": "معطَّل",
+    "all": "الكل",
+    "none": "لا يوجد",
+    "next": "التالي",
+    "previous": "السابق",
+    "page_of": "صفحة {current} من {total}",
+    "results_count": "{count, plural, =0 {لا توجد نتائج} one {نتيجة واحدة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}",
     "error_generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
   },
   "Auth": {
@@ -76,7 +92,13 @@
   "Admin": {
     "nav": {
       "dashboard": "لوحة التحكم",
-      "users": "المستخدمون"
+      "users": "المستخدمون",
+      "clients": "العملاء",
+      "campaigns": "الحملات",
+      "locations": "المواقع",
+      "regions": "المناطق",
+      "shifts": "الورديّات",
+      "assignments": "التعيينات"
     },
     "dashboard": {
       "title": "لوحة تحكم المدير",
@@ -159,10 +181,19 @@
     }
   },
   "Client": {
-    "nav": { "dashboard": "لوحة التحكم" },
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "campaigns": "الحملات"
+    },
     "dashboard": {
       "title": "لوحة تحكم العميل",
       "description": "ستظهر هنا حملاتك وتقاريرك."
+    },
+    "campaigns": {
+      "title": "الحملات",
+      "description": "عرض للقراءة فقط للحملات المخصّصة لحسابك.",
+      "empty_title": "لا توجد حملات بعد",
+      "empty_description": "ستظهر هنا الحملات المخصّصة لك بمجرّد إعدادها من قِبل المسؤول."
     }
   },
   "Roles": {

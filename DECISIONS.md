@@ -255,3 +255,55 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - Skip the column until Phase 2. Rejected: diverges from PLAN.md §6 Phase 1 scope and forces Phase 2 to touch `profiles` again.
   - Stub `locations` table now. Rejected: creeps Module 1 scope into Phase 1.
 - **Revisit when:** A user-assignments table (Phase 2, `user_assignments`) supersedes the array. The array becomes a denormalised cache; decide then whether to keep it or drop it.
+
+---
+
+## D-016 — Tenant isolation via `profiles.client_id` FK + CHECK
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 2
+- **Question:** How is multi-tenant isolation modelled at the database layer? A separate `client_users` junction table or a single column on `profiles`?
+- **Decision:** Add `profiles.client_id uuid REFERENCES public.clients(id) ON DELETE RESTRICT`, plus a CHECK constraint enforcing `client_id IS NOT NULL` exactly when `role = 'client'`. Internal users (admin / supervisor / promoter) keep `client_id = NULL`. A SECURITY DEFINER helper `current_client_id()` returns the calling user's `client_id`, and every RLS policy on a tenant-scoped table compares `row.client_id = current_client_id()`.
+- **Rationale:**
+  - Closed-tenancy SaaS: a client user belongs to exactly one brand and never spans tenants.
+  - Single FK is unambiguous and indexable; no junction-table joins inside RLS predicates (which would be slow and easy to get wrong).
+  - The CHECK is the cheapest way to make "client without a tenant" unrepresentable rather than relying on application code.
+- **Alternatives considered:**
+  - `client_users(user_id, client_id)` junction table. Rejected: introduces M:N semantics we don't have, and forces every RLS policy to subquery the junction.
+  - Storing tenant in JWT claims only. Rejected: claims are mutable on refresh and harder to audit; the source of truth must be in the DB.
+- **Revisit when:** A client account ever needs to span multiple tenants (e.g., agency consolidator). At that point we move to the junction table and update `current_client_id()` to return `setof uuid`.
+
+---
+
+## D-017 — Forms stack: react-hook-form + zodResolver client-side, Server Actions as the single mutation boundary
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 2
+- **Question:** What's the canonical form stack now that Phase 2 introduces non-trivial multi-field forms (campaigns, shifts, assignments)?
+- **Decision:** All client forms use `react-hook-form` with `@hookform/resolvers/zod` for inline validation. Submission goes to a Next.js Server Action that re-runs the **same** zod schema with `.strict()` before any DB write. The schema lives in `lib/validations/` and is imported by both sides, so client and server agree on shape and error messages.
+- **Rationale:**
+  - One schema = one source of truth. Client validation is UX; server validation is security. Both pass through the same parser.
+  - `.strict()` rejects unknown keys, defending against form-data injection.
+  - Server Action remains the trust boundary: even a malicious client that bypasses RHF can't bypass the server re-validation.
+  - RHF + zodResolver is already in `package.json` from Phase 1.
+- **Alternatives considered:**
+  - `useFormState` + raw zod parse on the server only. Rejected: no inline validation feedback, more re-render churn.
+  - tRPC. Rejected: a different API style than the rest of the app and unnecessary given Server Actions.
+- **Revisit when:** We need streaming server actions or partial form submission (probably not in this product).
+
+---
+
+## D-018 — `user_assignments` is the source of truth; `profiles.assigned_locations` is a denormalised cache
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 2
+- **Question:** Phase 1 (D-015) shipped `profiles.assigned_locations uuid[]`. Phase 2 introduces a relational `user_assignments` table. Which one wins?
+- **Decision:** `public.user_assignments` is the only table application code writes to. A row-level trigger on `user_assignments` recomputes the affected user's `profiles.assigned_locations` to be exactly the distinct set of `location_id`s where `active = true`. The denormalised array stays because it's the read path Phase 3 attendance already uses (`assigned_locations @> ARRAY[loc]`, served by the existing GIN index). `profiles.assigned_locations` direct UPDATEs by anyone other than the trigger continue to be blocked by the existing self-update guard for non-admins; admins are advised (and eventually enforced via app code) to never touch the column directly.
+- **Rationale:**
+  - Two writable copies of the same fact would drift. Pinning writes to `user_assignments` and pushing to the cache via trigger gives consistency without sacrificing the indexed array query.
+  - Keeps Phase 3 query plans unchanged — no migration cost for attendance.
+  - Soft-delete (`active = false`) and date-bounded assignments (`starts_on`, `ends_on`) are first-class in `user_assignments`; the trigger only includes currently-active rows.
+- **Alternatives considered:**
+  - Drop `profiles.assigned_locations`. Rejected: forces every attendance check to JOIN `user_assignments`, losing the GIN-array fast path.
+  - Make `assigned_locations` a generated column from a subquery. Rejected: Postgres generated columns can't reference other tables.
+- **Revisit when:** Read patterns change such that the array is no longer queried (e.g., Phase 7 dashboards switch to joining `user_assignments` directly). At that point, drop the trigger + column.
