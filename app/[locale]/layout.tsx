@@ -5,6 +5,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import type { ReactNode } from 'react';
 import { routing } from '@/i18n/routing';
+import { ServiceWorkerRegister } from '@/components/sw-register';
 import '../globals.css';
 
 const inter = Inter({
@@ -25,11 +26,14 @@ export const metadata: Metadata = {
   title: 'Promoter Monitoring Platform',
   description:
     'Bilingual SaaS for field marketing: campaigns, attendance, sales, stock, and reporting.',
+  manifest: '/manifest.json',
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Promoter' },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
+  themeColor: '#4f46e5',
 };
 
 export function generateStaticParams() {
@@ -55,6 +59,7 @@ export default async function LocaleLayout({
     <html lang={locale} dir={direction} className={`${inter.variable} ${ibmPlexArabic.variable}`}>
       <body>
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
+        <ServiceWorkerRegister />
       </body>
     </html>
   );
