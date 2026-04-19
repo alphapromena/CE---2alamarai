@@ -7,7 +7,7 @@ const config = [
   ...nextTypescript,
   prettier,
   {
-    ignores: ['.next/**', 'node_modules/**', 'public/sw.js'],
+    ignores: ['.next/**', 'node_modules/**', 'public/sw.js', 'supabase/functions/**'],
   },
   {
     rules: {

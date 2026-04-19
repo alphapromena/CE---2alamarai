@@ -75,6 +75,23 @@ enabled = true
 policy = "oneshot"
 inspector_port = 8083
 
+# Per-function config. verify_jwt = true is the default but making it explicit
+# prevents a future config change from accidentally flipping the trust model.
+[functions.geo-validate-checkin]
+verify_jwt = true
+
+[functions.geo-validate-checkout]
+verify_jwt = true
+
+[functions.supervisor-visit-create]
+verify_jwt = true
+
+# Cron-invoked sweep: no user session, so JWT verification is off. The
+# function validates an x-cron-secret header instead. CRON_SECRET must be set
+# as a Supabase function secret before deploy.
+[functions.detect-attendance-issues]
+verify_jwt = false
+
 [analytics]
 enabled = false
 

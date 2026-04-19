@@ -3,7 +3,11 @@ import { setRequestLocale } from 'next-intl/server';
 import { requireRole } from '@/lib/auth/guards';
 import { AppShell } from '@/components/features/app/app-shell';
 
-const NAV = [{ href: '/supervisor/dashboard', labelKey: 'Supervisor.nav.dashboard' }];
+const NAV = [
+  { href: '/supervisor/dashboard', labelKey: 'Supervisor.nav.dashboard' },
+  { href: '/supervisor/attendance', labelKey: 'Supervisor.nav.attendance' },
+  { href: '/supervisor/visits', labelKey: 'Supervisor.nav.visits' },
+];
 
 export default async function SupervisorLayout({
   children,
