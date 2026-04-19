@@ -1,0 +1,26 @@
+import nextCoreWebVitals from 'eslint-config-next/core-web-vitals';
+import nextTypescript from 'eslint-config-next/typescript';
+import prettier from 'eslint-config-prettier';
+
+const config = [
+  ...nextCoreWebVitals,
+  ...nextTypescript,
+  prettier,
+  {
+    ignores: ['.next/**', 'node_modules/**', 'public/sw.js'],
+  },
+  {
+    rules: {
+      '@typescript-eslint/consistent-type-imports': [
+        'warn',
+        { prefer: 'type-imports', fixStyle: 'inline-type-imports' },
+      ],
+      '@typescript-eslint/no-unused-vars': [
+        'warn',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_' },
+      ],
+    },
+  },
+];
+
+export default config;
