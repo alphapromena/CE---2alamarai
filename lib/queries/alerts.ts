@@ -1,15 +1,21 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
 
+export type AlertType =
+  | 'late_check_in'
+  | 'absent'
+  | 'early_leave'
+  | 'missing_check_out'
+  | 'geofence_violation'
+  | 'geofence_override_requested'
+  | 'low_stock'
+  | 'over_consumption'
+  | 'reconciliation_mismatch'
+  | 'no_usage';
+
 export type AlertRow = {
   id: string;
-  alert_type:
-    | 'late_check_in'
-    | 'absent'
-    | 'early_leave'
-    | 'missing_check_out'
-    | 'geofence_violation'
-    | 'geofence_override_requested';
+  alert_type: AlertType;
   severity: 'info' | 'warning' | 'critical';
   status: 'open' | 'acknowledged' | 'resolved' | 'dismissed';
   user_id: string | null;
@@ -26,6 +32,13 @@ export type AlertRow = {
   created_at: string;
   updated_at: string;
 };
+
+export const STOCK_ALERT_TYPES: readonly AlertType[] = [
+  'low_stock',
+  'over_consumption',
+  'reconciliation_mismatch',
+  'no_usage',
+];
 
 const ALERT_COLS =
   'id, alert_type, severity, status, user_id, attendance_id, campaign_id, location_id, message_key, message_params, acknowledged_by, acknowledged_at, resolved_by, resolved_at, resolution_note, created_at, updated_at';
@@ -66,6 +79,28 @@ export async function listAlertsForAttendance(
     .select(ALERT_COLS)
     .eq('attendance_id', attendanceId)
     .order('created_at', { ascending: false });
+  if (error) return [];
+  return (data ?? []) as AlertRow[];
+}
+
+/**
+ * Stock alerts (low_stock, over_consumption, reconciliation_mismatch,
+ * no_usage) in the caller's scope. Surfaced by the supervisor stock page
+ * as a banner + inline flags.
+ */
+export async function listOpenStockAlerts(opts?: {
+  campaignId?: string;
+  limit?: number;
+}): Promise<AlertRow[]> {
+  const supabase = await createServerSupabase();
+  let q = supabase
+    .from('alerts')
+    .select(ALERT_COLS)
+    .in('alert_type', STOCK_ALERT_TYPES as string[])
+    .in('status', ['open', 'acknowledged'])
+    .order('created_at', { ascending: false });
+  if (opts?.campaignId) q = q.eq('campaign_id', opts.campaignId);
+  const { data, error } = await q.limit(opts?.limit ?? 100);
   if (error) return [];
   return (data ?? []) as AlertRow[];
 }

@@ -8,6 +8,7 @@ const NAV = [
   { href: '/promoter/attendance', labelKey: 'Promoter.nav.attendance' },
   { href: '/promoter/reports/today', labelKey: 'Promoter.nav.reports_today' },
   { href: '/promoter/tasks', labelKey: 'Promoter.nav.tasks' },
+  { href: '/promoter/stock', labelKey: 'Promoter.nav.stock' },
 ];
 
 export default async function PromoterLayout({
