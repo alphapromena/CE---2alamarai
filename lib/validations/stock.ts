@@ -78,7 +78,52 @@ export const returnToWarehouseSchema = z
   })
   .strict();
 
+// ─── Supervisor: two-leg reallocation (RPC-backed) ───────────────────────
+// A reallocation moves stock between two supervisors OR two locations of
+// the SAME type. The kind-pair CHECK on stock_movements enforces the
+// same-type rule at the DB layer; this schema enforces it client-side
+// first so the user gets an actionable error without a round-trip.
+//
+// supervisor_id pairs require from_entity_type = to_entity_type = 'supervisor';
+// location_id pairs require from_entity_type = to_entity_type = 'location'.
+export const reallocateStockSchema = z
+  .object({
+    idempotency_key: idempotencyKey,
+    campaign_id: id,
+    sku_id: id,
+    from_entity_type: z.enum(['supervisor', 'location']),
+    from_entity_id: id,
+    to_entity_type: z.enum(['supervisor', 'location']),
+    to_entity_id: id,
+    quantity,
+    location_id: id.nullable().optional(),
+    reason,
+  })
+  .strict()
+  .refine(
+    (v) => v.from_entity_type === v.to_entity_type,
+    { message: 'reallocation from/to entity types must match', path: ['to_entity_type'] },
+  )
+  .refine(
+    (v) => !(v.from_entity_type === v.to_entity_type && v.from_entity_id === v.to_entity_id),
+    { message: 'reallocation cannot target the same entity', path: ['to_entity_id'] },
+  );
+
+// ─── Admin: correction of a prior movement (D-008) ───────────────────────
+// Admin-only. Inserts a reversal + a corrected restatement in one
+// transaction via the correct_stock_movement RPC.
+export const correctMovementSchema = z
+  .object({
+    idempotency_key: idempotencyKey,
+    original_movement_id: id,
+    new_quantity: quantity,
+    reason,
+  })
+  .strict();
+
 export type AllocateStockInput = z.infer<typeof allocateStockSchema>;
 export type DistributeStockInput = z.infer<typeof distributeStockSchema>;
 export type ReturnToSupervisorInput = z.infer<typeof returnToSupervisorSchema>;
 export type ReturnToWarehouseInput = z.infer<typeof returnToWarehouseSchema>;
+export type ReallocateStockInput = z.infer<typeof reallocateStockSchema>;
+export type CorrectMovementInput = z.infer<typeof correctMovementSchema>;
