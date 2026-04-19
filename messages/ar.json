@@ -98,7 +98,8 @@
       "locations": "المواقع",
       "regions": "المناطق",
       "shifts": "الورديّات",
-      "assignments": "التعيينات"
+      "assignments": "التعيينات",
+      "reports": "التقارير"
     },
     "dashboard": {
       "title": "لوحة تحكم المدير",
@@ -423,13 +424,19 @@
       "empty_title": "لا توجد مدن بعد",
       "empty_description": "أنشئ مدينة قبل إضافة المواقع.",
       "no_regions_yet": "أنشئ منطقة أولًا."
+    },
+    "reports": {
+      "title": "كل التقارير",
+      "subtitle": "كل الحملات على كل المواقع."
     }
   },
   "Supervisor": {
     "nav": {
       "dashboard": "لوحة التحكم",
       "attendance": "الحضور",
-      "visits": "زيارات المواقع"
+      "visits": "زيارات المواقع",
+      "reports": "التقارير",
+      "tasks": "المهام"
     },
     "dashboard": {
       "title": "لوحة تحكم المشرف",
@@ -518,12 +525,90 @@
       "photo_open": "صورة الزيارة",
       "within_geofence": "داخل النطاق",
       "outside_geofence": "خارج النطاق"
+    },
+    "reports": {
+      "title": "التقارير",
+      "subtitle": "راجع التقارير اليومية المقدّمة من فريقك.",
+      "empty": "لا توجد تقارير تطابق هذه الفلاتر.",
+      "filter": {
+        "all": "الكل",
+        "draft": "مسودة",
+        "submitted": "مُرسل",
+        "approved": "معتمد",
+        "rejected": "مرفوض"
+      },
+      "rejected_heading": "تم رفض التقرير — السبب:",
+      "funnel_heading": "القمع",
+      "kpis_heading": "مؤشرات الأداء",
+      "kpis_pending": "ستُحسب المؤشرات بعد الإرسال بقليل.",
+      "sku_breakdown": "تفصيل المنتجات",
+      "no_sku_entries": "لا توجد إدخالات منتجات في هذا التقرير.",
+      "sku_col": "المنتج",
+      "contribution_col": "المساهمة",
+      "photos_heading": "الصور",
+      "review_heading": "المراجعة",
+      "approve": "اعتماد",
+      "reject": "رفض",
+      "reject_reason_placeholder": "اكتب سبب الرفض (مطلوب)",
+      "kpi": {
+        "interaction": "التفاعل",
+        "engagement": "المشاركة",
+        "sampling": "العيّنات",
+        "conversion": "التحويل",
+        "sample_to_conversion": "من عيّنة إلى شراء"
+      },
+      "errors": {
+        "invalid_input": "بيانات غير صحيحة.",
+        "reason_required": "الرجاء كتابة سبب الرفض.",
+        "not_found": "التقرير غير موجود.",
+        "not_submitted": "هذا التقرير ليس قيد المراجعة.",
+        "approve_failed": "فشل الاعتماد.",
+        "reject_failed": "فشل الرفض.",
+        "location_not_assigned": "لست مُعيّناً على هذا الموقع."
+      }
+    },
+    "tasks": {
+      "title": "المهام",
+      "subtitle": "عيّن المهام للمنشطين على مواقعك.",
+      "create_heading": "إنشاء مهمة",
+      "list_heading": "كل المهام",
+      "empty": "لا توجد مهام بعد.",
+      "create": "إنشاء",
+      "create_success": "تم إنشاء المهمة.",
+      "form": {
+        "campaign": "الحملة",
+        "location": "الموقع",
+        "assignee": "المُكلَّف",
+        "pick_assignee": "اختر منشطاً…",
+        "due_date": "تاريخ الاستحقاق",
+        "title_en": "العنوان (إنكليزي)",
+        "title_ar": "العنوان (عربي)",
+        "desc_en": "الوصف (إنكليزي)",
+        "desc_ar": "الوصف (عربي)"
+      },
+      "col": {
+        "title": "العنوان",
+        "assignee": "المُكلَّف",
+        "location": "الموقع",
+        "campaign": "الحملة",
+        "due": "الاستحقاق",
+        "status": "الحالة"
+      },
+      "errors": {
+        "required": "يُرجى تعبئة الحقول المطلوبة.",
+        "invalid_input": "بيانات غير صحيحة.",
+        "duplicate": "المهمة موجودة مسبقاً.",
+        "create_failed": "فشل الإنشاء.",
+        "location_not_assigned": "لست مُعيّناً على هذا الموقع."
+      }
     }
   },
   "Promoter": {
     "nav": {
       "dashboard": "لوحة التحكم",
-      "attendance": "الحضور"
+      "attendance": "الحضور",
+      "reports_today": "تقرير اليوم",
+      "tasks": "المهام"
     },
     "dashboard": {
       "title": "لوحة تحكم المروِّج",
@@ -580,6 +665,84 @@
       "override_request_submit": "إرسال الطلب",
       "override_request_sent": "تم إرسال الطلب. سيقوم مشرفك بمراجعته.",
       "override_request_cta": "طلب استثناء"
+    },
+    "reports": {
+      "title": "تقرير اليوم",
+      "subtitle": "تقرير بتاريخ {date}",
+      "no_shift_title": "لا توجد وردية اليوم",
+      "no_shift_description": "لا توجد وردية مفعّلة لك اليوم. راجع المشرف إذا كان هذا غير صحيح.",
+      "save_draft": "حفظ كمسودة",
+      "submit": "إرسال",
+      "status_new": "جديد",
+      "status_draft": "مسودة",
+      "status_submitted": "مُرسل",
+      "status_approved": "معتمد",
+      "status_rejected": "مرفوض",
+      "offline": "غير متصل",
+      "queued_count": "{count} في الانتظار",
+      "rejected_heading": "تم رفض هذا التقرير",
+      "fields": {
+        "traffic": "إجمالي الزبائن",
+        "contacts": "الاتصالات",
+        "engaged": "المتفاعلون",
+        "samples": "العينات",
+        "sales": "المبيعات",
+        "notes": "ملاحظات"
+      },
+      "skus_heading": "المبيعات والعينات لكل منتج",
+      "no_skus": "لا توجد منتجات مفعّلة في هذه الحملة.",
+      "totals_summary": "المجموع — عينات: {samples} · مبيعات: {sales}",
+      "photo": {
+        "setup": "صورة التجهيز",
+        "during": "خلال الوردية",
+        "end_of_shift": "نهاية الوردية"
+      },
+      "tap_to_capture": "اضغط للتصوير",
+      "uploading": "جاري الرفع…",
+      "errors": {
+        "invalid_input": "بيانات غير صحيحة.",
+        "not_found": "التقرير غير موجود.",
+        "frozen": "تمت مراجعة التقرير ولا يمكن تعديله.",
+        "location_not_assigned": "لست مُعيّناً على هذا الموقع.",
+        "submit_failed": "فشل الإرسال. حاول مرة أخرى.",
+        "save_first": "احفظ مسودة قبل إضافة الصور.",
+        "photo_too_large": "الصورة كبيرة جداً.",
+        "photo_not_jpeg": "يُرجى رفع JPEG.",
+        "upload_failed": "فشل رفع الصورة.",
+        "offline_queued": "أنت غير متصل — تمت إضافة العملية للطابور."
+      },
+      "cols": {
+        "date": "التاريخ",
+        "campaign": "الحملة",
+        "location": "الموقع",
+        "promoter": "المنشط",
+        "contacts": "الاتصالات",
+        "samples": "العينات",
+        "sales": "المبيعات",
+        "status": "الحالة"
+      }
+    },
+    "tasks": {
+      "title": "المهام",
+      "subtitle": "المهام المعيّنة لك من المشرف.",
+      "open_heading": "مفتوحة",
+      "done_heading": "أُكملت مؤخراً",
+      "empty_open_title": "لا مهام مفتوحة",
+      "empty_open_description": "أنت متابع لكل شيء.",
+      "mark_in_progress": "ابدأ",
+      "mark_done": "أكملت",
+      "due": "المستحق: {date}",
+      "status_open": "مفتوحة",
+      "status_in_progress": "قيد التنفيذ",
+      "status_done": "مكتملة",
+      "status_cancelled": "مُلغاة",
+      "errors": {
+        "invalid_input": "بيانات غير صحيحة.",
+        "not_found": "المهمة غير موجودة.",
+        "not_yours": "هذه المهمة ليست معيّنة لك.",
+        "invalid_transition": "لا يمكن التغيير لهذه الحالة.",
+        "update_failed": "فشل التحديث."
+      }
     }
   },
   "Client": {

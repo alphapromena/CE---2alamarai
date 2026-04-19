@@ -92,6 +92,14 @@ verify_jwt = true
 [functions.detect-attendance-issues]
 verify_jwt = false
 
+# compute-kpis has two modes: targeted (invoked from Server Actions) and
+# sweep (cron). verify_jwt = true is correct for the targeted mode; the
+# sweep also requires a bearer token (use the service-role key when
+# scheduling) and is further gated by an x-cron-secret header checked in
+# the function body.
+[functions.compute-kpis]
+verify_jwt = true
+
 [analytics]
 enabled = false
 
