@@ -100,7 +100,8 @@
       "shifts": "Shifts",
       "assignments": "Assignments",
       "reports": "Reports",
-      "stock": "Stock"
+      "stock": "Stock",
+      "performance": "Performance"
     },
     "dashboard": {
       "title": "Admin dashboard",
@@ -529,7 +530,8 @@
       "visits": "Site visits",
       "reports": "Reports",
       "tasks": "Tasks",
-      "stock": "Stock"
+      "stock": "Stock",
+      "performance": "Performance"
     },
     "dashboard": {
       "title": "Supervisor dashboard",
@@ -1006,7 +1008,8 @@
   "Client": {
     "nav": {
       "dashboard": "Dashboard",
-      "campaigns": "Campaigns"
+      "campaigns": "Campaigns",
+      "performance": "Performance"
     },
     "dashboard": {
       "title": "Client dashboard",
@@ -1055,5 +1058,79 @@
   "Languages": {
     "ar": "العربية",
     "en": "English"
+  },
+  "Performance": {
+    "tier": {
+      "top": "Top",
+      "medium": "Medium",
+      "low": "Low",
+      "unclassified": "Unclassified"
+    },
+    "admin": {
+      "title": "Performance",
+      "description": "KPIs, rankings, and tier benchmarking across all campaigns."
+    },
+    "supervisor": {
+      "title": "Performance — your locations",
+      "description": "Promoter and location KPIs for the locations assigned to you."
+    },
+    "client": {
+      "title": "Performance",
+      "description": "Aggregate KPIs across your campaigns. Individual rows are not exposed."
+    },
+    "status": {
+      "planned": "Planned",
+      "active": "Active",
+      "completed": "Completed",
+      "cancelled": "Cancelled"
+    },
+    "table": {
+      "campaign": "Campaign",
+      "client": "Client",
+      "status": "Status",
+      "conversion": "Conversion",
+      "engagement": "Engagement",
+      "sampling": "Sampling",
+      "tier": "Tier",
+      "rank": "Rank",
+      "reports": "Reports",
+      "promoter": "Promoter",
+      "location": "Location",
+      "delta_vs_campaign": "Δ vs campaign"
+    },
+    "campaign": {
+      "overview": "Overview",
+      "reports": "Reports",
+      "tier_distribution": "Tier distribution",
+      "tier_distribution_legend": "Top / Medium / Low",
+      "locations_title": "Locations ranked by conversion",
+      "locations_description": "Compare locations side by side. Top performer is highlighted.",
+      "promoters_title": "Promoters ranked by conversion",
+      "vs_campaign": "Campaign average",
+      "campaign_overall": "overall conversion"
+    },
+    "location": {
+      "trend_title": "Daily conversion trend (last 30 days)",
+      "trend_description": "A line per day; ratios in [0,1].",
+      "trend_legend": "Conversion rate, daily, this campaign.",
+      "trend_aria": "Daily conversion trend",
+      "promoters_title": "Promoters at this location"
+    },
+    "promoter": {
+      "trend_title": "Daily conversion trend (last 30 days)",
+      "trend_description": "A line per day; ratios in [0,1].",
+      "trend_legend": "Conversion rate, daily, this campaign.",
+      "trend_aria": "Daily conversion trend",
+      "scope_size": "{size} promoters in this campaign",
+      "other_campaigns": "Other campaigns"
+    },
+    "empty": {
+      "no_campaigns_title": "No campaigns yet",
+      "no_campaigns_description": "Create a campaign before performance can be measured.",
+      "no_data_title": "No performance data yet",
+      "no_data_description": "Snapshots appear once promoters submit daily reports.",
+      "no_other_campaigns_title": "No other campaigns",
+      "no_other_campaigns_description": "This promoter has only worked on the current campaign."
+    }
   }
 }
