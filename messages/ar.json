@@ -3,5 +3,139 @@
     "title": "مرحبًا بالعالم",
     "description": "صفحة أساس المرحلة صفر. يتم عرض الاتجاه من اليمين إلى اليسار بشكل صحيح عندما تكون اللغة عربية.",
     "cta": "ابدأ الآن"
+  },
+  "Common": {
+    "cancel": "إلغاء",
+    "save": "حفظ",
+    "submit": "إرسال",
+    "submitting": "جارٍ الإرسال…",
+    "loading": "جارٍ التحميل…",
+    "back": "رجوع",
+    "required": "مطلوب",
+    "confirm": "تأكيد",
+    "error_generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+  },
+  "Auth": {
+    "brand": "منصة متابعة المروّجين",
+    "login": {
+      "title": "تسجيل الدخول",
+      "description": "أدخل بريدك الإلكتروني وكلمة المرور للمتابعة.",
+      "email_label": "البريد الإلكتروني",
+      "email_placeholder": "you@example.com",
+      "password_label": "كلمة المرور",
+      "password_placeholder": "••••••••",
+      "submit": "دخول",
+      "submit_loading": "جارٍ الدخول…",
+      "forgot_password": "هل نسيت كلمة المرور؟",
+      "deactivated_notice": "تم تعطيل حسابك. يرجى التواصل مع المشرف."
+    },
+    "logout": {
+      "cta": "تسجيل الخروج"
+    },
+    "reset_request": {
+      "title": "إعادة تعيين كلمة المرور",
+      "description": "سنرسل لك رابطًا لتعيين كلمة مرور جديدة.",
+      "email_label": "البريد الإلكتروني",
+      "submit": "إرسال رابط إعادة التعيين",
+      "submit_loading": "جارٍ الإرسال…",
+      "success_title": "تحقق من بريدك",
+      "success_body": "إذا كان هناك حساب مرتبط بهذا البريد، فسيصلك رابط إعادة التعيين.",
+      "back_to_login": "العودة إلى تسجيل الدخول"
+    },
+    "reset_confirm": {
+      "title": "اختر كلمة مرور جديدة",
+      "description": "اختر كلمة مرور لا تقل عن ٨ أحرف.",
+      "password_label": "كلمة المرور الجديدة",
+      "confirm_password_label": "تأكيد كلمة المرور الجديدة",
+      "submit": "تحديث كلمة المرور",
+      "submit_loading": "جارٍ التحديث…",
+      "success_title": "تم تحديث كلمة المرور",
+      "success_body": "يمكنك الآن تسجيل الدخول بكلمة المرور الجديدة.",
+      "back_to_login": "الانتقال إلى تسجيل الدخول"
+    },
+    "set_password": {
+      "title": "عيّن كلمة المرور",
+      "description": "مرحبًا. أنشئ كلمة مرور لإكمال إعداد حسابك.",
+      "password_label": "كلمة المرور",
+      "confirm_password_label": "تأكيد كلمة المرور",
+      "submit": "إنشاء كلمة المرور",
+      "submit_loading": "جارٍ الإنشاء…"
+    },
+    "errors": {
+      "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
+      "rate_limited": "عدد كبير من المحاولات. يرجى الانتظار قليلًا ثم إعادة المحاولة.",
+      "email_invalid": "أدخل بريدًا إلكترونيًا صالحًا.",
+      "password_too_short": "يجب ألا تقل كلمة المرور عن ٨ أحرف.",
+      "passwords_mismatch": "كلمتا المرور غير متطابقتين.",
+      "session_expired": "انتهت صلاحية جلستك. يرجى تسجيل الدخول مجددًا.",
+      "invite_expired": "انتهت صلاحية رابط الدعوة أو تم استخدامه مسبقًا.",
+      "unknown": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+    }
+  },
+  "Admin": {
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "users": "المستخدمون"
+    },
+    "dashboard": {
+      "title": "لوحة تحكم المدير",
+      "description": "ستظهر هنا نظرة عامة على نشاط المنصة."
+    },
+    "users": {
+      "title": "المستخدمون",
+      "description": "ادعُ أعضاء الفريق وأدِر صلاحياتهم.",
+      "invite_cta": "دعوة مستخدم",
+      "role_filter_label": "الدور",
+      "role_filter_all": "كل الأدوار",
+      "columns": {
+        "name": "الاسم",
+        "email": "البريد الإلكتروني",
+        "role": "الدور",
+        "status": "الحالة",
+        "locations": "المواقع",
+        "created_at": "تاريخ الإنشاء",
+        "actions": "إجراءات"
+      },
+      "status": {
+        "active": "مفعَّل",
+        "inactive": "معطَّل"
+      },
+      "row_actions": {
+        "activate": "تفعيل",
+        "deactivate": "تعطيل",
+        "change_role": "تغيير الدور"
+      },
+      "invite_dialog": {
+        "title": "دعوة مستخدم",
+        "description": "أرسل دعوة عبر البريد الإلكتروني. سيقوم المستخدم بإنشاء كلمة المرور بنفسه عند القبول.",
+        "email_label": "البريد الإلكتروني",
+        "full_name_label": "الاسم الكامل",
+        "role_label": "الدور",
+        "preferred_language_label": "اللغة المفضلة",
+        "submit": "إرسال الدعوة",
+        "submit_loading": "جارٍ الإرسال…",
+        "success": "تم إرسال الدعوة.",
+        "errors": {
+          "duplicate_email": "يوجد مستخدم بهذا البريد بالفعل.",
+          "unknown": "تعذّر إرسال الدعوة. يرجى المحاولة مرة أخرى."
+        }
+      },
+      "locations_count": "{count, plural, =0 {لا يوجد} one {موقع واحد} two {موقعان} few {# مواقع} many {# موقعًا} other {# موقع}}",
+      "empty": {
+        "title": "لا يوجد مستخدمون بعد",
+        "description": "ادعُ أول عضو في فريقك للبدء.",
+        "cta": "دعوة مستخدم"
+      }
+    }
+  },
+  "Roles": {
+    "admin": "مدير",
+    "supervisor": "مشرف",
+    "promoter": "مروِّج",
+    "client": "عميل"
+  },
+  "Languages": {
+    "ar": "العربية",
+    "en": "English"
   }
 }

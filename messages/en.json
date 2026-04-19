@@ -3,5 +3,139 @@
     "title": "Hello, world",
     "description": "Phase 0 foundation page. RTL renders correctly when locale is Arabic.",
     "cta": "Get started"
+  },
+  "Common": {
+    "cancel": "Cancel",
+    "save": "Save",
+    "submit": "Submit",
+    "submitting": "Submitting…",
+    "loading": "Loading…",
+    "back": "Back",
+    "required": "Required",
+    "confirm": "Confirm",
+    "error_generic": "Something went wrong. Please try again."
+  },
+  "Auth": {
+    "brand": "Promoter Monitoring",
+    "login": {
+      "title": "Sign in",
+      "description": "Enter your email and password to continue.",
+      "email_label": "Email",
+      "email_placeholder": "you@example.com",
+      "password_label": "Password",
+      "password_placeholder": "••••••••",
+      "submit": "Sign in",
+      "submit_loading": "Signing in…",
+      "forgot_password": "Forgot your password?",
+      "deactivated_notice": "Your account has been deactivated. Contact an administrator."
+    },
+    "logout": {
+      "cta": "Sign out"
+    },
+    "reset_request": {
+      "title": "Reset your password",
+      "description": "We'll email you a link to set a new password.",
+      "email_label": "Email",
+      "submit": "Send reset link",
+      "submit_loading": "Sending…",
+      "success_title": "Check your inbox",
+      "success_body": "If an account exists for that email, a reset link is on its way.",
+      "back_to_login": "Back to sign in"
+    },
+    "reset_confirm": {
+      "title": "Choose a new password",
+      "description": "Pick a password with at least 8 characters.",
+      "password_label": "New password",
+      "confirm_password_label": "Confirm new password",
+      "submit": "Update password",
+      "submit_loading": "Updating…",
+      "success_title": "Password updated",
+      "success_body": "You can now sign in with your new password.",
+      "back_to_login": "Go to sign in"
+    },
+    "set_password": {
+      "title": "Set your password",
+      "description": "Welcome. Create a password to finish setting up your account.",
+      "password_label": "Password",
+      "confirm_password_label": "Confirm password",
+      "submit": "Create password",
+      "submit_loading": "Creating…"
+    },
+    "errors": {
+      "invalid_credentials": "Invalid email or password.",
+      "rate_limited": "Too many attempts. Please wait a moment and try again.",
+      "email_invalid": "Enter a valid email address.",
+      "password_too_short": "Password must be at least 8 characters.",
+      "passwords_mismatch": "Passwords do not match.",
+      "session_expired": "Your session has expired. Please sign in again.",
+      "invite_expired": "This invitation link has expired or already been used.",
+      "unknown": "Something went wrong. Please try again."
+    }
+  },
+  "Admin": {
+    "nav": {
+      "dashboard": "Dashboard",
+      "users": "Users"
+    },
+    "dashboard": {
+      "title": "Admin dashboard",
+      "description": "Overview of platform activity will live here."
+    },
+    "users": {
+      "title": "Users",
+      "description": "Invite team members and manage access.",
+      "invite_cta": "Invite user",
+      "role_filter_label": "Role",
+      "role_filter_all": "All roles",
+      "columns": {
+        "name": "Name",
+        "email": "Email",
+        "role": "Role",
+        "status": "Status",
+        "locations": "Locations",
+        "created_at": "Created",
+        "actions": "Actions"
+      },
+      "status": {
+        "active": "Active",
+        "inactive": "Inactive"
+      },
+      "row_actions": {
+        "activate": "Activate",
+        "deactivate": "Deactivate",
+        "change_role": "Change role"
+      },
+      "invite_dialog": {
+        "title": "Invite user",
+        "description": "Send an email invitation. The user sets their own password when they accept.",
+        "email_label": "Email",
+        "full_name_label": "Full name",
+        "role_label": "Role",
+        "preferred_language_label": "Preferred language",
+        "submit": "Send invite",
+        "submit_loading": "Sending…",
+        "success": "Invite sent.",
+        "errors": {
+          "duplicate_email": "A user with that email already exists.",
+          "unknown": "Could not send the invite. Please try again."
+        }
+      },
+      "locations_count": "{count, plural, =0 {None} one {# location} other {# locations}}",
+      "empty": {
+        "title": "No users yet",
+        "description": "Invite your first team member to get started.",
+        "cta": "Invite user"
+      }
+    }
+  },
+  "Roles": {
+    "admin": "Admin",
+    "supervisor": "Supervisor",
+    "promoter": "Promoter",
+    "client": "Client"
+  },
+  "Languages": {
+    "ar": "العربية",
+    "en": "English"
   }
 }
