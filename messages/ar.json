@@ -100,7 +100,8 @@
       "shifts": "الورديّات",
       "assignments": "التعيينات",
       "reports": "التقارير",
-      "stock": "المخزون"
+      "stock": "المخزون",
+      "performance": "الأداء"
     },
     "dashboard": {
       "title": "لوحة تحكم المدير",
@@ -529,7 +530,8 @@
       "visits": "زيارات المواقع",
       "reports": "التقارير",
       "tasks": "المهام",
-      "stock": "المخزون"
+      "stock": "المخزون",
+      "performance": "الأداء"
     },
     "dashboard": {
       "title": "لوحة تحكم المشرف",
@@ -1006,7 +1008,8 @@
   "Client": {
     "nav": {
       "dashboard": "لوحة التحكم",
-      "campaigns": "الحملات"
+      "campaigns": "الحملات",
+      "performance": "الأداء"
     },
     "dashboard": {
       "title": "لوحة تحكم العميل",
@@ -1055,5 +1058,79 @@
   "Languages": {
     "ar": "العربية",
     "en": "English"
+  },
+  "Performance": {
+    "tier": {
+      "top": "الأعلى",
+      "medium": "متوسط",
+      "low": "منخفض",
+      "unclassified": "غير مصنف"
+    },
+    "admin": {
+      "title": "الأداء",
+      "description": "مؤشرات الأداء والتصنيفات والمقارنات عبر جميع الحملات."
+    },
+    "supervisor": {
+      "title": "الأداء — مواقعك",
+      "description": "مؤشرات أداء المنادين والمواقع المخصصة لك."
+    },
+    "client": {
+      "title": "الأداء",
+      "description": "مؤشرات أداء إجمالية عبر حملاتك. التفاصيل الفردية غير ظاهرة."
+    },
+    "status": {
+      "planned": "مخطط",
+      "active": "نشط",
+      "completed": "مكتمل",
+      "cancelled": "ملغى"
+    },
+    "table": {
+      "campaign": "الحملة",
+      "client": "العميل",
+      "status": "الحالة",
+      "conversion": "التحويل",
+      "engagement": "المشاركة",
+      "sampling": "العينات",
+      "tier": "الفئة",
+      "rank": "الترتيب",
+      "reports": "التقارير",
+      "promoter": "المنادي",
+      "location": "الموقع",
+      "delta_vs_campaign": "الفرق مقابل الحملة"
+    },
+    "campaign": {
+      "overview": "نظرة عامة",
+      "reports": "التقارير",
+      "tier_distribution": "توزيع الفئات",
+      "tier_distribution_legend": "الأعلى / متوسط / منخفض",
+      "locations_title": "المواقع مرتبة حسب التحويل",
+      "locations_description": "قارن بين المواقع جنبًا إلى جنب. يتم إبراز الأفضل أداءً.",
+      "promoters_title": "المنادون مرتبون حسب التحويل",
+      "vs_campaign": "متوسط الحملة",
+      "campaign_overall": "إجمالي التحويل"
+    },
+    "location": {
+      "trend_title": "اتجاه التحويل اليومي (آخر 30 يومًا)",
+      "trend_description": "خط لكل يوم؛ النسب في النطاق [0،1].",
+      "trend_legend": "معدل التحويل اليومي لهذه الحملة.",
+      "trend_aria": "اتجاه التحويل اليومي",
+      "promoters_title": "المنادون في هذا الموقع"
+    },
+    "promoter": {
+      "trend_title": "اتجاه التحويل اليومي (آخر 30 يومًا)",
+      "trend_description": "خط لكل يوم؛ النسب في النطاق [0،1].",
+      "trend_legend": "معدل التحويل اليومي لهذه الحملة.",
+      "trend_aria": "اتجاه التحويل اليومي",
+      "scope_size": "{size} مناديًا في هذه الحملة",
+      "other_campaigns": "حملات أخرى"
+    },
+    "empty": {
+      "no_campaigns_title": "لا توجد حملات بعد",
+      "no_campaigns_description": "أنشئ حملة قبل قياس الأداء.",
+      "no_data_title": "لا توجد بيانات أداء بعد",
+      "no_data_description": "تظهر البيانات بعد أن يقدّم المنادون التقارير اليومية.",
+      "no_other_campaigns_title": "لا توجد حملات أخرى",
+      "no_other_campaigns_description": "لم يعمل هذا المنادي إلا على الحملة الحالية."
+    }
   }
 }

@@ -479,3 +479,48 @@ A running log of decisions made during the build. When an ambiguity is resolved 
 - **Rationale:** Mirrors D-019 for attendance thresholds — different brands have different operational rhythms. A cosmetics sampling booth runs at a different cadence from a yogurt sampling booth; hard-coding one number forces a schema change the first time a client disagrees.
 - **Implementation:** `readNoUsageHours` + `readLowStockThreshold` in both `lib/stock/ledger.ts` and `supabase/functions/_shared/ledger.ts` (byte-for-byte mirror). Safely ignore non-numeric / non-positive values and fall back to default.
 - **Revisit when:** Clients want sub-hour granularity ("flag after 30 minutes"). The detector currently operates on an hourly threshold; minutes would work too, but the surface now is hours.
+
+---
+
+## D-028 — Phase 6 performance: new `performance_snapshots` table; per-campaign tier config; daily/weekly/CTD periods; plain view; single Edge Function; client aggregates-only
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 6 (Performance Management)
+- **Question:** Six Phase-6 ambiguities resolved together because each shapes the same surface (rollup writer, dashboards, role visibility):
+  1. New `performance_snapshots` table or extend `kpi_snapshots`?
+  2. Tier thresholds: per-campaign config or global defaults?
+  3. Which periods does the MVP support?
+  4. `performance_latest` view: materialized or plain?
+  5. New `compute-performance` Edge Function or extend `compute-kpis`?
+  6. What does the client role see exactly?
+- **Decision:**
+  1. **New `performance_snapshots` table.** `kpi_snapshots` is 1:1 with `daily_reports` (single shift, single promoter, single location, single date). Performance is rolled up over a *period* and a *scope* (promoter / location / campaign), with tier + rank columns derived from configurable thresholds. Different cardinality, different lifecycle, different indexes; conflating two grains in one table would force every query to filter on a synthetic discriminator.
+  2. **Per-campaign tier config in `kpi_config`** (`tier_high` default 0.50, `tier_medium` default 0.30, `tier_metric` default `'conversion_rate'`). Read via `readTierConfig()` with a soft-add posture — invalid / out-of-range / inverted thresholds fall back to defaults per field. Same pattern as D-007 (sampling denominator), D-019 (lateness/absence), D-027 (no-usage hours): one schema migration covers all future per-campaign tuning.
+  3. **MVP periods are exactly three: `daily`, `weekly` (Mon..Sun UTC), and `campaign_to_date`.** `period_start` + `period_end` are explicit columns rather than an enum so future custom ranges plug in without a migration. Monthly / custom ranges are deferred until a customer asks for them.
+  4. **Plain view (`performance_latest`) with `security_invoker = on`.** Same trade-off as D-023 for `stock_balances`: the snapshot table itself is the read cache; a `DISTINCT ON` view over the indexed `(scope_kind, scope_id, campaign_id, period_kind, period_start)` columns is sub-millisecond at realistic row counts. A materialized layer can be added in Phase 9 if dashboard p95 measurements justify it; the plain view stays authoritative.
+  5. **Extend `compute-kpis`** rather than ship a second Edge Function. The trigger (daily report submit/approve), the JWT model, the sweep cron, and the secret rotation are all already in place. After every kpi_snapshot write, the function recomputes the affected campaign's performance rollups across daily / weekly / campaign_to_date × promoter / location / campaign and UPSERTs them in one statement against the table's unique constraint. A failure in the performance write is logged but does not fail the kpi_snapshot write — the sweep mode catches it on the next run.
+  6. **Client visibility (D-019 item 3, refined for Phase 6): campaign-scope rows ONLY.** Per-promoter and per-location rows are not exposed under client RLS. The client page shows per-campaign aggregate cards (conversion / engagement / sampling / reports) and a daily trend sparkline; it intentionally hides tier distribution because that count requires visibility into location / promoter rows the client does not have. Phase 8 reporting may expand this when location-level rollups are agreed with the brand contact.
+- **Rationale:**
+  - One table = one grain. Two grains in one table forces every read to disambiguate and breaks the unique key story.
+  - Per-campaign threshold config is cheaper to ship than a schema migration the first time a brand disagrees with our defaults.
+  - Three periods cover the spec's "daily / weekly / end-of-campaign" cadence; more grains can be added incrementally.
+  - Plain view sidesteps the materialized-refresh hot-path cost while submits are happening.
+  - One Edge Function = one auth scaffold = one cron = one secret. A second function would duplicate everything for no behavioural benefit.
+  - Aggregates-only client view matches the closed-tenancy data-share posture without compromising operational privacy of individual promoters.
+- **Implementation:**
+  - Migration: `supabase/migrations/20260423000000_phase6_performance_snapshots.sql`.
+  - Pure logic: `lib/performance/tiering.ts` + `lib/performance/rollups.ts`; mirrored at `supabase/functions/_shared/performance.ts`.
+  - Edge Function: `supabase/functions/compute-kpis/index.ts` (extended).
+  - Tests: `lib/performance/tiering.test.ts` (Safeway Khalda vs Shini exit fixture + boundary policy + soft-add config), `lib/performance/rollups.test.ts` (Almarai 3-location integration + period helpers), `supabase/tests/phase6.test.sql` (CHECKs, UNIQUE, RLS for admin/promoter/supervisor/client, `performance_latest` freshness).
+  - UI: `/[locale]/admin/performance` index + `campaign/[id]` + `location/[id]` + `promoter/[id]`; `/[locale]/supervisor/performance`; `/[locale]/client/performance`. Tier badges via existing `StatusPill`; ratios rendered with `dir="ltr"` `tabular-nums`. Recharts intentionally NOT added; a small pure-SVG `Sparkline` component covers the spec's time-series needs without a new dependency. Switch to recharts in a later phase if interactivity is required.
+- **Alternatives considered:**
+  - **Extend `kpi_snapshots`.** Rejected: conflates grains; would force every existing query to add a scope filter.
+  - **Global tier thresholds.** Rejected: same reason as D-007 — different brands have different SLAs.
+  - **Materialized `performance_latest`.** Rejected for v1: refresh on every submit would absorb the cost we explicitly pushed off the write path.
+  - **Separate `compute-performance` Edge Function.** Rejected: doubles the cron/secret/auth surface for zero behavioural gain.
+  - **Add `recharts`.** Considered; deferred. The spec time-series are simple ratios in `[0, 1]`; a pure-SVG sparkline is enough and avoids a new dep + SSR-vs-client gymnastics.
+- **Revisit when:**
+  - A customer asks for monthly / custom date ranges (item 3) → add a `'custom'` period_kind and an explicit start/end input.
+  - Dashboard p95 exceeds target (item 4) → layer a materialized view + cron refresh on top of the table.
+  - Location-level rollups are agreed for the client surface (item 6) → relax the client RLS policy to include scope_kind = 'location'.
+  - Charts need interactivity (zoom, hover tooltips, brush) → swap `Sparkline` for `recharts`.

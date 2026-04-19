@@ -1,4 +1,10 @@
-// compute-kpis — the server-side KPI writer (D-020).
+// compute-kpis — the server-side KPI + performance writer (D-020 + Phase 6).
+//
+// Also writes performance_snapshots for the affected campaign whenever a
+// daily report is (re)computed, across three periods (daily/weekly/
+// campaign_to_date) × three scopes (promoter/location/campaign). The math
+// lives in ../_shared/performance.ts (mirror of lib/performance/*).
+//
 //
 // Two modes:
 //
@@ -27,6 +33,16 @@ import {
   readSamplingDenominator,
   type SkuBreakdown,
 } from '../_shared/kpis.ts';
+import {
+  campaignToDatePeriod,
+  dailyPeriod,
+  readTierConfig,
+  rollupByScope,
+  weeklyPeriod,
+  type PerformanceRollup,
+  type ScopeKind,
+  type SourceReport,
+} from '../_shared/performance.ts';
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -144,7 +160,179 @@ async function computeAndWrite(
       { onConflict: 'daily_report_id' },
     );
   if (upErr) return { error: 'snapshot_write_failed', status: 500 };
+
+  // After the per-shift snapshot, recompute the campaign's performance
+  // rollups across all three MVP periods touching this report's date.
+  // Failure here is logged but does not fail the kpi_snapshot write — the
+  // sweep mode will repair on its next run.
+  const perfErr = await recomputePerformanceForCampaignAndDate(
+    admin,
+    report.campaign_id,
+    report.report_date,
+  );
+  if (perfErr) {
+    console.error(
+      `performance_rollup_failed campaign=${report.campaign_id} date=${report.report_date}: ${perfErr}`,
+    );
+  }
+
   return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Performance rollup writer. Recomputes daily / weekly / campaign_to_date
+// snapshots for the (campaign, anchor_date) — across promoter, location,
+// and campaign scopes (3 scopes × 3 periods = 9 grain combinations,
+// each with multiple scope_id rows). All three scopes UPSERT against the
+// (scope_kind, scope_id, campaign_id, period_kind, period_start) unique
+// constraint defined in the Phase 6 migration.
+// ---------------------------------------------------------------------------
+
+type CampaignWindow = { id: string; start_date: string; end_date: string | null; kpi_config: unknown };
+
+async function fetchCampaignWindow(
+  admin: ReturnType<typeof createClient>,
+  campaignId: string,
+): Promise<CampaignWindow | null> {
+  const { data, error } = await admin
+    .from('campaigns')
+    .select('id, start_date, end_date, kpi_config')
+    .eq('id', campaignId)
+    .maybeSingle();
+  if (error || !data) return null;
+  return data as CampaignWindow;
+}
+
+async function fetchReportsInWindow(
+  admin: ReturnType<typeof createClient>,
+  campaignId: string,
+  startDate: string,
+  endDate: string,
+): Promise<SourceReport[]> {
+  const { data: reps, error } = await admin
+    .from('daily_reports')
+    .select(
+      'id, campaign_id, location_id, promoter_user_id, report_date, total_traffic, contacts, engaged, samples_total, sales_total, status',
+    )
+    .eq('campaign_id', campaignId)
+    .gte('report_date', startDate)
+    .lte('report_date', endDate)
+    .in('status', ['submitted', 'approved']);
+  if (error || !reps) return [];
+
+  const ids = (reps as Array<{ id: string }>).map((r) => r.id);
+  if (ids.length === 0) return [];
+
+  const { data: ents, error: entErr } = await admin
+    .from('sales_entries')
+    .select('daily_report_id, sku_id, samples, sales')
+    .in('daily_report_id', ids);
+  if (entErr) return [];
+
+  const byReport = new Map<string, SkuBreakdown[]>();
+  for (const e of (ents as Array<{ daily_report_id: string; sku_id: string; samples: number; sales: number }>) ?? []) {
+    const arr = byReport.get(e.daily_report_id) ?? [];
+    arr.push({ sku_id: e.sku_id, samples: e.samples, sales: e.sales });
+    byReport.set(e.daily_report_id, arr);
+  }
+
+  return (reps as Array<DailyReportRow>).map((r) => ({
+    daily_report_id: r.id,
+    promoter_user_id: r.promoter_user_id,
+    location_id: r.location_id,
+    campaign_id: r.campaign_id,
+    report_date: r.report_date,
+    total_traffic: r.total_traffic,
+    contacts: r.contacts,
+    engaged: r.engaged,
+    samples_total: r.samples_total,
+    sales_total: r.sales_total,
+    skus: byReport.get(r.id) ?? [],
+  }));
+}
+
+function rollupRowsToDb(rows: PerformanceRollup[]) {
+  const nowIso = new Date().toISOString();
+  return rows.map((r) => ({
+    scope_kind: r.scope_kind,
+    scope_id: r.scope_id,
+    campaign_id: r.campaign_id,
+    period_kind: r.period_kind,
+    period_start: r.period_start,
+    period_end: r.period_end,
+    reports_count: r.reports_count,
+    total_traffic: r.total_traffic,
+    contacts: r.contacts,
+    engaged: r.engaged,
+    samples_total: r.samples_total,
+    sales_total: r.sales_total,
+    interaction_rate: r.interaction_rate,
+    engagement_rate: r.engagement_rate,
+    sampling_rate: r.sampling_rate,
+    conversion_rate: r.conversion_rate,
+    sample_to_conversion_rate: r.sample_to_conversion_rate,
+    sku_contributions: r.sku_contributions,
+    sampling_rate_denominator: r.sampling_rate_denominator,
+    tier: r.tier,
+    tier_metric: r.tier_metric,
+    tier_metric_value: r.tier_metric_value,
+    tier_high_threshold: r.tier_high_threshold,
+    tier_medium_threshold: r.tier_medium_threshold,
+    rank_in_scope: r.rank_in_scope,
+    scope_size: r.scope_size,
+    computation_version: COMPUTATION_VERSION,
+    computed_at: nowIso,
+  }));
+}
+
+async function recomputePerformanceForCampaignAndDate(
+  admin: ReturnType<typeof createClient>,
+  campaignId: string,
+  anchorDate: string,
+): Promise<string | null> {
+  const camp = await fetchCampaignWindow(admin, campaignId);
+  if (!camp) return 'campaign_not_found';
+
+  const tier = readTierConfig(camp.kpi_config);
+  const samplingDenom = readSamplingDenominator(camp.kpi_config);
+
+  const today = new Date().toISOString().slice(0, 10);
+  const windows = [
+    { period_kind: 'daily' as const, ...dailyPeriod(anchorDate) },
+    { period_kind: 'weekly' as const, ...weeklyPeriod(anchorDate) },
+    {
+      period_kind: 'campaign_to_date' as const,
+      ...campaignToDatePeriod(camp.start_date, today, camp.end_date),
+    },
+  ];
+
+  const allRows: PerformanceRollup[] = [];
+  for (const w of windows) {
+    const reports = await fetchReportsInWindow(admin, campaignId, w.period_start, w.period_end);
+    for (const scope of ['promoter', 'location', 'campaign'] as ScopeKind[]) {
+      const rolled = rollupByScope({
+        scope_kind: scope,
+        campaign_id: campaignId,
+        period_kind: w.period_kind,
+        period_start: w.period_start,
+        period_end: w.period_end,
+        reports,
+        sampling_denominator: samplingDenom,
+        tier,
+      });
+      allRows.push(...rolled);
+    }
+  }
+
+  if (allRows.length === 0) return null;
+
+  const { error } = await admin
+    .from('performance_snapshots')
+    .upsert(rollupRowsToDb(allRows), {
+      onConflict: 'scope_kind,scope_id,campaign_id,period_kind,period_start',
+    });
+  if (error) return error.message;
+  return null;
 }
 
 Deno.serve(async (req) => {

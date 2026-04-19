@@ -1,13 +1,25 @@
 # compute-kpis
 
-Server-side KPI writer for `daily_reports`. Single source of truth: the
-pure KPI math in `supabase/functions/_shared/kpis.ts`, mirrored by
-`lib/kpis/compute.ts` which is vitest-tested against the Almarai Safeway
-Jubeiha example from the spec.
+Server-side KPI **and performance** writer. Single source of truth lives in
+two pure modules:
 
-**Never trust client math.** The only path that writes `kpi_snapshots` is
-this function (service-role client). There are no authenticated INSERT or
-UPDATE RLS policies on that table.
+- `supabase/functions/_shared/kpis.ts` (mirrors `lib/kpis/compute.ts`) —
+  per-shift KPI math, vitest-tested against the Almarai Safeway Jubeiha
+  fixture.
+- `supabase/functions/_shared/performance.ts` (mirrors
+  `lib/performance/tiering.ts` + `lib/performance/rollups.ts`) — Phase 6
+  rollups (promoter / location / campaign × daily / weekly /
+  campaign_to_date) with auto-tier + dense rank. Tested against the
+  Safeway Khalda vs Shini fixture.
+
+**Never trust client math.** Service-role writes only — no authenticated
+INSERT/UPDATE RLS policies on `kpi_snapshots` or `performance_snapshots`.
+
+Whenever a `daily_report` is (re)computed, the function also recomputes
+the affected campaign's `performance_snapshots` for three periods × three
+scopes, UPSERTed against the
+`(scope_kind, scope_id, campaign_id, period_kind, period_start)`
+unique constraint.
 
 ## Modes
 

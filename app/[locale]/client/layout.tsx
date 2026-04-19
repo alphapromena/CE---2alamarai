@@ -6,6 +6,7 @@ import { AppShell } from '@/components/features/app/app-shell';
 const NAV = [
   { href: '/client/dashboard', labelKey: 'Client.nav.dashboard' },
   { href: '/client/campaigns', labelKey: 'Client.nav.campaigns' },
+  { href: '/client/performance', labelKey: 'Client.nav.performance' },
 ];
 
 export default async function ClientLayout({
