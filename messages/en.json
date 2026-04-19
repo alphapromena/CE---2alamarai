@@ -233,6 +233,106 @@
       "empty_title": "No regions yet",
       "empty_description": "Create a region before adding cities or locations."
     },
+    "campaigns": {
+      "title": "Campaigns",
+      "description": "Plan, configure, and monitor field marketing activations.",
+      "new_cta": "New campaign",
+      "no_clients_yet": "Create a client first.",
+      "go_to_clients": "Go to Clients",
+      "details_section": "Details",
+      "columns": {
+        "name": "Name",
+        "client": "Client",
+        "dates": "Dates",
+        "status": "Status"
+      },
+      "status": {
+        "planned": "Planned",
+        "active": "Active",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "form": {
+        "client_label": "Client",
+        "start_date_label": "Start date",
+        "end_date_label": "End date",
+        "objectives_label": "Objectives",
+        "denominator_label": "Sampling-rate denominator",
+        "denominator_contacts": "Contacts",
+        "denominator_engaged": "Engaged customers",
+        "denominator_help": "Used by the Phase 4 KPI engine to compute Sampling Rate.",
+        "status_label": "Status"
+      },
+      "new_title": "New campaign",
+      "new_description": "Create a campaign. Add locations and SKUs after it's created.",
+      "edit_title": "Edit campaign",
+      "edit_description": "Update campaign details, locations, and SKUs.",
+      "empty_title": "No campaigns yet",
+      "empty_description": "Create your first campaign to start scheduling shifts and assigning promoters.",
+      "locations_panel": {
+        "title": "Locations",
+        "description": "Stores hosting this campaign. Shifts can only reference locations that appear here.",
+        "no_locations": "Create a location first."
+      },
+      "skus_panel": {
+        "title": "SKUs",
+        "description": "Sample / sale units tracked for this campaign. Add at least one before Phase 4.",
+        "empty": "No SKUs yet for this campaign.",
+        "columns": {
+          "name": "Name",
+          "unit": "Unit",
+          "target": "Target",
+          "stock": "Stock allocated"
+        },
+        "unit_en_label": "Unit (English)",
+        "unit_ar_label": "Unit (Arabic)",
+        "target_label": "Target",
+        "stock_label": "Stock allocated",
+        "add_title": "Add a SKU",
+        "add_cta": "Add SKU",
+        "save_short": "Save",
+        "delete": "Delete SKU"
+      }
+    },
+    "assignments": {
+      "title": "Assignments",
+      "description": "Assign promoters and supervisors to locations and shifts.",
+      "new_cta": "New assignment",
+      "no_users": "Activate at least one promoter or supervisor first.",
+      "no_locations": "Create a location first.",
+      "any_shift": "Any shift",
+      "columns": {
+        "user": "User",
+        "location": "Location",
+        "shift": "Shift",
+        "role_scope": "Scope",
+        "dates": "Dates",
+        "status": "Status"
+      },
+      "role_scope": {
+        "promoter": "Promoter",
+        "supervisor": "Supervisor"
+      },
+      "form": {
+        "user_label": "User",
+        "location_label": "Location",
+        "shift_label": "Shift",
+        "shift_any": "Any shift at this location",
+        "shift_help": "Optional. Leave blank to assign across all shifts at the chosen location.",
+        "role_scope_label": "Scope",
+        "role_scope_promoter": "Promoter",
+        "role_scope_supervisor": "Supervisor",
+        "starts_on_label": "Starts on",
+        "ends_on_label": "Ends on",
+        "active_label": "Active"
+      },
+      "new_title": "New assignment",
+      "new_description": "Assign a user to a location, optionally tied to a specific shift.",
+      "edit_title": "Edit assignment",
+      "edit_description": "Update assignment details. Marking inactive removes it from the user's location set.",
+      "empty_title": "No assignments yet",
+      "empty_description": "Assign someone to a location to enable check-ins."
+    },
     "locations": {
       "title": "Locations",
       "description": "Stores and points-of-sale where promoters check in.",

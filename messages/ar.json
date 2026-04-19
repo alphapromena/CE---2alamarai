@@ -233,6 +233,106 @@
       "empty_title": "لا توجد مناطق بعد",
       "empty_description": "أنشئ منطقة قبل إضافة المدن أو المواقع."
     },
+    "campaigns": {
+      "title": "الحملات",
+      "description": "تخطيط وإعداد ومتابعة حملات التسويق الميداني.",
+      "new_cta": "حملة جديدة",
+      "no_clients_yet": "أنشئ عميلًا أولًا.",
+      "go_to_clients": "الانتقال إلى العملاء",
+      "details_section": "التفاصيل",
+      "columns": {
+        "name": "الاسم",
+        "client": "العميل",
+        "dates": "التواريخ",
+        "status": "الحالة"
+      },
+      "status": {
+        "planned": "مخطّطة",
+        "active": "نشِطة",
+        "completed": "مكتملة",
+        "cancelled": "ملغاة"
+      },
+      "form": {
+        "client_label": "العميل",
+        "start_date_label": "تاريخ البدء",
+        "end_date_label": "تاريخ الانتهاء",
+        "objectives_label": "الأهداف",
+        "denominator_label": "مقام معدل أخذ العينات",
+        "denominator_contacts": "جهات الاتصال",
+        "denominator_engaged": "العملاء المتفاعلون",
+        "denominator_help": "يستخدمه محرّك مؤشرات الأداء في المرحلة الرابعة لحساب معدّل أخذ العينات.",
+        "status_label": "الحالة"
+      },
+      "new_title": "حملة جديدة",
+      "new_description": "أنشئ حملة. أضف المواقع والـ SKU بعد الإنشاء.",
+      "edit_title": "تعديل الحملة",
+      "edit_description": "تحديث تفاصيل الحملة والمواقع والـ SKU.",
+      "empty_title": "لا توجد حملات بعد",
+      "empty_description": "أنشئ حملتك الأولى لبدء جدولة الورديّات وتعيين المروّجين.",
+      "locations_panel": {
+        "title": "المواقع",
+        "description": "المتاجر التي تستضيف هذه الحملة. لا يمكن للورديّات أن تشير إلا إلى المواقع التي تظهر هنا.",
+        "no_locations": "أنشئ موقعًا أولًا."
+      },
+      "skus_panel": {
+        "title": "الـ SKU",
+        "description": "وحدات العيّنات / المبيعات المتتبَّعة لهذه الحملة. أضف واحدة على الأقل قبل المرحلة الرابعة.",
+        "empty": "لا توجد SKU لهذه الحملة بعد.",
+        "columns": {
+          "name": "الاسم",
+          "unit": "الوحدة",
+          "target": "الهدف",
+          "stock": "المخزون المخصَّص"
+        },
+        "unit_en_label": "الوحدة (إنجليزي)",
+        "unit_ar_label": "الوحدة (عربي)",
+        "target_label": "الهدف",
+        "stock_label": "المخزون المخصَّص",
+        "add_title": "إضافة SKU",
+        "add_cta": "إضافة SKU",
+        "save_short": "حفظ",
+        "delete": "حذف SKU"
+      }
+    },
+    "assignments": {
+      "title": "التعيينات",
+      "description": "عيّن المروّجين والمشرفين على المواقع والورديّات.",
+      "new_cta": "تعيين جديد",
+      "no_users": "فعّل مروّجًا أو مشرفًا واحدًا على الأقل أولًا.",
+      "no_locations": "أنشئ موقعًا أولًا.",
+      "any_shift": "أي ورديّة",
+      "columns": {
+        "user": "المستخدم",
+        "location": "الموقع",
+        "shift": "الورديّة",
+        "role_scope": "النطاق",
+        "dates": "التواريخ",
+        "status": "الحالة"
+      },
+      "role_scope": {
+        "promoter": "مروّج",
+        "supervisor": "مشرف"
+      },
+      "form": {
+        "user_label": "المستخدم",
+        "location_label": "الموقع",
+        "shift_label": "الورديّة",
+        "shift_any": "أي ورديّة في هذا الموقع",
+        "shift_help": "اختياري. اتركه فارغًا للتعيين عبر كل الورديّات في الموقع المختار.",
+        "role_scope_label": "النطاق",
+        "role_scope_promoter": "مروّج",
+        "role_scope_supervisor": "مشرف",
+        "starts_on_label": "يبدأ في",
+        "ends_on_label": "ينتهي في",
+        "active_label": "مفعَّل"
+      },
+      "new_title": "تعيين جديد",
+      "new_description": "عيّن مستخدمًا لموقع، مع إمكانية ربطه بورديّة محدّدة.",
+      "edit_title": "تعديل التعيين",
+      "edit_description": "تحديث تفاصيل التعيين. التعطيل يزيله من قائمة مواقع المستخدم.",
+      "empty_title": "لا توجد تعيينات بعد",
+      "empty_description": "عيّن شخصًا لموقع لتفعيل تسجيل الحضور."
+    },
     "locations": {
       "title": "المواقع",
       "description": "المتاجر ونقاط البيع التي يسجّل المروّجون فيها الحضور.",
