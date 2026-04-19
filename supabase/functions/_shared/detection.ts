@@ -1,6 +1,6 @@
-// Slim copy of lib/attendance/detection.ts for the Deno Edge Function. Only
-// the functions this function actually calls are included (classifyCheckIn
-// + kpi_config readers). Update both files together.
+// Slim copy of lib/attendance/detection.ts for Deno Edge Functions.
+// Shared between geo-validate-checkin and geo-validate-checkout.
+// Update both files together when lib/attendance/detection.ts changes.
 
 export const DEFAULT_LATENESS_GRACE_MINUTES = 15;
 export const DEFAULT_ABSENCE_CUTOFF_MINUTES = 60;
@@ -35,4 +35,13 @@ export function classifyCheckIn(args: {
   const delayMs = args.checkInAt.getTime() - args.shiftStart.getTime();
   const graceMs = args.graceMinutes * MINUTE_MS;
   return delayMs > graceMs ? 'late' : 'checked_in';
+}
+
+export function classifyCheckOut(args: {
+  shiftEnd: Date;
+  checkOutAt: Date;
+}): 'checked_out' | 'early_leave' {
+  return args.checkOutAt.getTime() < args.shiftEnd.getTime()
+    ? 'early_leave'
+    : 'checked_out';
 }

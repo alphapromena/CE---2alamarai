@@ -80,6 +80,9 @@ inspector_port = 8083
 [functions.geo-validate-checkin]
 verify_jwt = true
 
+[functions.geo-validate-checkout]
+verify_jwt = true
+
 [analytics]
 enabled = false
 

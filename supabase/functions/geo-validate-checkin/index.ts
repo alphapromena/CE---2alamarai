@@ -28,14 +28,12 @@
 // to write the alert rows (promoters cannot INSERT alerts by RLS).
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.103.3';
-import { classifyCheckIn, readLatenessGrace } from './detection.ts';
-import { haversineDistance } from './haversine.ts';
-import { isJpeg, parseJpegExifMinimal, stripJpegMetadata } from './exif.ts';
+import { classifyCheckIn, readLatenessGrace } from '../_shared/detection.ts';
+import { haversineDistance } from '../_shared/haversine.ts';
+import { isJpeg, parseJpegExifMinimal, stripJpegMetadata } from '../_shared/exif.ts';
+import { combineShiftInstant, localDateString } from '../_shared/shift-time.ts';
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-// Assumed timezone offset for shift-time → instant conversion. Phase 3 ships
-// Jordan only (UTC+3 permanent, no DST). Revisit in Phase 7 if multi-region.
-const SHIFT_TZ_OFFSET_MINUTES = 3 * 60;
 
 const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
@@ -75,26 +73,6 @@ function parseMetadata(raw: unknown): CheckInMetadata | null {
   if (typeof m.lng !== 'number' || m.lng < -180 || m.lng > 180) return null;
   if (typeof m.captured_at !== 'string' || Number.isNaN(Date.parse(m.captured_at))) return null;
   return m as CheckInMetadata;
-}
-
-function combineShiftStart(attendanceDate: string, shiftStartTime: string): Date {
-  // attendanceDate: 'YYYY-MM-DD'. shiftStartTime: 'HH:MM:SS'. Interpret as
-  // Asia/Amman (UTC+3 no DST) — see SHIFT_TZ_OFFSET_MINUTES.
-  const [y, mo, d] = attendanceDate.split('-').map(Number);
-  const [h, mi, s] = shiftStartTime.split(':').map(Number);
-  // Construct as UTC, then subtract offset to get the local-wall-clock instant.
-  const ms = Date.UTC(y, (mo ?? 1) - 1, d ?? 1, h ?? 0, mi ?? 0, s ?? 0);
-  return new Date(ms - SHIFT_TZ_OFFSET_MINUTES * 60_000);
-}
-
-function localDateString(d: Date): string {
-  // YYYY-MM-DD in Asia/Amman. Date objects in JS are UTC-under-the-hood; offset
-  // the instant to the local wall-clock and then read the UTC components.
-  const local = new Date(d.getTime() + SHIFT_TZ_OFFSET_MINUTES * 60_000);
-  const y = local.getUTCFullYear();
-  const m = String(local.getUTCMonth() + 1).padStart(2, '0');
-  const dd = String(local.getUTCDate()).padStart(2, '0');
-  return `${y}-${m}-${dd}`;
 }
 
 Deno.serve(async (req) => {
@@ -253,7 +231,7 @@ Deno.serve(async (req) => {
       shift.location_id === meta.location_id
     ) {
       const capturedAt = new Date(meta.captured_at);
-      shiftStart = combineShiftStart(localDateString(capturedAt), shift.start_time);
+      shiftStart = combineShiftInstant(localDateString(capturedAt), shift.start_time);
     }
   }
 
