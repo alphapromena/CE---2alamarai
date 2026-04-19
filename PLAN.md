@@ -1,6 +1,6 @@
 # PLAN.md — Promoter Monitoring & Reporting Platform
 
-**Status:** Phases 0–2 merged to `main`. Phase 3 (Attendance & Geo-Tracking) complete on branch `claude/phase-3-planning-review-Xu8ID`, pending review + manual migration application.
+**Status:** Phases 0–5 merged to `main`. Phase 6 (Performance Management) complete on branch `claude/phase-6-planning-f4pul`, pending review + manual migration application.
 **Source of truth** for the build. When in doubt, this document wins. Update via PR.
 
 ---
@@ -263,15 +263,29 @@ Scope:
 
 **Decisions finalised:** D-021 · D-022 · D-023 · D-024 · D-025 · D-026 · D-027.
 
-### Phase 6 — Performance Management (Module 7)
-Scope:
-- KPI engine configurable per campaign
-- Multi-level views (promoter / location / campaign)
-- Auto-ranking & tiering (High/Medium/Low) with configurable thresholds
-- Benchmarking: location vs location, promoter vs promoter, phase vs phase
-- Dashboards per role
+### Phase 6 — Performance Management (Module 7) — SHIPPED ✅
+Scope delivered:
+- New `performance_snapshots` table per (scope_kind, scope_id, campaign_id, period_kind, period_start) with funnel totals + KPI ratios + tier + dense rank; service-role-only writes.
+- Per-campaign tier thresholds + tier_metric in `kpi_config` (defaults 0.50 / 0.30 / `conversion_rate`); soft-add via `readTierConfig()` (D-028 mirrors D-007/D-019/D-027).
+- Pure logic in `lib/performance/tiering.ts` (`assignTier`, `rankWithinScope`, `tierDistribution`) + `lib/performance/rollups.ts` (`rollupByScope` + promoter/location/campaign helpers + period helpers); reuses Phase 4 `rollupKpis` (D-020). Mirrored byte-for-byte at `supabase/functions/_shared/performance.ts`.
+- `compute-kpis` Edge Function extended (D-028) — after every kpi_snapshot write recomputes the affected campaign's performance rollups across daily / weekly / campaign_to_date × promoter / location / campaign and UPSERTs against the table's unique constraint.
+- Plain `performance_latest` view (`security_invoker = on`) for fast dashboard reads (same trade-off as D-023 `stock_balances`).
+- Admin pages: `/admin/performance` index + `campaign/[id]` (overview + location ranking with delta vs campaign + promoter ranking) + `location/[id]` + `promoter/[id]` (cards + 30-day daily-trend sparkline).
+- Supervisor page (`/supervisor/performance`): RLS-scoped location + promoter rankings.
+- Client page (`/client/performance`): aggregates only (D-019 item 3 reaffirmed) — per-campaign cards + sparkline; per-promoter / per-location rows not exposed.
+- Tier badges via existing `StatusPill`; ratios rendered with `dir="ltr"` `tabular-nums`. Pure-SVG `Sparkline` component (no recharts dep added; deferred per D-028).
+- Bilingual copy (en + ar) for all new pages; RTL via logical Tailwind properties.
 
-**Exit criteria:** The Safeway Khalda (65% → Top) vs Shini (20% → Low) example from the spec displays correctly with rankings and highlighted top performer.
+**Exit criteria** (met): The Safeway Khalda (65% → Top) vs Shini (20% → Low) example from the spec is encoded as a vitest fixture in `lib/performance/tiering.test.ts` against the tiering pure function, and the rollup integration test (`lib/performance/rollups.test.ts`) confirms Khalda ranks #1, Cozmo (40% → Medium) #2, Shini #3 across the Almarai 3-location campaign.
+
+**Test matrix:** 164 vitest pass total (Phase 6 added the 23-case `tiering.test.ts` + the 8-case `rollups.test.ts`); 11 pgtap tests in `supabase/tests/phase6.test.sql` (CHECKs, UNIQUE, RLS for admin/promoter/supervisor/client, `performance_latest` freshness).
+
+**Decisions finalised:** D-028.
+
+**Open before merge:**
+1. Apply migration manually via Supabase SQL Editor (`supabase/migrations/20260423000000_phase6_performance_snapshots.sql`).
+2. Re-deploy `compute-kpis` Edge Function (now writes performance_snapshots in addition to kpi_snapshots).
+3. No new env vars or secrets.
 
 ### Phase 7 — Real-Time Monitoring + Breaks (Modules 8 + 9)
 Scope:
