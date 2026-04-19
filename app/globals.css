@@ -6,7 +6,7 @@
   :root {
     /* Neutral palette — the only grays you may use */
     --color-white: #ffffff;
-    --color-gray-50:  #fafafa;
+    --color-gray-50: #fafafa;
     --color-gray-100: #f5f5f5;
     --color-gray-200: #e5e5e5;
     --color-gray-300: #d4d4d4;
@@ -16,49 +16,49 @@
     --color-gray-700: #404040;
     --color-gray-800: #262626;
     --color-gray-900: #171717;
-    --color-black:    #0a0a0a;
+    --color-black: #0a0a0a;
 
     /* Semantic tokens — reference these in components, not raw grays */
-    --color-bg:               var(--color-white);
-    --color-bg-subtle:        var(--color-gray-50);
-    --color-bg-muted:         var(--color-gray-100);
-    --color-bg-hover:         var(--color-gray-100);
-    --color-border:           var(--color-gray-200);
-    --color-border-strong:    var(--color-gray-300);
-    --color-text:             var(--color-gray-900);
-    --color-text-secondary:   var(--color-gray-600);
-    --color-text-muted:       var(--color-gray-500);
-    --color-text-disabled:    var(--color-gray-400);
-    --color-text-inverse:     var(--color-white);
+    --color-bg: var(--color-white);
+    --color-bg-subtle: var(--color-gray-50);
+    --color-bg-muted: var(--color-gray-100);
+    --color-bg-hover: var(--color-gray-100);
+    --color-border: var(--color-gray-200);
+    --color-border-strong: var(--color-gray-300);
+    --color-text: var(--color-gray-900);
+    --color-text-secondary: var(--color-gray-600);
+    --color-text-muted: var(--color-gray-500);
+    --color-text-disabled: var(--color-gray-400);
+    --color-text-inverse: var(--color-white);
 
     /* Accent — the ONLY color in the app besides grayscale
        Indigo-600. Used for primary actions, active states, links, focus rings, and nothing else. */
-    --color-accent:           #4f46e5;
-    --color-accent-hover:     #4338ca;
-    --color-accent-subtle:    #eef2ff;
-    --color-accent-text:      #ffffff;
+    --color-accent: #4f46e5;
+    --color-accent-hover: #4338ca;
+    --color-accent-subtle: #eef2ff;
+    --color-accent-text: #ffffff;
 
     /* Status colors — used ONLY in status pills, toasts, and alerts.
        Never as primary button colors or page backgrounds.
        Desaturated, not candy-colored. */
-    --color-success:          #15803d;
-    --color-success-subtle:   #f0fdf4;
-    --color-success-border:   #bbf7d0;
-    --color-warning:          #a16207;
-    --color-warning-subtle:   #fefce8;
-    --color-warning-border:   #fde68a;
-    --color-danger:           #b91c1c;
-    --color-danger-subtle:    #fef2f2;
-    --color-danger-border:    #fecaca;
-    --color-info:             #1d4ed8;
-    --color-info-subtle:      #eff6ff;
-    --color-info-border:      #bfdbfe;
+    --color-success: #15803d;
+    --color-success-subtle: #f0fdf4;
+    --color-success-border: #bbf7d0;
+    --color-warning: #a16207;
+    --color-warning-subtle: #fefce8;
+    --color-warning-border: #fde68a;
+    --color-danger: #b91c1c;
+    --color-danger-subtle: #fef2f2;
+    --color-danger-border: #fecaca;
+    --color-info: #1d4ed8;
+    --color-info-subtle: #eff6ff;
+    --color-info-border: #bfdbfe;
 
     /* Radius */
-    --radius-sm:  4px;
-    --radius-md:  6px;
-    --radius-lg:  8px;
-    --radius-xl:  12px;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+    --radius-xl: 12px;
 
     /* Shadow — used sparingly, only on floating elements */
     --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
@@ -70,17 +70,24 @@
   }
 
   html {
-    font-family: var(--font-sans), 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
-    font-feature-settings: 'cv11', 'ss01', 'ss03';  /* Inter's refined variants */
+    font-family:
+      var(--font-sans),
+      'Inter',
+      ui-sans-serif,
+      system-ui,
+      -apple-system,
+      sans-serif;
+    font-feature-settings: 'cv11', 'ss01', 'ss03'; /* Inter's refined variants */
     -webkit-font-smoothing: antialiased;
     color: var(--color-text);
     background: var(--color-bg);
-    font-size: 14px;  /* SaaS default — not 16px. Denser is better here. */
+    font-size: 14px; /* SaaS default — not 16px. Denser is better here. */
     line-height: 1.5;
   }
 
-  html[lang="ar"] {
-    font-family: var(--font-sans-ar), 'IBM Plex Sans Arabic', var(--font-sans), 'Inter', system-ui, sans-serif;
+  html[lang='ar'] {
+    font-family:
+      var(--font-sans-ar), 'IBM Plex Sans Arabic', var(--font-sans), 'Inter', system-ui, sans-serif;
   }
 
   /* Selection color matches accent */
