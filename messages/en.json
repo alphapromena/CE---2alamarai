@@ -233,6 +233,72 @@
       "empty_title": "No regions yet",
       "empty_description": "Create a region before adding cities or locations."
     },
+    "locations": {
+      "title": "Locations",
+      "description": "Stores and points-of-sale where promoters check in.",
+      "new_cta": "New location",
+      "no_cities_yet": "Create a city first.",
+      "columns": {
+        "name": "Name",
+        "city": "City",
+        "coordinates": "Coordinates",
+        "geofence": "Geofence",
+        "status": "Status"
+      },
+      "form": {
+        "city_label": "City",
+        "address_label": "Address",
+        "lat_label": "Latitude",
+        "lng_label": "Longitude",
+        "geofence_label": "Geofence radius",
+        "geofence_help": "Metres. Defaults to 100. Phase 3 attendance verifies check-ins fall within this circle.",
+        "active_label": "Active"
+      },
+      "new_title": "New location",
+      "new_description": "Register a store or point-of-sale.",
+      "edit_title": "Edit location",
+      "edit_description": "Update location details. Coordinates affect future attendance validation.",
+      "empty_title": "No locations yet",
+      "empty_description": "Add your first location to start scheduling shifts."
+    },
+    "shifts": {
+      "title": "Shifts",
+      "description": "Recurring schedule for a campaign at a location.",
+      "new_cta": "New shift",
+      "no_pairs_yet": "Create a campaign and assign a location to it first.",
+      "go_to_campaigns": "Go to Campaigns",
+      "columns": {
+        "campaign": "Campaign",
+        "location": "Location",
+        "time": "Time",
+        "days": "Days",
+        "status": "Status"
+      },
+      "form": {
+        "pair_label": "Campaign — Location",
+        "pair_help": "Only campaign-location pairs that are already linked appear here.",
+        "start_time_label": "Start time",
+        "end_time_label": "End time",
+        "days_label": "Days of week",
+        "days_help": "Sunday is the start of the week.",
+        "active_label": "Active"
+      },
+      "new_title": "New shift",
+      "new_description": "Define when this campaign runs at this location.",
+      "edit_title": "Edit shift",
+      "edit_description": "Update shift schedule.",
+      "empty_title": "No shifts yet",
+      "empty_description": "Create a shift after you have at least one campaign with assigned locations.",
+      "day_short": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      }
+    },
     "cities": {
       "title": "Cities",
       "description": "Cities sit beneath a region and host one or more locations.",
