@@ -204,3 +204,54 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - Professionals use the platform for hours. Clean, calm, low-visual-noise wins.
   - Single source of truth for design prevents drift across components and phases.
 - **Revisit when:** Product marketing requires a different brand direction. If dark mode is added later, all tokens must be theme-ified first.
+
+---
+
+## D-013 — Admin Invite Flow via `supabase.auth.admin.inviteUserByEmail`
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 1
+- **Question:** How does an admin add a new user?
+- **Decision:** Admin submits `{ email, full_name, role, preferred_language }`. Server action (admin-guarded, service-role client) calls `supabase.auth.admin.inviteUserByEmail(email, { redirectTo, data })` with the profile metadata packed into `user_metadata`. The recipient receives an email link that lands on `/[locale]/auth/callback?next=/set-password`; the callback exchanges the code for a session; the user completes sign-up by setting a password on `/set-password`.
+- **Rationale:**
+  - Passwords never pass through the admin's screen or the network.
+  - Supabase's built-in email delivery, token expiry, and replay protection are reused rather than reinvented.
+  - The DB trigger `handle_new_user` materialises the `profiles` row from `raw_user_meta_data`, so the admin flow works even if the user clicks the link days later — no race conditions with the UI.
+- **Alternatives considered:**
+  - Admin types a temporary password + user changes on first login. Rejected: password-in-transit risk and more moving parts (no-reset path, force-reset flag).
+  - Self-signup + admin approval. Rejected: doesn't fit the closed-tenancy SaaS model; promoters don't know how to sign up.
+- **Revisit when:** We need bulk invites (CSV import) — the same server action composes fine, but UI changes.
+
+---
+
+## D-014 — Role Column as Postgres ENUM
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 1
+- **Question:** How is `profiles.role` typed at the database layer?
+- **Decision:** Postgres ENUM `user_role` with values `admin | supervisor | promoter | client`. Used as the column type on `profiles.role` and as the return type of the `current_role()` SECURITY DEFINER helper.
+- **Rationale:**
+  - Type safety at the DB boundary — SQL rejects unknown roles, RLS policies can compare against the enum, and generated TypeScript types are string-literal unions rather than `string`.
+  - Fast index lookups (ENUM is a 4-byte oid internally).
+  - Matches the fixed four-role model reflected in `app/[locale]/<role>/` subtrees and `LANDING_PATH_BY_ROLE`.
+- **Alternatives considered:**
+  - `text` with a CHECK constraint. Rejected: weaker typing, TS generates `string`, trivially defeated by anyone bypassing RLS.
+  - Single bitmask / array-of-roles. Rejected: overkill for a fixed, mutually-exclusive role set; complicates RLS policies.
+- **Revisit when:** A new role is needed — `ALTER TYPE user_role ADD VALUE 'name'` is cheap but cannot be undone; treat role additions as a considered decision.
+
+---
+
+## D-015 — `profiles.assigned_locations` shape without a `locations` FK in Phase 1
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 1
+- **Question:** PLAN.md §6 lists `assigned_locations[]` as a Phase 1 profile field, but `locations` doesn't exist yet (Phase 2).
+- **Decision:** Ship `profiles.assigned_locations uuid[] NOT NULL DEFAULT '{}'` with a GIN index. No foreign-key enforcement in Phase 1. Phase 2's `locations` migration adds a constraint trigger that validates each element of the array on INSERT/UPDATE. Admin UI shows the count only in Phase 1.
+- **Rationale:**
+  - Lets Phase 1 ship without waiting on Module 1 schema.
+  - Postgres does not support per-element array FOREIGN KEY constraints, so a trigger is required regardless of when it's added.
+  - GIN index now means Phase 3 attendance queries (`assigned_locations @> ARRAY[loc]`) don't need a schema change later.
+- **Alternatives considered:**
+  - Skip the column until Phase 2. Rejected: diverges from PLAN.md §6 Phase 1 scope and forces Phase 2 to touch `profiles` again.
+  - Stub `locations` table now. Rejected: creeps Module 1 scope into Phase 1.
+- **Revisit when:** A user-assignments table (Phase 2, `user_assignments`) supersedes the array. The array becomes a denormalised cache; decide then whether to keep it or drop it.

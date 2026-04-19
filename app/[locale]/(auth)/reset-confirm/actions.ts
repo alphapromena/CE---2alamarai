@@ -1,0 +1,50 @@
+'use server';
+
+import { redirect } from 'next/navigation';
+import { getLocale } from 'next-intl/server';
+import { createServerSupabase } from '@/lib/supabase/server';
+import { logAuditEvent } from '@/lib/auth/audit';
+import { confirmResetSchema } from '@/lib/validations/auth';
+
+export type ResetConfirmState = { error: string | null };
+
+export async function resetConfirmAction(
+  _prev: ResetConfirmState,
+  formData: FormData,
+): Promise<ResetConfirmState> {
+  const locale = await getLocale();
+
+  const parsed = confirmResetSchema.safeParse({
+    password: formData.get('password'),
+    confirm_password: formData.get('confirm_password'),
+  });
+  if (!parsed.success) {
+    const first = parsed.error.issues[0];
+    return { error: first?.message ?? 'unknown' };
+  }
+
+  const supabase = await createServerSupabase();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) {
+    return { error: 'session_expired' };
+  }
+
+  const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
+  if (error) {
+    return { error: 'unknown' };
+  }
+
+  await logAuditEvent({
+    actor_id: user.id,
+    action: 'auth.password_reset',
+    entity: 'auth',
+    entity_id: user.id,
+  });
+
+  // Force re-login with the new password.
+  await supabase.auth.signOut();
+
+  redirect(`/${locale}/login?reset=ok`);
+}
