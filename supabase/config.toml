@@ -75,6 +75,11 @@ enabled = true
 policy = "oneshot"
 inspector_port = 8083
 
+# Per-function config. verify_jwt = true is the default but making it explicit
+# prevents a future config change from accidentally flipping the trust model.
+[functions.geo-validate-checkin]
+verify_jwt = true
+
 [analytics]
 enabled = false
 

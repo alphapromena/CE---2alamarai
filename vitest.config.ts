@@ -8,7 +8,7 @@ export default defineConfig({
   test: {
     environment: 'node',
     include: ['**/*.{test,spec}.{ts,tsx}'],
-    exclude: ['node_modules/**', '.next/**', 'dist/**'],
+    exclude: ['node_modules/**', '.next/**', 'dist/**', 'supabase/functions/**'],
   },
   resolve: {
     alias: {
