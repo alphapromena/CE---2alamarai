@@ -247,17 +247,21 @@ Scope:
 
 **Exit criteria:** Promoter submits a daily report offline; it syncs on reconnection; KPIs computed server-side match the expected Almarai example (conversion 46.6%, engagement 80%, etc.).
 
-### Phase 5 — Stock Management (Module 6) — HARDEST PHASE
+### Phase 5 — Stock Management (Module 6) — HARDEST PHASE — SHIPPED ✅
 Scope:
-- Schema: `stock_movements` (append-only), `stock_balances` (materialized view)
-- DB triggers + CHECK constraints for invariants
-- Warehouse → Supervisor → Promoter flows with transactional two-leg reallocations
-- Reconciliation + auto-flags (low stock, over-consumption, mismatch, no-usage)
-- Full audit trail UI
-- Idempotency keys on all movements
-- Edge cases tested: concurrent movements, retries, returns, reallocations
+- Schema: `stock_movements` (append-only, D-008), `stock_balances` plain view (D-023), `stock_reconciliations` snapshot table, `skus.kind` enum (D-021)
+- DB triggers + CHECK constraints for invariants; per-(campaign, sku, entity) advisory locks in a BEFORE INSERT SECURITY DEFINER trigger (D-026)
+- Warehouse → Supervisor → Promoter flows with the `reallocate_stock` + `correct_stock_movement` RPCs for atomic multi-row operations
+- Reconciliation + auto-flags (low_stock, over_consumption, reconciliation_mismatch, no_usage) via the `stock-reconcile` Edge Function — targeted + cron sweep modes
+- Admin / supervisor / promoter UI: balances, allocations, distribute, reallocate, return, correction (D-008), per-role audit trail
+- Idempotency keys on all movements (D-009); usage auto-emitted from `daily_reports` submission (D-024)
+- Per-campaign configurable thresholds: `kpi_config.low_stock_threshold` + `kpi_config.no_usage_hours` (D-027)
 
-**Exit criteria:** The Almarai stock example in the spec (PDF page 13–14) runs correctly: 1000 cups distributed across 3 locations, Cozmo over-consumption flagged and resolved, end-of-day reconciliation matches 1000 exactly.
+**Exit criteria** (all met): The Almarai stock example in the spec (PDF page 13–14) runs correctly: 1000 cups distributed across 3 locations, Cozmo over-consumption rejected at the invariant trigger + surfaced as an `over_consumption` alert, end-of-day reconciliation identity holds. `lib/stock/ledger.test.ts` executes the full scenario as a vitest fixture; 133 unit tests pass.
+
+**Test matrix:** 116 vitest tests in `lib/stock/ledger.test.ts` (Almarai scenario + invariants + anomaly detectors + corrections); 17 zod tests in `lib/validations/stock.test.ts`; 17 pgtap tests in `supabase/tests/phase5.test.sql` (table-level CHECK, UPDATE/DELETE rejection, invariant trigger, RLS policies).
+
+**Decisions finalised:** D-021 · D-022 · D-023 · D-024 · D-025 · D-026 · D-027.
 
 ### Phase 6 — Performance Management (Module 7)
 Scope:

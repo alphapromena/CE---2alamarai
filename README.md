@@ -2,7 +2,7 @@
 
 A bilingual (Arabic + English) SaaS platform for Consumer Engagement & Field Execution Management. Manages field marketing campaigns end-to-end: planning, attendance with GPS + selfie validation, live sales/sampling tracking per SKU, multi-level stock control, real-time monitoring, performance analytics, and full data export.
 
-> **Status:** Early development. Phase 0 (foundation) in progress.
+> **Status:** Phases 0–5 shipped. Phase 5 (Stock Management) adds the append-only `stock_movements` ledger, RPC-backed reallocate + correct, a `stock-reconcile` Edge Function with sweep + targeted modes, and full admin/supervisor/promoter UI. The Almarai 1000-cup ground-truth scenario executes end-to-end in vitest.
 
 ## Documentation
 

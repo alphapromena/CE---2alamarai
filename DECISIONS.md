@@ -374,3 +374,108 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - Locations start belonging to multiple simultaneous campaigns (breaks item 3's assumption).
   - Tasks grow a real "evidence of completion" concept (photo proof, geo-proof) — then a reviewer gate earns its keep.
   - Background Sync gets solid cross-browser support, including iOS.
+
+---
+
+## D-021 — Stock SKU types via `skus.kind` enum (not separate tables)
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 5 (Stock)
+- **Question:** How do we model sample / giveaway / sale_unit without duplicating the SKU table three times?
+- **Decision:** Add a single `skus.kind` enum column with values `sample | giveaway | sale_unit`. One ledger (`stock_movements`) serves all three — every row carries both `sku_id` and, transitively, its kind. The Almarai fixture tests both types (yogurt cups = sample, giveaways = giveaway) to prove the ledger handles them uniformly.
+- **Rationale:**
+  - Operationally all three are "units on a shelf" moving through the same warehouse → supervisor → promoter → consumer path.
+  - A separate table per kind would require three parallel ledgers — triple the RLS surface, triple the invariant triggers, triple the queries — for zero behavioural benefit.
+  - Kind is the only dimension that matters at report time (count sold vs count sampled). It's a column, not a schema boundary.
+- **Alternatives considered:** Separate `samples`, `giveaways`, `sale_units` tables. Rejected for the reasons above.
+- **Revisit when:** A kind needs fields the others don't (e.g., `sale_units.price` that never applies to samples). Then split.
+
+---
+
+## D-022 — Warehouse is infinite; `skus.stock_allocated` is a planning value
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 5 (Stock)
+- **Question:** Does the warehouse have a balance the ledger has to track?
+- **Decision:** No. The warehouse is the infinite source. Allocations (warehouse → supervisor) never fail on a balance check. The invariant trigger explicitly short-circuits `from_entity_type = 'warehouse'`. The existing `skus.stock_allocated` column stays as a **planning / target** value — "we intend to produce 10 000 cups for this campaign" — not an initial ledger balance.
+- **Rationale:**
+  - The platform tracks field-side inventory (what the promoter has), not production-side inventory (what the client has pledged). Modelling production stock would double the scope without unlocking a user need.
+  - Infinite warehouse makes the identity `Σ distributed = Σ allocated` trivially holdable: an allocation creates the supervisor balance out of thin air.
+- **Alternatives considered:** Seed an explicit `(warehouse, sku, campaign)` row from `stock_allocated` at campaign start. Rejected: adds a migration burden + a special-case "what if the client produced more than expected?" failure mode.
+- **Revisit when:** The platform needs to reconcile against the client's production-side ledger.
+
+---
+
+## D-023 — `stock_balances` is a plain SQL view (not materialized)
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 5 (Stock)
+- **Question:** Plain view or materialized view for the balance rollup?
+- **Decision:** Plain `CREATE VIEW WITH (security_invoker = on)`. The supervisor and promoter live dashboards read this view; freshness is a product requirement. Materialized + refresh-on-insert would put a hot-path cost on every distribution. Phase 7 may layer a nightly-refreshed materialized read cache on top for admin dashboards if p95 measurements justify it; the plain view stays authoritative.
+- **Rationale:** With composite indexes on `stock_movements (campaign, sku, to_*)` and `(campaign, sku, from_*)`, the view's GROUP BY is index-only and sub-millisecond per (campaign, sku) at realistic row counts. Materialized refresh during the most write-heavy moments (lunch-rush distributions) is the wrong cost to absorb.
+- **Alternatives considered:**
+  - Materialized view with `REFRESH CONCURRENTLY` on trigger. Rejected: adds latency + complexity; concurrency mode requires a unique index.
+  - Client-side computation from `stock_movements`. Rejected: RLS-filtered reads can miss rows a supervisor needs to see aggregated in their own balance. View-with-`security_invoker` + supervisor-visible-promoters RLS policy is cleaner.
+- **Revisit when:** Phase 7 dashboard p95 exceeds target and the row count grows into the millions per campaign.
+
+---
+
+## D-024 — Usage is emitted from `daily_reports` submission (not an independent entry)
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 5 (Stock)
+- **Question:** How does a promoter tell the ledger they used N samples?
+- **Decision:** Usage movements (promoter → consumer) are **emitted from the existing `daily_reports` submit Server Action**, not from a separate "log usage" form. When a daily report is submitted with `sales_entries[sku].samples = N`, the submit action inserts one `stock_movements` row per SKU with `quantity = N` and `movement_kind = 'usage'`, sharing the daily report's idempotency key so retries are safe.
+- **Rationale:**
+  - The promoter already enters samples dispensed per SKU on the daily report form. A second "log usage" UI would duplicate that entry and invite drift.
+  - Over-consumption (reported usage > received) is rejected at the ledger's invariant trigger, which gives us a single enforcement point. The promoter sees the error attached to the daily-report submit, which is where the business state they care about lives.
+  - `daily_reports` idempotency already exists; we inherit it for free.
+- **Implementation:** Wiring lives in the `submitDailyReportAction` + `approveDailyReportAction` paths. Each call computes the delta from the prior emitted-usage count (if any) and inserts a correction + new-usage pair to keep the ledger consistent with the latest report state.
+- **Alternatives considered:**
+  - Dedicated "log usage" Server Action. Rejected: double-entry for promoters with no data-quality upside.
+  - Usage as a trigger on `sales_entries`. Rejected: pushes business logic into the DB, makes the retry/idempotency story harder.
+- **Revisit when:** Usage events need to decouple from daily reports (e.g., real-time live-sales counter that must not wait for end-of-day submission).
+
+---
+
+## D-025 — Inter-supervisor reallocation is open for v1; inter-campaign is blocked
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 5 (Stock)
+- **Question:** Who may reallocate to whom?
+- **Decision:**
+  1. **Inter-supervisor reallocation (A → B within the same campaign) is admitted in v1 without a dedicated approval step.** The from-side supervisor initiates it; an audit_log row captures the actor; the ledger's `reallocation_group_id` + `created_at` preserve traceability. A future "approval" workflow is sketched as optional and will be added if field operations show supervisors abusing the freedom.
+  2. **Inter-campaign reallocation is not a concept.** The `stock_movements` schema requires both the from and to legs of a reallocation to share a `campaign_id`. A physical transfer between campaigns is expressed as "return to warehouse in campaign X + allocate from warehouse in campaign Y" — two separate audited operations.
+- **Rationale:**
+  - Supervisors are trusted operators; a heavyweight approval step adds friction for a class of action (helping a peer cover a shortfall) we actively want to happen.
+  - Inter-campaign reallocation conflates two accounting contexts. The separation-of-concerns benefit of two explicit movements beats the convenience of a single row.
+- **Revisit when:** Audit data shows reallocations being used to mask over-consumption, or customers request inter-campaign transfers.
+
+---
+
+## D-026 — Concurrency guarded by per-entity advisory locks inside a BEFORE INSERT trigger
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 5 (Stock)
+- **Question:** How do we prevent two concurrent distributions from the same supervisor double-spending?
+- **Decision:** A `BEFORE INSERT` trigger on `stock_movements` takes `pg_advisory_xact_lock(hash_of(campaign, sku, from_entity))` before computing the balance and validating the from-side. The lock is released on transaction commit; a peer transaction blocks until the first either commits or rolls back. The reallocate RPC additionally takes the TO-side lock because both entities' balances are materially affected.
+- **Rationale:**
+  - MVCC alone is not enough: two concurrent `INSERT`s each observe a pre-commit balance that excludes the other's pending row. The advisory lock serialises the read-validate-insert critical section.
+  - A table lock would be far too coarse. Row locks don't exist here because the rows being read (prior movements) aren't the rows being written. Advisory locks are the right granularity.
+- **Implementation:** `20260422040000_phase5_stock_invariants.sql` BEFORE INSERT trigger — SECURITY DEFINER with locked `search_path`. See the file-level comment for the full reasoning on why BEFORE INSERT rather than AFTER.
+- **Alternatives considered:**
+  - `SERIALIZABLE` transaction isolation level. Rejected: cross-cutting configuration, retry-on-conflict logic everywhere, surprising failures for unrelated queries.
+  - Explicit row-level lock on a synthetic "balance row" table. Rejected: adds a table to keep consistent + the read-write amplification we wanted to avoid with the plain view (D-023).
+- **Revisit when:** Advisory lock contention becomes measurable (e.g., a very hot supervisor). Mitigation: shard the lock key by sub-second bucket so concurrent writes of different SKUs don't fight.
+
+---
+
+## D-027 — `no_usage_hours` is per-campaign in `kpi_config`; default 4
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 5 (Stock)
+- **Question:** How long without a usage event before a promoter gets a `no_usage` anomaly flag?
+- **Decision:** Campaign-configurable via `campaigns.kpi_config.no_usage_hours`. Read via `readNoUsageHours(kpiConfig)` in `lib/stock/ledger.ts`, with a default of 4 hours for legacy / unconfigured rows. A similar `low_stock_threshold` key (default 10 units) controls the low-stock detector. Both keys are soft-added (absent-on-read → default), so no migration is needed; admins set them via the campaign form.
+- **Rationale:** Mirrors D-019 for attendance thresholds — different brands have different operational rhythms. A cosmetics sampling booth runs at a different cadence from a yogurt sampling booth; hard-coding one number forces a schema change the first time a client disagrees.
+- **Implementation:** `readNoUsageHours` + `readLowStockThreshold` in both `lib/stock/ledger.ts` and `supabase/functions/_shared/ledger.ts` (byte-for-byte mirror). Safely ignore non-numeric / non-positive values and fall back to default.
+- **Revisit when:** Clients want sub-hour granularity ("flag after 30 minutes"). The detector currently operates on an hourly threshold; minutes would work too, but the surface now is hours.
