@@ -818,11 +818,59 @@
       "dashboard": "لوحة التحكم",
       "attendance": "الحضور",
       "reports_today": "تقرير اليوم",
-      "tasks": "المهام"
+      "tasks": "المهام",
+      "stock": "المخزون"
     },
     "dashboard": {
       "title": "لوحة تحكم المروِّج",
       "description": "ستظهر هنا ورديّاتك وتسجيل الحضور والمهام."
+    },
+    "stock": {
+      "title": "مخزوني",
+      "description": "ما استلمته، وما استخدمته، وما تبقّى.",
+      "return_cta": "إرجاع إلى المشرف",
+      "return_title": "إرجاع المخزون",
+      "return_description": "أعِد المخزون المتبقي إلى مشرفك في نهاية الوردية.",
+      "balances_title": "الأرصدة",
+      "recent_title": "الحركات الأخيرة",
+      "recent_empty": "لا توجد حركات بعد.",
+      "direction_incoming": "مُستلَم",
+      "direction_outgoing": "صادر",
+      "empty_title": "لا يوجد مخزون بعد",
+      "empty_description": "سيظهر المخزون هنا عندما يوزّعه عليك مشرفك.",
+      "columns": {
+        "campaign": "الحملة",
+        "sku": "SKU",
+        "received": "المستلَم",
+        "used": "المستخدَم",
+        "on_hand": "المتبقّي",
+        "when": "الوقت",
+        "kind": "النوع",
+        "direction": "الاتجاه",
+        "qty": "الكمية"
+      },
+      "return_form": {
+        "campaign_label": "الحملة",
+        "campaign_placeholder": "اختر حملة…",
+        "sku_label": "SKU",
+        "sku_placeholder": "اختر SKU…",
+        "supervisor_label": "المشرف",
+        "supervisor_placeholder": "اختر مشرفاً…",
+        "location_label": "الموقع",
+        "location_placeholder": "اختر موقعاً…",
+        "quantity_label": "الكمية",
+        "reason_label": "السبب (اختياري)",
+        "cancel_cta": "إلغاء",
+        "submit_cta": "إرجاع",
+        "submit_loading": "جارٍ التقديم…"
+      },
+      "errors": {
+        "invalid_input": "يرجى التحقق من الحقول وإعادة المحاولة.",
+        "insufficient_balance": "لا يوجد مخزون كافٍ للإرجاع.",
+        "over_consumption": "الاستهلاك يتجاوز المخزون المُستلَم.",
+        "insert_failed": "تعذّر تسجيل الإرجاع. يرجى إعادة المحاولة.",
+        "location_not_assigned": "أنت غير معيَّن في هذا الموقع."
+      }
     },
     "attendance": {
       "title": "الحضور",

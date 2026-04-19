@@ -818,11 +818,59 @@
       "dashboard": "Dashboard",
       "attendance": "Attendance",
       "reports_today": "Today's report",
-      "tasks": "Tasks"
+      "tasks": "Tasks",
+      "stock": "Stock"
     },
     "dashboard": {
       "title": "Promoter dashboard",
       "description": "Your shifts, check-in, and tasks will live here."
+    },
+    "stock": {
+      "title": "My stock",
+      "description": "What you've received, what you've used, and what's on hand.",
+      "return_cta": "Return to supervisor",
+      "return_title": "Return stock",
+      "return_description": "Return leftover inventory to your supervisor at the end of the shift.",
+      "balances_title": "Balances",
+      "recent_title": "Recent movements",
+      "recent_empty": "No movements yet.",
+      "direction_incoming": "Received",
+      "direction_outgoing": "Out",
+      "empty_title": "No stock yet",
+      "empty_description": "Stock will appear here when your supervisor distributes to you.",
+      "columns": {
+        "campaign": "Campaign",
+        "sku": "SKU",
+        "received": "Received",
+        "used": "Used",
+        "on_hand": "On hand",
+        "when": "When",
+        "kind": "Kind",
+        "direction": "Direction",
+        "qty": "Qty"
+      },
+      "return_form": {
+        "campaign_label": "Campaign",
+        "campaign_placeholder": "Select a campaign…",
+        "sku_label": "SKU",
+        "sku_placeholder": "Select an SKU…",
+        "supervisor_label": "Supervisor",
+        "supervisor_placeholder": "Select a supervisor…",
+        "location_label": "Location",
+        "location_placeholder": "Select a location…",
+        "quantity_label": "Quantity",
+        "reason_label": "Reason (optional)",
+        "cancel_cta": "Cancel",
+        "submit_cta": "Return",
+        "submit_loading": "Submitting…"
+      },
+      "errors": {
+        "invalid_input": "Please check the fields and try again.",
+        "insufficient_balance": "You don't have enough stock for this return.",
+        "over_consumption": "Usage exceeds received stock.",
+        "insert_failed": "Could not record the return. Please retry.",
+        "location_not_assigned": "You are not assigned to this location."
+      }
     },
     "attendance": {
       "title": "Attendance",
