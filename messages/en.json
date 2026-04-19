@@ -106,6 +106,15 @@
         "deactivate": "Deactivate",
         "change_role": "Change role"
       },
+      "edit": {
+        "title": "Edit user",
+        "description": "Update this user's role or activation state.",
+        "email_label": "Email",
+        "role_label": "Role",
+        "status_label": "Status",
+        "save_role": "Save role",
+        "saved": "Changes saved."
+      },
       "invite_dialog": {
         "title": "Invite user",
         "description": "Send an email invitation. The user sets their own password when they accept.",
