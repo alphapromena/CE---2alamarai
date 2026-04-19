@@ -121,6 +121,12 @@
           "unknown": "Could not send the invite. Please try again."
         }
       },
+      "errors": {
+        "duplicate_email": "A user with that email already exists.",
+        "cannot_self_demote": "You cannot change your own role.",
+        "cannot_self_deactivate": "You cannot deactivate your own account.",
+        "unknown": "Something went wrong. Please try again."
+      },
       "locations_count": "{count, plural, =0 {None} one {# location} other {# locations}}",
       "empty": {
         "title": "No users yet",
