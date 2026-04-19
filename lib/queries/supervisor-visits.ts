@@ -16,10 +16,17 @@ export type SupervisorVisitRow = {
   notes: string | null;
   created_at: string;
   updated_at: string;
+  campaign_name_i18n: { ar?: string; en?: string } | null;
+  location_name_i18n: { ar?: string; en?: string } | null;
 };
 
-const VISIT_COLS =
-  'id, supervisor_id, campaign_id, location_id, visited_at, lat, lng, distance_m, is_within_geofence, photo_path, outcome, notes, created_at, updated_at';
+const VISIT_COLS = `
+  id, supervisor_id, campaign_id, location_id, visited_at, lat, lng,
+  distance_m, is_within_geofence, photo_path, outcome, notes, created_at,
+  updated_at,
+  campaign:campaigns ( name_i18n ),
+  location:locations ( name_i18n )
+`;
 
 export async function listSupervisorVisits(opts?: {
   limit?: number;
@@ -39,5 +46,13 @@ export async function listSupervisorVisits(opts?: {
   if (opts?.toDate) q = q.lte('visited_at', opts.toDate);
   const { data, error } = await q.limit(opts?.limit ?? 100);
   if (error) return [];
-  return (data ?? []) as SupervisorVisitRow[];
+  type Raw = Omit<SupervisorVisitRow, 'campaign_name_i18n' | 'location_name_i18n'> & {
+    campaign: { name_i18n: { ar?: string; en?: string } } | null;
+    location: { name_i18n: { ar?: string; en?: string } } | null;
+  };
+  return ((data ?? []) as unknown as Raw[]).map((r) => ({
+    ...r,
+    campaign_name_i18n: r.campaign?.name_i18n ?? null,
+    location_name_i18n: r.location?.name_i18n ?? null,
+  }));
 }

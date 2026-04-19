@@ -616,6 +616,15 @@
       }
     }
   },
+  "alerts": {
+    "geofence_violation": "Outside geofence by {distance_m}m (radius {radius_m}m)",
+    "geofence_violation_checkout": "Checked out outside geofence by {distance_m}m (radius {radius_m}m)",
+    "late_check_in": "Late check-in (grace {grace_minutes} min)",
+    "early_leave": "Left before shift end",
+    "absent": "Absent — no check-in past {cutoff_minutes} min cutoff",
+    "missing_check_out": "Past shift end with no check-out",
+    "geofence_override_requested": "Override requested: {reason}"
+  },
   "Roles": {
     "admin": "Admin",
     "supervisor": "Supervisor",

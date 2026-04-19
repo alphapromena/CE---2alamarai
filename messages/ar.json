@@ -616,6 +616,15 @@
       }
     }
   },
+  "alerts": {
+    "geofence_violation": "خارج النطاق الجغرافي بمقدار {distance_m} م (نصف القطر {radius_m} م)",
+    "geofence_violation_checkout": "الخروج خارج النطاق الجغرافي بمقدار {distance_m} م (نصف القطر {radius_m} م)",
+    "late_check_in": "تسجيل دخول متأخر (مدة السماح {grace_minutes} دقيقة)",
+    "early_leave": "انصرف قبل انتهاء الوردية",
+    "absent": "غائب — لا يوجد تسجيل دخول بعد مهلة {cutoff_minutes} دقيقة",
+    "missing_check_out": "تجاوز انتهاء الوردية بدون تسجيل خروج",
+    "geofence_override_requested": "طلب استثناء: {reason}"
+  },
   "Roles": {
     "admin": "مدير",
     "supervisor": "مشرف",

@@ -8,6 +8,15 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { StatusPill } from '@/components/ui/status-pill';
 import { VisitPhotoButton } from './visit-photo-button';
 
+function pickName(
+  n: { ar?: string; en?: string } | null,
+  locale: string,
+): string {
+  if (!n) return '';
+  if (locale === 'ar') return n.ar ?? n.en ?? '';
+  return n.en ?? n.ar ?? '';
+}
+
 function formatTs(iso: string, locale: string): string {
   try {
     return new Date(iso).toLocaleString(locale === 'ar' ? 'ar-JO' : 'en-JO', {
@@ -28,6 +37,7 @@ export default async function SupervisorVisitsPage({
   setRequestLocale(locale);
   await requireRole('supervisor');
   const t = await getTranslations('Supervisor.visits');
+  const tCommon = await getTranslations('Common');
 
   const visits = await listSupervisorVisits({ limit: 100 });
 
@@ -55,6 +65,7 @@ export default async function SupervisorVisitsPage({
               <thead className="bg-bg-subtle text-xs font-medium uppercase tracking-wide text-fg-secondary">
                 <tr>
                   <th className="px-4 py-2.5 text-start">{t('columns.visited_at')}</th>
+                  <th className="px-4 py-2.5 text-start">{t('columns.campaign')}</th>
                   <th className="px-4 py-2.5 text-start">{t('columns.location')}</th>
                   <th className="px-4 py-2.5 text-end">{t('columns.distance')}</th>
                   <th className="px-4 py-2.5 text-start">{t('columns.outcome')}</th>
@@ -70,11 +81,11 @@ export default async function SupervisorVisitsPage({
                         {formatTs(v.visited_at, locale)}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-sm text-fg-secondary">
-                      {/* location_name_i18n isn't joined on this query yet —
-                          show id as a placeholder; a future step can enrich
-                          the row if the list UI needs it. */}
-                      <span className="font-mono text-xs">{v.location_id.slice(0, 8)}</span>
+                    <td className="px-4 py-3 text-sm">
+                      {pickName(v.campaign_name_i18n, locale)}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {pickName(v.location_name_i18n, locale)}
                     </td>
                     <td className="px-4 py-3 text-end text-sm">
                       <div className="flex items-center justify-end gap-1.5">
@@ -103,7 +114,12 @@ export default async function SupervisorVisitsPage({
                       {v.notes ? <span className="line-clamp-2 block max-w-md">{v.notes}</span> : '—'}
                     </td>
                     <td className="px-4 py-3 text-end">
-                      <VisitPhotoButton path={v.photo_path} label={t('view_photo')} dialogTitle={t('photo_open')} />
+                      <VisitPhotoButton
+                        path={v.photo_path}
+                        label={t('view_photo')}
+                        dialogTitle={t('photo_open')}
+                        closeLabel={tCommon('cancel')}
+                      />
                     </td>
                   </tr>
                 ))}

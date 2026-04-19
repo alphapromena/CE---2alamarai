@@ -307,3 +307,30 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - Drop `profiles.assigned_locations`. Rejected: forces every attendance check to JOIN `user_assignments`, losing the GIN-array fast path.
   - Make `assigned_locations` a generated column from a subquery. Rejected: Postgres generated columns can't reference other tables.
 - **Revisit when:** Read patterns change such that the array is no longer queried (e.g., Phase 7 dashboards switch to joining `user_assignments` directly). At that point, drop the trigger + column.
+
+---
+
+## D-019 — Phase 3 live-monitoring, storage access, client visibility, and configurable detection thresholds
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 3
+- **Question:** Four Phase-3 ambiguities bundled into one entry because each is small on its own but all four shape the same feature surface: live dashboards, selfie storage access, the client role's visibility during Phase 3, and how lateness/absence thresholds are configured.
+- **Decision:**
+  1. **Live dashboards poll in Phase 3.** Supervisor + admin attendance views use TanStack-Query-style `router.refresh()` on a 30-second interval. Upgrade to Supabase Realtime subscriptions in Phase 7 (Module 8 — "Real-Time Monitoring"). PLAN §6 Phase 7 already scopes the Realtime wiring; duplicating it in Phase 3 would inflate scope and add a surface (Realtime + RLS interactions) we're not yet ready to test.
+  2. **Selfies go through server-signed URLs, not direct storage reads.** The `attendance-photos` bucket is private with no `authenticated` policies on `storage.objects` → all direct client I/O is denied. Reads happen via Route Handlers that first verify (role, assigned_locations, or ownership) on the owning attendance or supervisor_visits row, then call `createSignedUrl` with a 5-minute TTL. Writes happen via service-role uploads inside Edge Functions after server-side EXIF stripping.
+  3. **Clients see aggregate-only attendance in Phase 3.** No RLS policy on `attendance` grants `client` role access. Phase 8 (Module 11 — Reporting) is where client read access arrives, gated on a roll-up view rather than raw row reads. Until then, clients see campaigns + SKUs but not individual check-ins, photos, or alerts.
+  4. **Lateness grace and absence cutoff are configurable per campaign** via `campaigns.kpi_config.lateness_grace_minutes` and `campaigns.kpi_config.absence_cutoff_minutes`. Defaults are 15 minutes (grace) and 60 minutes (cutoff). `kpi_config` is an existing JSONB column (D-007); the new keys are soft-added (absent-on-read → fall back to default), so no schema migration is required. Detection code reads via `readLatenessGrace` / `readAbsenceCutoff` which safely tolerate invalid/missing values.
+- **Rationale:**
+  - Polling keeps Phase 3 bounded and matches the staged rollout in PLAN §6.
+  - Server-signed URLs put the authorization decision in one place (the Route Handler) and make storage policies trivial — "no direct access, full stop" — which is easier to audit than a stack of Storage RLS policies that mirror row-level visibility.
+  - Deferring client raw-row visibility avoids leaking promoter photos/PII through an aggregate-only page that hasn't been built yet. Clients still see the campaigns + locations they already owned in Phase 2.
+  - Per-campaign thresholds match D-007's pattern for `sampling_rate_denominator`: different brands have different SLA conventions; one-size-fits-all hard-codes would force a schema change the first time a client disagrees.
+- **Alternatives considered:**
+  - Realtime in Phase 3 now. Rejected: RLS + subscriptions combined are non-trivial; Phase 7's test budget already anticipates them.
+  - Storage RLS policies mirroring attendance access. Rejected: two sources of truth for visibility (row-level + storage-level); any drift produces a bug that RLS tests don't catch.
+  - Raw-row client access now. Rejected: PII/photos; aggregates-only is cheaper to ship and matches the Phase 8 reporting story.
+  - Hard-coded 15/60-minute thresholds. Rejected: guaranteed to need a schema migration once a client pushes back.
+- **Revisit when:**
+  - Phase 7 ships Realtime (item 1). Migration plan: replace `useEffect(() => setInterval(...))` with a `supabase.channel(...)` subscription; keep polling as a fallback behind a feature flag for the first deploy.
+  - A legal/compliance review changes photo retention or access rules (item 2 + 3).
+  - A client requires a retention/threshold that doesn't fit a single numeric minute-value (e.g., rolling-window cutoffs). At that point `kpi_config` becomes a structured object per metric rather than flat keys.

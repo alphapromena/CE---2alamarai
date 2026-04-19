@@ -1,6 +1,6 @@
 # PLAN.md — Promoter Monitoring & Reporting Platform
 
-**Status:** Phase 0 (foundation). Not yet started in code.
+**Status:** Phases 0–2 merged to `main`. Phase 3 (Attendance & Geo-Tracking) complete on branch `claude/phase-3-planning-review-Xu8ID`, pending review + manual migration application.
 **Source of truth** for the build. When in doubt, this document wins. Update via PR.
 
 ---
@@ -209,16 +209,33 @@ Scope:
 
 **Exit criteria:** Admin creates the Almarai demo campaign end-to-end. Client login sees only their campaigns. RLS tests prove two clients cannot see each other's data.
 
-### Phase 3 — Attendance & Geo-Tracking (Module 3)
-Scope:
-- Schema: `attendance`, `supervisor_visits`
-- Edge Function `geo-validate-checkin` — server-side geofence validation
-- Selfie upload pipeline: Supabase Storage private bucket, server-side EXIF strip (preserve timestamp + GPS only), signed URL retrieval
-- Promoter PWA check-in/out flow: camera API + geolocation API
-- Supervisor validation UI
-- Alerts (lateness/absence/missing-checkout) — Edge Function on cron
+### Phase 3 — Attendance & Geo-Tracking (Module 3) — COMPLETE (pending manual migration apply)
+Scope delivered:
+- Schema: `attendance`, `alerts`, `supervisor_visits`, private `attendance-photos` Storage bucket (4 migrations — not yet applied).
+- Edge Functions (Deno, shared `_shared/` modules):
+  - `geo-validate-checkin` — JWT verify, authz re-check, haversine, byte-level JPEG EXIF strip (D-006), attendance insert with D-009 idempotency read-through, fires `late_check_in` + `geofence_violation` alerts.
+  - `geo-validate-checkout` — mirror: ownership check, haversine, EXIF strip, updates existing row, fires `early_leave` + `geofence_violation` alerts.
+  - `supervisor-visit-create` — supervisor site-visit logging; does not reject on geofence failure but flags it.
+  - `detect-attendance-issues` — scheduled sweep (verify_jwt off, shared-secret header): inserts `absent` rows past cutoff and bumps `missing_checkout` past shift end; idempotent on re-runs.
+- Selfie pipeline: private bucket with no authenticated storage policies; server-signed URLs (5-minute TTL) issued by Route Handlers at `/api/attendance/photo-url` and `/api/supervisor-visits/photo-url`.
+- Promoter PWA flow: `/[locale]/promoter/attendance` with `navigator.geolocation`, JPEG camera capture, `crypto.randomUUID` idempotency, `supabase.functions.invoke` → Edge Functions, override-request form when geofence fails.
+- Supervisor dashboard: `/[locale]/supervisor/attendance` with polling (30 s per D-019), filter bar (date/campaign/location), CSV export, open-alerts panel with inline approve/resolve, attendance table with status + geofence + override pills, photo viewer dialog.
+- Supervisor site visits: `/[locale]/supervisor/visits` (list with photo viewer) and `/new` (form with GPS + camera).
+- Pure-function unit tests (vitest): 42 total — 10 haversine, 26 detection (including kpi_config readers), 6 CSV serialiser.
+- Full bilingual copy (en + ar) for all new pages; RTL via logical Tailwind properties + `dir="ltr"` on numeric spans.
 
-**Exit criteria:** A Promoter on a phone can check in with a selfie at Safeway Jubeiha; check-in fails if geofence is breached; Supervisor sees the photo in the dashboard with timestamp and location.
+Decisions made in this phase: **D-019** (live-dashboard polling, storage via signed URLs, client aggregate-only, configurable kpi_config thresholds).
+
+**Exit criteria check** (PLAN Phase 3 original):
+- ✅ Promoter on a phone can check in with a selfie (code + bilingual UI; real-device verification still pending).
+- ✅ Check-in fails (server-side) if geofence is breached — distance stored, alert fired, override-request flow available.
+- ✅ Supervisor sees the photo in the dashboard with timestamp and location — via signed URL viewer, filtered by date/campaign/location.
+
+**Open before merge:**
+1. Apply migrations manually via Supabase SQL Editor (4 files under `supabase/migrations/20260420*`).
+2. Deploy 4 Edge Functions: `geo-validate-checkin`, `geo-validate-checkout`, `supervisor-visit-create`, `detect-attendance-issues`. Set `CRON_SECRET` before the last one.
+3. Schedule `detect-attendance-issues` (pg_cron or Supabase scheduled functions) — instructions in its README.
+4. Real-device walkthrough on mobile Safari + Chrome with camera + geolocation.
 
 ### Phase 4 — Tasks, Activity, Sales/Sampling (Modules 4 + 5)
 Scope:

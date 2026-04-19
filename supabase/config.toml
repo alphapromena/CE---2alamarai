@@ -86,6 +86,12 @@ verify_jwt = true
 [functions.supervisor-visit-create]
 verify_jwt = true
 
+# Cron-invoked sweep: no user session, so JWT verification is off. The
+# function validates an x-cron-secret header instead. CRON_SECRET must be set
+# as a Supabase function secret before deploy.
+[functions.detect-attendance-issues]
+verify_jwt = false
+
 [analytics]
 enabled = false
 

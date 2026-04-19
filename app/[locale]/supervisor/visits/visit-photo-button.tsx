@@ -10,10 +10,12 @@ export function VisitPhotoButton({
   path,
   label,
   dialogTitle,
+  closeLabel,
 }: {
   path: string;
   label: string;
   dialogTitle: string;
+  closeLabel: string;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -23,7 +25,12 @@ export function VisitPhotoButton({
         <Camera className="h-4 w-4" strokeWidth={1.75} aria-hidden />
       </Button>
       {open ? (
-        <VisitPhotoDialog path={path} onClose={() => setOpen(false)} title={dialogTitle} />
+        <VisitPhotoDialog
+          path={path}
+          onClose={() => setOpen(false)}
+          title={dialogTitle}
+          closeLabel={closeLabel}
+        />
       ) : null}
     </>
   );
@@ -33,10 +40,12 @@ function VisitPhotoDialog({
   path,
   onClose,
   title,
+  closeLabel,
 }: {
   path: string;
   onClose: () => void;
   title: string;
+  closeLabel: string;
 }) {
   const [url, setUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -61,7 +70,7 @@ function VisitPhotoDialog({
   }, [path]);
 
   return (
-    <Dialog open onOpenChange={(o) => !o && onClose()} title={title} closeLabel="Close" size="lg">
+    <Dialog open onOpenChange={(o) => !o && onClose()} title={title} closeLabel={closeLabel} size="lg">
       {error ? (
         <Alert variant="danger" title={error} />
       ) : url ? (
