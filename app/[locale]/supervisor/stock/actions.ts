@@ -2,6 +2,7 @@
 
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
+import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth/guards';
 import {
   distributeStockSchema,
@@ -14,6 +15,17 @@ import {
   type InsertMovementError,
   type RpcMovementError,
 } from '@/lib/stock/actions-helper';
+import { z } from 'zod';
+import {
+  computeBalances,
+  detectLowStock,
+  detectNoUsage,
+  readLowStockThreshold,
+  readNoUsageHours,
+  type Movement,
+  type AnomalyFlag,
+} from '@/lib/stock/ledger';
+import { logAuditEvent } from '@/lib/auth/audit';
 
 export type StockActionState = {
   error: InsertMovementError | 'invalid_input' | 'location_not_assigned' | null;
@@ -200,4 +212,149 @@ export async function reallocateStockAction(
   revalidatePath(`/${locale}/admin/stock`);
   revalidatePath(`/${locale}/admin/stock/audit`);
   return { error: null, movementId: result.movementId, replayed: result.replayed };
+}
+
+// ============================================================================
+// Reconciliation (in-process version of the stock-reconcile Edge Function,
+// scoped to the caller's supervisor snapshot). Inserts one
+// stock_reconciliations row capturing the current computed state.
+//
+// No declarations in this v1 — it's a "what does the ledger say right now?"
+// snapshot. Declaration-based mismatch detection lives in the Edge Function
+// and lands in Phase 7's declared-count flow.
+// ============================================================================
+const reconcileInputSchema = z
+  .object({
+    campaign_id: z.string().uuid(),
+    supervisor_id: z.string().uuid(),
+  })
+  .strict();
+
+export type ReconcileActionState = {
+  error: 'invalid_input' | 'not_authorized' | 'reconcile_failed' | null;
+  status?: 'matched' | 'mismatched';
+  flags?: number;
+};
+
+export async function runReconcileAction(input: unknown): Promise<ReconcileActionState> {
+  const actor = await requireRole('supervisor', 'admin');
+  const parsed = reconcileInputSchema.safeParse(input);
+  if (!parsed.success) return { error: 'invalid_input' };
+  if (actor.role === 'supervisor' && parsed.data.supervisor_id !== actor.id) {
+    return { error: 'not_authorized' };
+  }
+
+  const admin = createAdminSupabase();
+
+  const { data: campaignRow } = await admin
+    .from('campaigns')
+    .select('kpi_config')
+    .eq('id', parsed.data.campaign_id)
+    .maybeSingle();
+  const kpiConfig = (campaignRow as { kpi_config: unknown } | null)?.kpi_config ?? null;
+
+  const { data: movRows, error: movErr } = await admin
+    .from('stock_movements')
+    .select(
+      'id, campaign_id, sku_id, from_entity_type, from_entity_id, to_entity_type, to_entity_id, quantity, movement_kind, created_at',
+    )
+    .eq('campaign_id', parsed.data.campaign_id);
+  if (movErr) return { error: 'reconcile_failed' };
+
+  const movements: Movement[] = (movRows as unknown as Movement[] | null) ?? [];
+  const balances = computeBalances(movements);
+
+  const lowStockThreshold = readLowStockThreshold(kpiConfig);
+  const noUsageHours = readNoUsageHours(kpiConfig);
+
+  const { data: scopeRows } = await admin
+    .from('user_assignments')
+    .select('user_id')
+    .in(
+      'location_id',
+      actor.assigned_locations.length > 0
+        ? actor.assigned_locations
+        : ['00000000-0000-0000-0000-000000000000'],
+    )
+    .eq('active', true);
+  const visiblePromoters = new Set<string>(
+    ((scopeRows as { user_id: string }[] | null) ?? []).map((r) => r.user_id),
+  );
+
+  const noUsageInputs: {
+    campaign_id: string;
+    sku_id: string;
+    promoter_id: string;
+    received: number;
+    last_usage_at: string | null;
+  }[] = [];
+  const recv = new Map<string, { received: number; last: string | null }>();
+  for (const m of movements) {
+    if (m.to_entity_type === 'promoter' && m.to_entity_id && visiblePromoters.has(m.to_entity_id)) {
+      const key = `${m.sku_id}|${m.to_entity_id}`;
+      const prior = recv.get(key) ?? { received: 0, last: null };
+      recv.set(key, { received: prior.received + m.quantity, last: prior.last });
+    }
+    if (m.movement_kind === 'usage' && m.from_entity_type === 'promoter' && m.from_entity_id) {
+      const key = `${m.sku_id}|${m.from_entity_id}`;
+      const prior = recv.get(key);
+      if (prior) {
+        const ts = m.created_at ?? '';
+        if (!prior.last || ts > prior.last) prior.last = ts;
+      }
+    }
+  }
+  for (const [key, v] of recv) {
+    const [skuId, promoterId] = key.split('|');
+    noUsageInputs.push({
+      campaign_id: parsed.data.campaign_id,
+      sku_id: skuId!,
+      promoter_id: promoterId!,
+      received: v.received,
+      last_usage_at: v.last,
+    });
+  }
+
+  const allFlags: AnomalyFlag[] = [
+    ...detectLowStock(balances, { low_stock_threshold: lowStockThreshold }),
+    ...detectNoUsage(noUsageInputs, { no_usage_hours: noUsageHours }, new Date()),
+  ];
+  const scoped = allFlags.filter((f) => {
+    if (f.kind === 'low_stock') {
+      if (f.entity_type === 'supervisor') return f.entity_id === parsed.data.supervisor_id;
+      if (f.entity_type === 'location') return actor.assigned_locations.includes(f.entity_id ?? '');
+      if (f.entity_type === 'promoter') return visiblePromoters.has(f.entity_id ?? '');
+    }
+    if (f.kind === 'no_usage') return visiblePromoters.has(f.promoter_id);
+    return false;
+  });
+
+  const status: 'matched' | 'mismatched' = scoped.length === 0 ? 'matched' : 'mismatched';
+
+  const { data: reconRow, error: reconErr } = await admin
+    .from('stock_reconciliations')
+    .insert({
+      campaign_id: parsed.data.campaign_id,
+      scope: 'supervisor',
+      entity_id: parsed.data.supervisor_id,
+      reconciled_by: actor.id,
+      status,
+      details: scoped as unknown as Record<string, unknown>[],
+    })
+    .select('id')
+    .single();
+  if (reconErr || !reconRow) return { error: 'reconcile_failed' };
+
+  await logAuditEvent({
+    actor_id: actor.id,
+    action: 'supervisor.stock_reconciled',
+    entity: 'stock_reconciliation',
+    entity_id: (reconRow as { id: string }).id,
+    after: { status, flags: scoped.length },
+  });
+
+  const locale = await getLocale();
+  revalidatePath(`/${locale}/supervisor/stock`);
+  revalidatePath(`/${locale}/supervisor/stock/reconcile`);
+  return { error: null, status, flags: scoped.length };
 }
