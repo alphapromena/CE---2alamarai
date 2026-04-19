@@ -1,0 +1,7 @@
+{
+  "Hello": {
+    "title": "Hello, world",
+    "description": "Phase 0 foundation page. RTL renders correctly when locale is Arabic.",
+    "cta": "Get started"
+  }
+}
