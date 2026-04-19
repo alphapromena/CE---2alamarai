@@ -334,3 +334,43 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - Phase 7 ships Realtime (item 1). Migration plan: replace `useEffect(() => setInterval(...))` with a `supabase.channel(...)` subscription; keep polling as a fallback behind a feature flag for the first deploy.
   - A legal/compliance review changes photo retention or access rules (item 2 + 3).
   - A client requires a retention/threshold that doesn't fit a single numeric minute-value (e.g., rolling-window cutoffs). At that point `kpi_config` becomes a structured object per metric rather than flat keys.
+
+---
+
+## D-020 — Phase 4 KPI computation: Edge Function + sweep (not a DB trigger); promoter-per-(location,date) uniqueness; tasks self-complete; new `activity-photos` bucket; offline queue via `idb`
+
+- **Date:** 2026-04-19
+- **Phase:** Phase 4
+- **Question:** Five Phase-4 ambiguities bundled into one entry because they shape the same feature surface (daily reports, KPI snapshots, photos, offline mobile UX) and resolve together:
+  1. Who writes `kpi_snapshots` — a DB trigger or an Edge Function?
+  2. Are activity photos stored in the existing `attendance-photos` bucket or a new one?
+  3. Is the uniqueness key for `daily_reports` per (promoter, date) or per (promoter, location, date)?
+  4. Do tasks need a supervisor sign-off on completion, or can the promoter self-close?
+  5. Which IndexedDB primitive powers the offline write queue (D-010)?
+- **Decision:**
+  1. **`kpi_snapshots` is written by a Supabase Edge Function (`compute-kpis`), not a DB trigger.** The targeted mode is invoked from the promoter-submit and supervisor-approve Server Actions with the caller's JWT; verify_jwt = true plus an RLS re-check via a user-scoped client proves authorization before service-role writes the snapshot. A second sweep mode (cron-gated with `x-cron-secret`, hourly) recomputes any submitted/approved report whose snapshot is stale vs `daily_reports.updated_at` — the safety net for missed invocations. The actual KPI math lives exactly once in TypeScript, at `lib/kpis/compute.ts`, with a byte-for-byte mirror at `supabase/functions/_shared/kpis.ts`; both are exercised by `lib/kpis/compute.test.ts` (Almarai Safeway Jubeiha fixture: 50/80/66.6/46.6/70 + SKU contributions 57/29/14).
+  2. **Activity photos land in a new private `activity-photos` bucket**, declared in `20260421030000_phase4_storage_bucket.sql`. Same "no storage.objects policies → all direct client I/O denied → server-signed URLs only" posture as the Phase 3 `attendance-photos` bucket (D-019). Separating the buckets lets retention, lifecycle, and audit posture diverge later without coupling attendance selfies to activity documentation.
+  3. **`daily_reports` uniqueness is `(promoter_user_id, location_id, report_date)`**, not `(promoter_user_id, report_date)`. A promoter who works two stores in a day therefore has two reports. `campaign_id` is intentionally excluded from the uniqueness key: a location can currently be active in only one campaign at a time, and making campaign part of the key would let two campaigns fight for the same day's numbers. If that ever becomes possible, revisit and add campaign to the key.
+  4. **Tasks are self-completable by the promoter.** Status enum: `open | in_progress | done | cancelled`. Promoter can flip `open → in_progress → done`; supervisor can re-open by flipping `done → in_progress` if unsatisfied. No separate "approval" gate — approval lives at the daily_report layer where money/KPIs are decided. Supervisors cancel with a reason (soft-delete) instead of hard DELETE, preserving the audit trail.
+  5. **Offline queue uses `idb` (the typed IndexedDB wrapper).** Schema: `{ id, actionName, payload, idempotencyKey, createdAt, attemptCount, lastError }`. Flushed by an in-page `online` listener plus a periodic interval — not Background Sync, because iOS Safari's BG-Sync support is still patchy and most promoters are on iPhone. D-010 is upheld: all mutations send a client-generated UUID (D-009); server replay is safe.
+  6. **Draft autosave cadence: on-blur + every 30 s**, whichever comes first. Writes go to IndexedDB only; server-side save is explicit via a "Save draft" button so network errors can't silently corrupt partial reports.
+  7. **Client role has no RLS access to any Phase-4 table.** Consistent with Phase 3 (D-019 item 3). Client rollups arrive in Phase 8 via an aggregate view.
+- **Rationale:**
+  1. One source of truth for KPI math beats two. A DB trigger would duplicate `compute.ts` in PL/pgSQL — hard to unit-test, hard to evolve, and a guaranteed drift when we add a KPI. The targeted-invoke-plus-sweep pattern gives us atomic-enough updates (users see fresh KPIs the moment they submit) plus a self-healing background refresh. Service role bypasses `kpi_snapshots` RLS cleanly; no authenticated write policies exist.
+  2. Naming buckets after what they hold beats name-squatting. Cheap to add a bucket; expensive to retroactively untangle two unrelated domains sharing one.
+  3. The spec's Almarai example (a single store-day) and the general retail reality (supermarkets, multi-location shifts) both fit per-(promoter, location, date). Per-(promoter, date) would collapse two locations into one row and lose KPI breakdown.
+  4. Two-step tasks approval doubles the surface for little gain. The substantive review point for the business is the daily report (KPIs, photos, sales). Tasks exist to coordinate work, not audit it.
+  5. `workbox-background-sync` nominally solves this but the iOS Safari story is historically broken. A small `idb`-backed queue replayed on `online` events and short intervals is deterministic and testable.
+- **Alternatives considered:**
+  - **DB trigger for KPIs.** Rejected: forces duplicate math + harder tests. If we ever need strict atomicity (e.g., a reconciliation invariant), revisit.
+  - **Reuse `attendance-photos` bucket.** Rejected: couples unrelated retention policies; mixes selfie-PII with activity-shots.
+  - **`(promoter, date)` uniqueness.** Rejected: breaks the multi-store-in-a-day case.
+  - **Supervisor sign-off on tasks.** Rejected: duplicated approval workflow without a distinct audit need.
+  - **`workbox-background-sync` / raw IndexedDB.** Rejected: unreliable on iOS / too much code to own.
+  - **Expose aggregate client rollups now.** Rejected: Phase 8 ships the reporting surface; no point half-building it here.
+- **Revisit when:**
+  - KPI math must be atomic with the write (e.g., a future invariant that depends on the snapshot existing). Option then: keep the Edge Function as primary and add a thin `DEFERRED` trigger that enqueues a compute request to pg_net.
+  - Retention requirements force us to merge or re-split buckets.
+  - Locations start belonging to multiple simultaneous campaigns (breaks item 3's assumption).
+  - Tasks grow a real "evidence of completion" concept (photo proof, geo-proof) — then a reviewer gate earns its keep.
+  - Background Sync gets solid cross-browser support, including iOS.
