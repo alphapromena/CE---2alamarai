@@ -129,6 +129,27 @@
       }
     }
   },
+  "Supervisor": {
+    "nav": { "dashboard": "لوحة التحكم" },
+    "dashboard": {
+      "title": "لوحة تحكم المشرف",
+      "description": "ستظهر هنا نظرة عامة على عملياتك اليومية."
+    }
+  },
+  "Promoter": {
+    "nav": { "dashboard": "لوحة التحكم" },
+    "dashboard": {
+      "title": "لوحة تحكم المروِّج",
+      "description": "ستظهر هنا ورديّاتك وتسجيل الحضور والمهام."
+    }
+  },
+  "Client": {
+    "nav": { "dashboard": "لوحة التحكم" },
+    "dashboard": {
+      "title": "لوحة تحكم العميل",
+      "description": "ستظهر هنا حملاتك وتقاريرك."
+    }
+  },
   "Roles": {
     "admin": "مدير",
     "supervisor": "مشرف",

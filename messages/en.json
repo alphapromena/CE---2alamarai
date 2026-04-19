@@ -129,6 +129,27 @@
       }
     }
   },
+  "Supervisor": {
+    "nav": { "dashboard": "Dashboard" },
+    "dashboard": {
+      "title": "Supervisor dashboard",
+      "description": "Your daily operations overview will live here."
+    }
+  },
+  "Promoter": {
+    "nav": { "dashboard": "Dashboard" },
+    "dashboard": {
+      "title": "Promoter dashboard",
+      "description": "Your shifts, check-in, and tasks will live here."
+    }
+  },
+  "Client": {
+    "nav": { "dashboard": "Dashboard" },
+    "dashboard": {
+      "title": "Client dashboard",
+      "description": "Your campaigns and reports will live here."
+    }
+  },
   "Roles": {
     "admin": "Admin",
     "supervisor": "Supervisor",
