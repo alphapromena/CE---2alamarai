@@ -47,7 +47,7 @@ export function UsersTable({ rows }: { rows: AdminUserRow[] }) {
         </thead>
         <tbody>
           {rows.map((u) => (
-            <tr key={u.id} className="group border-t border-border hover:bg-bg-subtle/50">
+            <tr key={u.id} className="hover:bg-bg-subtle/50 group border-t border-border">
               <td className="px-4 py-3 font-medium">{u.full_name}</td>
               <td className="px-4 py-3 text-fg-secondary">
                 <span dir="ltr">{u.email}</span>
@@ -57,17 +57,9 @@ export function UsersTable({ rows }: { rows: AdminUserRow[] }) {
               </td>
               <td className="px-4 py-3">
                 {u.active ? (
-                  <StatusPill
-                    variant="success"
-                    icon={CheckCircle2}
-                    label={t('status.active')}
-                  />
+                  <StatusPill variant="success" icon={CheckCircle2} label={t('status.active')} />
                 ) : (
-                  <StatusPill
-                    variant="neutral"
-                    icon={CircleSlash2}
-                    label={t('status.inactive')}
-                  />
+                  <StatusPill variant="neutral" icon={CircleSlash2} label={t('status.inactive')} />
                 )}
               </td>
               <td className="px-4 py-3 tabular-nums">
@@ -81,7 +73,7 @@ export function UsersTable({ rows }: { rows: AdminUserRow[] }) {
               <td className="px-4 py-3 text-end">
                 <Link
                   href={`/admin/users/${u.id}`}
-                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-fg-secondary opacity-0 transition-opacity hover:bg-bg-hover hover:text-fg group-hover:opacity-100 focus-visible:opacity-100"
+                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-fg-secondary opacity-0 transition-opacity hover:bg-bg-hover hover:text-fg focus-visible:opacity-100 group-hover:opacity-100"
                   aria-label={t('row_actions.change_role')}
                 >
                   <Pencil className="h-3.5 w-3.5" strokeWidth={1.75} aria-hidden />

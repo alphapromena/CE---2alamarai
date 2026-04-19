@@ -13,13 +13,11 @@ import { loginAction, type LoginActionState } from './actions';
 export function LoginForm({ deactivatedNotice }: { deactivatedNotice?: boolean }) {
   const t = useTranslations('Auth.login');
   const tError = useTranslations('Auth.errors');
-  const [state, formAction, isPending] = useActionState<LoginActionState, FormData>(
-    loginAction,
-    { error: null },
-  );
+  const [state, formAction, isPending] = useActionState<LoginActionState, FormData>(loginAction, {
+    error: null,
+  });
 
-  const errorMessage =
-    state.error && tError.has(state.error) ? tError(state.error) : null;
+  const errorMessage = state.error && tError.has(state.error) ? tError(state.error) : null;
 
   return (
     <div className="rounded-lg border border-border bg-white p-6">
@@ -27,9 +25,7 @@ export function LoginForm({ deactivatedNotice }: { deactivatedNotice?: boolean }
       <p className="mt-1 text-sm text-fg-secondary">{t('description')}</p>
 
       <form action={formAction} className="mt-6 space-y-4" noValidate>
-        {deactivatedNotice ? (
-          <Alert variant="warning">{t('deactivated_notice')}</Alert>
-        ) : null}
+        {deactivatedNotice ? <Alert variant="warning">{t('deactivated_notice')}</Alert> : null}
         {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
 
         <div>

@@ -45,10 +45,7 @@ export async function logAuditEvent(input: AuditEventInput): Promise<void> {
   }
 
   const h = await headers();
-  const ip =
-    firstForwardedIp(h.get('x-forwarded-for')) ??
-    h.get('x-real-ip') ??
-    null;
+  const ip = firstForwardedIp(h.get('x-forwarded-for')) ?? h.get('x-real-ip') ?? null;
   const userAgent = h.get('user-agent');
 
   const admin = createAdminSupabase();

@@ -8,13 +8,13 @@ import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { StatusPill } from '@/components/ui/status-pill';
 import { USER_ROLES, type UserRole } from '@/lib/auth/roles';
-import {
-  changeUserRoleAction,
-  setUserActiveAction,
-  type AdminActionState,
-} from '../actions';
+import { changeUserRoleAction, setUserActiveAction, type AdminActionState } from '../actions';
 
-function resolveError(errorKey: string | null, t: (key: string) => string, has: (key: string) => boolean) {
+function resolveError(
+  errorKey: string | null,
+  t: (key: string) => string,
+  has: (key: string) => boolean,
+) {
   if (!errorKey) return null;
   return has(errorKey) ? t(errorKey) : null;
 }
@@ -51,7 +51,7 @@ export function ChangeRoleForm({
           defaultValue={currentRole}
           disabled={isPending || isSelf}
           required
-          className="h-8 w-full rounded-md border border-border bg-white px-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 disabled:cursor-not-allowed disabled:opacity-50"
+          className="focus:ring-accent/20 h-8 w-full rounded-md border border-border bg-white px-2 text-sm focus:border-accent focus:outline-none focus:ring-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {USER_ROLES.map((role) => (
             <option key={role} value={role}>
@@ -118,9 +118,7 @@ export function ToggleActiveForm({
         variant={active ? 'destructive' : 'secondary'}
         disabled={isPending || isSelf}
       >
-        {isPending ? (
-          <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} />
-        ) : null}
+        {isPending ? <Loader2 className="h-4 w-4 animate-spin" strokeWidth={1.75} /> : null}
         {active ? t('row_actions.deactivate') : t('row_actions.activate')}
       </Button>
     </form>

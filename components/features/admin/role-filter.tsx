@@ -26,12 +26,10 @@ export function RoleFilter({ value }: { value: UserRole | null }) {
         onChange={(e) => {
           const next = e.target.value;
           startTransition(() => {
-            router.replace(
-              next ? `/admin/users?role=${encodeURIComponent(next)}` : '/admin/users',
-            );
+            router.replace(next ? `/admin/users?role=${encodeURIComponent(next)}` : '/admin/users');
           });
         }}
-        className="h-8 rounded-md border border-border bg-white px-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+        className="focus:ring-accent/20 h-8 rounded-md border border-border bg-white px-2 text-sm focus:border-accent focus:outline-none focus:ring-2"
       >
         <option value="">{t('role_filter_all')}</option>
         {USER_ROLES.map((role) => (

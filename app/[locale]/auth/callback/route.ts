@@ -20,18 +20,14 @@ export async function GET(
   const origin = url.origin;
 
   if (!code) {
-    return NextResponse.redirect(
-      new URL(`/${locale}/login?error=invite_expired`, origin),
-    );
+    return NextResponse.redirect(new URL(`/${locale}/login?error=invite_expired`, origin));
   }
 
   const supabase = await createServerSupabase();
   const { data, error } = await supabase.auth.exchangeCodeForSession(code);
 
   if (error || !data.user) {
-    return NextResponse.redirect(
-      new URL(`/${locale}/login?error=invite_expired`, origin),
-    );
+    return NextResponse.redirect(new URL(`/${locale}/login?error=invite_expired`, origin));
   }
 
   await logAuditEvent({

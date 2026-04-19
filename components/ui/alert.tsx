@@ -36,16 +36,10 @@ export function Alert({
   return (
     <div
       role={variant === 'danger' ? 'alert' : 'status'}
-      className={cn(
-        'flex gap-2 rounded-lg border p-4 text-sm',
-        VARIANT_STYLES[variant],
-        className,
-      )}
+      className={cn('flex gap-2 rounded-lg border p-4 text-sm', VARIANT_STYLES[variant], className)}
       {...props}
     >
-      {Icon ? (
-        <Icon className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden />
-      ) : null}
+      {Icon ? <Icon className="mt-0.5 h-4 w-4 shrink-0" strokeWidth={1.75} aria-hidden /> : null}
       <div className="min-w-0 flex-1">
         {title ? <p className="font-medium">{title}</p> : null}
         {children ? <div className={cn(title && 'mt-0.5')}>{children}</div> : null}

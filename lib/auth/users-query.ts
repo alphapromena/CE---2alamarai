@@ -13,9 +13,7 @@ export type AdminUserRow = {
   created_at: string;
 };
 
-export async function listAdminUsers(
-  roleFilter: UserRole | null,
-): Promise<AdminUserRow[]> {
+export async function listAdminUsers(roleFilter: UserRole | null): Promise<AdminUserRow[]> {
   const admin = createAdminSupabase();
 
   let profQuery = admin

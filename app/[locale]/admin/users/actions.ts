@@ -56,7 +56,9 @@ export async function inviteUserAction(
   });
 
   if (error || !data.user) {
-    const duplicate = /already registered|already been registered|exists/i.test(error?.message ?? '');
+    const duplicate = /already registered|already been registered|exists/i.test(
+      error?.message ?? '',
+    );
     await logAuditEvent({
       actor_id: actor.id,
       action: 'admin.user_invite_failed',

@@ -22,8 +22,7 @@ export function InviteForm() {
     { error: null },
   );
 
-  const errorMessage =
-    state.error && tError.has(state.error) ? tError(state.error) : null;
+  const errorMessage = state.error && tError.has(state.error) ? tError(state.error) : null;
 
   return (
     <form action={formAction} className="space-y-6" noValidate>
@@ -68,7 +67,7 @@ export function InviteForm() {
           defaultValue="promoter"
           disabled={isPending}
           required
-          className="h-8 w-full rounded-md border border-border bg-white px-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+          className="focus:ring-accent/20 h-8 w-full rounded-md border border-border bg-white px-2 text-sm focus:border-accent focus:outline-none focus:ring-2"
         >
           {USER_ROLES.map((role) => (
             <option key={role} value={role}>
@@ -85,7 +84,7 @@ export function InviteForm() {
           name="preferred_language"
           defaultValue="en"
           disabled={isPending}
-          className="h-8 w-full rounded-md border border-border bg-white px-2 text-sm focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20"
+          className="focus:ring-accent/20 h-8 w-full rounded-md border border-border bg-white px-2 text-sm focus:border-accent focus:outline-none focus:ring-2"
         >
           <option value="en">{tLangs('en')}</option>
           <option value="ar">{tLangs('ar')}</option>

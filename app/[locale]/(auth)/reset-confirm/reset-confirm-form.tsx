@@ -17,8 +17,7 @@ export function ResetConfirmForm() {
     { error: null },
   );
 
-  const errorMessage =
-    state.error && tError.has(state.error) ? tError(state.error) : state.error;
+  const errorMessage = state.error && tError.has(state.error) ? tError(state.error) : state.error;
 
   return (
     <div className="rounded-lg border border-border bg-white p-6">

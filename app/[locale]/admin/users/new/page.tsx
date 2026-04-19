@@ -2,11 +2,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { getTranslations } from 'next-intl/server';
 import { InviteForm } from './invite-form';
 
-export default async function InviteUserPage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function InviteUserPage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
   const t = await getTranslations('Admin.users.invite_dialog');
