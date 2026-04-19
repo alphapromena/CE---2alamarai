@@ -7,12 +7,28 @@
   "Common": {
     "cancel": "Cancel",
     "save": "Save",
+    "saving": "Saving…",
     "submit": "Submit",
     "submitting": "Submitting…",
     "loading": "Loading…",
     "back": "Back",
     "required": "Required",
     "confirm": "Confirm",
+    "edit": "Edit",
+    "delete": "Delete",
+    "create": "Create",
+    "view": "View",
+    "search": "Search",
+    "yes": "Yes",
+    "no": "No",
+    "active": "Active",
+    "inactive": "Inactive",
+    "all": "All",
+    "none": "None",
+    "next": "Next",
+    "previous": "Previous",
+    "page_of": "Page {current} of {total}",
+    "results_count": "{count, plural, =0 {No results} one {# result} other {# results}}",
     "error_generic": "Something went wrong. Please try again."
   },
   "Auth": {
@@ -76,7 +92,13 @@
   "Admin": {
     "nav": {
       "dashboard": "Dashboard",
-      "users": "Users"
+      "users": "Users",
+      "clients": "Clients",
+      "campaigns": "Campaigns",
+      "locations": "Locations",
+      "regions": "Regions",
+      "shifts": "Shifts",
+      "assignments": "Assignments"
     },
     "dashboard": {
       "title": "Admin dashboard",
@@ -142,6 +164,265 @@
         "description": "Invite your first team member to get started.",
         "cta": "Invite user"
       }
+    },
+    "i18n_field": {
+      "name_en": "Name (English)",
+      "name_ar": "Name (Arabic)",
+      "placeholder_en": "e.g. Almarai Ramadan 2026",
+      "placeholder_ar": "مثال: حملة المراعي رمضان ٢٠٢٦"
+    },
+    "common": {
+      "name_label": "Name",
+      "active_label": "Status",
+      "create_cta": "Create",
+      "create_loading": "Creating…",
+      "save_cta": "Save changes",
+      "save_loading": "Saving…",
+      "saved": "Changes saved.",
+      "back_to_list": "Back to list",
+      "errors": {
+        "duplicate": "A record with the same name already exists.",
+        "not_found": "Record not found.",
+        "unknown": "Something went wrong. Please try again."
+      }
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Tenants whose data is isolated by row-level security.",
+      "new_cta": "New client",
+      "columns": {
+        "name": "Name",
+        "contact_email": "Contact email",
+        "contact_phone": "Contact phone",
+        "status": "Status",
+        "created_at": "Created"
+      },
+      "form": {
+        "name_label": "Internal name",
+        "name_help": "Used in admin lists. Not shown to client users.",
+        "contact_email_label": "Contact email",
+        "contact_phone_label": "Contact phone",
+        "active_label": "Active"
+      },
+      "new_title": "New client",
+      "new_description": "Create a tenant. Client users you invite later will be locked to this tenant.",
+      "edit_title": "Edit client",
+      "edit_description": "Update tenant details.",
+      "empty_title": "No clients yet",
+      "empty_description": "Create your first tenant to start setting up campaigns."
+    },
+    "regions": {
+      "title": "Regions",
+      "description": "Top of the geographic hierarchy. Cities belong to a region.",
+      "new_cta": "New region",
+      "columns": {
+        "name": "Name",
+        "country": "Country",
+        "status": "Status",
+        "created_at": "Created"
+      },
+      "form": {
+        "country_code_label": "Country code",
+        "country_code_help": "ISO 3166-1 alpha-2 (e.g. JO, AE, SA).",
+        "active_label": "Active"
+      },
+      "new_title": "New region",
+      "new_description": "Add a region for an existing country.",
+      "edit_title": "Edit region",
+      "edit_description": "Update region details.",
+      "empty_title": "No regions yet",
+      "empty_description": "Create a region before adding cities or locations."
+    },
+    "campaigns": {
+      "title": "Campaigns",
+      "description": "Plan, configure, and monitor field marketing activations.",
+      "new_cta": "New campaign",
+      "no_clients_yet": "Create a client first.",
+      "go_to_clients": "Go to Clients",
+      "details_section": "Details",
+      "columns": {
+        "name": "Name",
+        "client": "Client",
+        "dates": "Dates",
+        "status": "Status"
+      },
+      "status": {
+        "planned": "Planned",
+        "active": "Active",
+        "completed": "Completed",
+        "cancelled": "Cancelled"
+      },
+      "form": {
+        "client_label": "Client",
+        "start_date_label": "Start date",
+        "end_date_label": "End date",
+        "objectives_label": "Objectives",
+        "denominator_label": "Sampling-rate denominator",
+        "denominator_contacts": "Contacts",
+        "denominator_engaged": "Engaged customers",
+        "denominator_help": "Used by the Phase 4 KPI engine to compute Sampling Rate.",
+        "status_label": "Status"
+      },
+      "new_title": "New campaign",
+      "new_description": "Create a campaign. Add locations and SKUs after it's created.",
+      "edit_title": "Edit campaign",
+      "edit_description": "Update campaign details, locations, and SKUs.",
+      "empty_title": "No campaigns yet",
+      "empty_description": "Create your first campaign to start scheduling shifts and assigning promoters.",
+      "locations_panel": {
+        "title": "Locations",
+        "description": "Stores hosting this campaign. Shifts can only reference locations that appear here.",
+        "no_locations": "Create a location first."
+      },
+      "skus_panel": {
+        "title": "SKUs",
+        "description": "Sample / sale units tracked for this campaign. Add at least one before Phase 4.",
+        "empty": "No SKUs yet for this campaign.",
+        "columns": {
+          "name": "Name",
+          "unit": "Unit",
+          "target": "Target",
+          "stock": "Stock allocated"
+        },
+        "unit_en_label": "Unit (English)",
+        "unit_ar_label": "Unit (Arabic)",
+        "target_label": "Target",
+        "stock_label": "Stock allocated",
+        "add_title": "Add a SKU",
+        "add_cta": "Add SKU",
+        "save_short": "Save",
+        "delete": "Delete SKU"
+      }
+    },
+    "assignments": {
+      "title": "Assignments",
+      "description": "Assign promoters and supervisors to locations and shifts.",
+      "new_cta": "New assignment",
+      "no_users": "Activate at least one promoter or supervisor first.",
+      "no_locations": "Create a location first.",
+      "any_shift": "Any shift",
+      "columns": {
+        "user": "User",
+        "location": "Location",
+        "shift": "Shift",
+        "role_scope": "Scope",
+        "dates": "Dates",
+        "status": "Status"
+      },
+      "role_scope": {
+        "promoter": "Promoter",
+        "supervisor": "Supervisor"
+      },
+      "form": {
+        "user_label": "User",
+        "location_label": "Location",
+        "shift_label": "Shift",
+        "shift_any": "Any shift at this location",
+        "shift_help": "Optional. Leave blank to assign across all shifts at the chosen location.",
+        "role_scope_label": "Scope",
+        "role_scope_promoter": "Promoter",
+        "role_scope_supervisor": "Supervisor",
+        "starts_on_label": "Starts on",
+        "ends_on_label": "Ends on",
+        "active_label": "Active"
+      },
+      "new_title": "New assignment",
+      "new_description": "Assign a user to a location, optionally tied to a specific shift.",
+      "edit_title": "Edit assignment",
+      "edit_description": "Update assignment details. Marking inactive removes it from the user's location set.",
+      "empty_title": "No assignments yet",
+      "empty_description": "Assign someone to a location to enable check-ins."
+    },
+    "locations": {
+      "title": "Locations",
+      "description": "Stores and points-of-sale where promoters check in.",
+      "new_cta": "New location",
+      "no_cities_yet": "Create a city first.",
+      "columns": {
+        "name": "Name",
+        "city": "City",
+        "coordinates": "Coordinates",
+        "geofence": "Geofence",
+        "status": "Status"
+      },
+      "form": {
+        "city_label": "City",
+        "address_label": "Address",
+        "lat_label": "Latitude",
+        "lng_label": "Longitude",
+        "geofence_label": "Geofence radius",
+        "geofence_help": "Metres. Defaults to 100. Phase 3 attendance verifies check-ins fall within this circle.",
+        "active_label": "Active"
+      },
+      "new_title": "New location",
+      "new_description": "Register a store or point-of-sale.",
+      "edit_title": "Edit location",
+      "edit_description": "Update location details. Coordinates affect future attendance validation.",
+      "empty_title": "No locations yet",
+      "empty_description": "Add your first location to start scheduling shifts."
+    },
+    "shifts": {
+      "title": "Shifts",
+      "description": "Recurring schedule for a campaign at a location.",
+      "new_cta": "New shift",
+      "no_pairs_yet": "Create a campaign and assign a location to it first.",
+      "go_to_campaigns": "Go to Campaigns",
+      "columns": {
+        "campaign": "Campaign",
+        "location": "Location",
+        "time": "Time",
+        "days": "Days",
+        "status": "Status"
+      },
+      "form": {
+        "pair_label": "Campaign — Location",
+        "pair_help": "Only campaign-location pairs that are already linked appear here.",
+        "start_time_label": "Start time",
+        "end_time_label": "End time",
+        "days_label": "Days of week",
+        "days_help": "Sunday is the start of the week.",
+        "active_label": "Active"
+      },
+      "new_title": "New shift",
+      "new_description": "Define when this campaign runs at this location.",
+      "edit_title": "Edit shift",
+      "edit_description": "Update shift schedule.",
+      "empty_title": "No shifts yet",
+      "empty_description": "Create a shift after you have at least one campaign with assigned locations.",
+      "day_short": {
+        "sun": "Sun",
+        "mon": "Mon",
+        "tue": "Tue",
+        "wed": "Wed",
+        "thu": "Thu",
+        "fri": "Fri",
+        "sat": "Sat"
+      }
+    },
+    "cities": {
+      "title": "Cities",
+      "description": "Cities sit beneath a region and host one or more locations.",
+      "new_cta": "New city",
+      "filter_region_label": "Region",
+      "filter_region_all": "All regions",
+      "columns": {
+        "name": "Name",
+        "region": "Region",
+        "status": "Status",
+        "created_at": "Created"
+      },
+      "form": {
+        "region_label": "Region",
+        "region_placeholder": "Select a region",
+        "active_label": "Active"
+      },
+      "new_title": "New city",
+      "new_description": "Add a city to an existing region.",
+      "edit_title": "Edit city",
+      "edit_description": "Update city details.",
+      "empty_title": "No cities yet",
+      "empty_description": "Create a city before adding locations.",
+      "no_regions_yet": "Create a region first."
     }
   },
   "Supervisor": {
@@ -159,10 +440,37 @@
     }
   },
   "Client": {
-    "nav": { "dashboard": "Dashboard" },
+    "nav": {
+      "dashboard": "Dashboard",
+      "campaigns": "Campaigns"
+    },
     "dashboard": {
       "title": "Client dashboard",
       "description": "Your campaigns and reports will live here."
+    },
+    "campaigns": {
+      "title": "Campaigns",
+      "description": "Read-only view of campaigns assigned to your account.",
+      "empty_title": "No campaigns yet",
+      "empty_description": "Your assigned campaigns will appear here once your administrator sets them up.",
+      "columns": {
+        "name": "Name",
+        "dates": "Dates",
+        "status": "Status"
+      }
+    },
+    "campaign_detail": {
+      "objectives": "Objectives",
+      "locations": "Locations",
+      "no_locations": "No locations are assigned to this campaign yet.",
+      "skus": "SKUs",
+      "no_skus": "No SKUs have been configured yet.",
+      "sku_columns": {
+        "name": "Name",
+        "unit": "Unit",
+        "target": "Target",
+        "stock": "Stock allocated"
+      }
     }
   },
   "Roles": {

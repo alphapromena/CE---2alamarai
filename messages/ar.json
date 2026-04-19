@@ -7,12 +7,28 @@
   "Common": {
     "cancel": "إلغاء",
     "save": "حفظ",
+    "saving": "جارٍ الحفظ…",
     "submit": "إرسال",
     "submitting": "جارٍ الإرسال…",
     "loading": "جارٍ التحميل…",
     "back": "رجوع",
     "required": "مطلوب",
     "confirm": "تأكيد",
+    "edit": "تعديل",
+    "delete": "حذف",
+    "create": "إنشاء",
+    "view": "عرض",
+    "search": "بحث",
+    "yes": "نعم",
+    "no": "لا",
+    "active": "مفعَّل",
+    "inactive": "معطَّل",
+    "all": "الكل",
+    "none": "لا يوجد",
+    "next": "التالي",
+    "previous": "السابق",
+    "page_of": "صفحة {current} من {total}",
+    "results_count": "{count, plural, =0 {لا توجد نتائج} one {نتيجة واحدة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}",
     "error_generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
   },
   "Auth": {
@@ -76,7 +92,13 @@
   "Admin": {
     "nav": {
       "dashboard": "لوحة التحكم",
-      "users": "المستخدمون"
+      "users": "المستخدمون",
+      "clients": "العملاء",
+      "campaigns": "الحملات",
+      "locations": "المواقع",
+      "regions": "المناطق",
+      "shifts": "الورديّات",
+      "assignments": "التعيينات"
     },
     "dashboard": {
       "title": "لوحة تحكم المدير",
@@ -142,6 +164,265 @@
         "description": "ادعُ أول عضو في فريقك للبدء.",
         "cta": "دعوة مستخدم"
       }
+    },
+    "i18n_field": {
+      "name_en": "الاسم (إنجليزي)",
+      "name_ar": "الاسم (عربي)",
+      "placeholder_en": "e.g. Almarai Ramadan 2026",
+      "placeholder_ar": "مثال: حملة المراعي رمضان ٢٠٢٦"
+    },
+    "common": {
+      "name_label": "الاسم",
+      "active_label": "الحالة",
+      "create_cta": "إنشاء",
+      "create_loading": "جارٍ الإنشاء…",
+      "save_cta": "حفظ التغييرات",
+      "save_loading": "جارٍ الحفظ…",
+      "saved": "تم حفظ التغييرات.",
+      "back_to_list": "العودة إلى القائمة",
+      "errors": {
+        "duplicate": "يوجد سجل بنفس الاسم بالفعل.",
+        "not_found": "لم يتم العثور على السجل.",
+        "unknown": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+      }
+    },
+    "clients": {
+      "title": "العملاء",
+      "description": "المستأجرون الذين تُعزل بياناتهم عبر سياسات أمان الصفوف.",
+      "new_cta": "عميل جديد",
+      "columns": {
+        "name": "الاسم",
+        "contact_email": "البريد الإلكتروني للتواصل",
+        "contact_phone": "هاتف التواصل",
+        "status": "الحالة",
+        "created_at": "تاريخ الإنشاء"
+      },
+      "form": {
+        "name_label": "الاسم الداخلي",
+        "name_help": "يُستخدم في قوائم المسؤول. لا يُعرض لمستخدمي العميل.",
+        "contact_email_label": "البريد الإلكتروني للتواصل",
+        "contact_phone_label": "هاتف التواصل",
+        "active_label": "مفعَّل"
+      },
+      "new_title": "عميل جديد",
+      "new_description": "أنشئ مستأجرًا جديدًا. سيُحجز كل مستخدم عميل تدعوه لاحقًا داخل هذا المستأجر.",
+      "edit_title": "تعديل العميل",
+      "edit_description": "تحديث تفاصيل المستأجر.",
+      "empty_title": "لا يوجد عملاء بعد",
+      "empty_description": "أنشئ مستأجرك الأول لبدء إعداد الحملات."
+    },
+    "regions": {
+      "title": "المناطق",
+      "description": "أعلى مستوى في التسلسل الجغرافي. تنتمي المدن إلى منطقة.",
+      "new_cta": "منطقة جديدة",
+      "columns": {
+        "name": "الاسم",
+        "country": "الدولة",
+        "status": "الحالة",
+        "created_at": "تاريخ الإنشاء"
+      },
+      "form": {
+        "country_code_label": "رمز الدولة",
+        "country_code_help": "ISO 3166-1 alpha-2 (مثل JO، AE، SA).",
+        "active_label": "مفعَّلة"
+      },
+      "new_title": "منطقة جديدة",
+      "new_description": "أضف منطقة لدولة موجودة.",
+      "edit_title": "تعديل المنطقة",
+      "edit_description": "تحديث تفاصيل المنطقة.",
+      "empty_title": "لا توجد مناطق بعد",
+      "empty_description": "أنشئ منطقة قبل إضافة المدن أو المواقع."
+    },
+    "campaigns": {
+      "title": "الحملات",
+      "description": "تخطيط وإعداد ومتابعة حملات التسويق الميداني.",
+      "new_cta": "حملة جديدة",
+      "no_clients_yet": "أنشئ عميلًا أولًا.",
+      "go_to_clients": "الانتقال إلى العملاء",
+      "details_section": "التفاصيل",
+      "columns": {
+        "name": "الاسم",
+        "client": "العميل",
+        "dates": "التواريخ",
+        "status": "الحالة"
+      },
+      "status": {
+        "planned": "مخطّطة",
+        "active": "نشِطة",
+        "completed": "مكتملة",
+        "cancelled": "ملغاة"
+      },
+      "form": {
+        "client_label": "العميل",
+        "start_date_label": "تاريخ البدء",
+        "end_date_label": "تاريخ الانتهاء",
+        "objectives_label": "الأهداف",
+        "denominator_label": "مقام معدل أخذ العينات",
+        "denominator_contacts": "جهات الاتصال",
+        "denominator_engaged": "العملاء المتفاعلون",
+        "denominator_help": "يستخدمه محرّك مؤشرات الأداء في المرحلة الرابعة لحساب معدّل أخذ العينات.",
+        "status_label": "الحالة"
+      },
+      "new_title": "حملة جديدة",
+      "new_description": "أنشئ حملة. أضف المواقع والـ SKU بعد الإنشاء.",
+      "edit_title": "تعديل الحملة",
+      "edit_description": "تحديث تفاصيل الحملة والمواقع والـ SKU.",
+      "empty_title": "لا توجد حملات بعد",
+      "empty_description": "أنشئ حملتك الأولى لبدء جدولة الورديّات وتعيين المروّجين.",
+      "locations_panel": {
+        "title": "المواقع",
+        "description": "المتاجر التي تستضيف هذه الحملة. لا يمكن للورديّات أن تشير إلا إلى المواقع التي تظهر هنا.",
+        "no_locations": "أنشئ موقعًا أولًا."
+      },
+      "skus_panel": {
+        "title": "الـ SKU",
+        "description": "وحدات العيّنات / المبيعات المتتبَّعة لهذه الحملة. أضف واحدة على الأقل قبل المرحلة الرابعة.",
+        "empty": "لا توجد SKU لهذه الحملة بعد.",
+        "columns": {
+          "name": "الاسم",
+          "unit": "الوحدة",
+          "target": "الهدف",
+          "stock": "المخزون المخصَّص"
+        },
+        "unit_en_label": "الوحدة (إنجليزي)",
+        "unit_ar_label": "الوحدة (عربي)",
+        "target_label": "الهدف",
+        "stock_label": "المخزون المخصَّص",
+        "add_title": "إضافة SKU",
+        "add_cta": "إضافة SKU",
+        "save_short": "حفظ",
+        "delete": "حذف SKU"
+      }
+    },
+    "assignments": {
+      "title": "التعيينات",
+      "description": "عيّن المروّجين والمشرفين على المواقع والورديّات.",
+      "new_cta": "تعيين جديد",
+      "no_users": "فعّل مروّجًا أو مشرفًا واحدًا على الأقل أولًا.",
+      "no_locations": "أنشئ موقعًا أولًا.",
+      "any_shift": "أي ورديّة",
+      "columns": {
+        "user": "المستخدم",
+        "location": "الموقع",
+        "shift": "الورديّة",
+        "role_scope": "النطاق",
+        "dates": "التواريخ",
+        "status": "الحالة"
+      },
+      "role_scope": {
+        "promoter": "مروّج",
+        "supervisor": "مشرف"
+      },
+      "form": {
+        "user_label": "المستخدم",
+        "location_label": "الموقع",
+        "shift_label": "الورديّة",
+        "shift_any": "أي ورديّة في هذا الموقع",
+        "shift_help": "اختياري. اتركه فارغًا للتعيين عبر كل الورديّات في الموقع المختار.",
+        "role_scope_label": "النطاق",
+        "role_scope_promoter": "مروّج",
+        "role_scope_supervisor": "مشرف",
+        "starts_on_label": "يبدأ في",
+        "ends_on_label": "ينتهي في",
+        "active_label": "مفعَّل"
+      },
+      "new_title": "تعيين جديد",
+      "new_description": "عيّن مستخدمًا لموقع، مع إمكانية ربطه بورديّة محدّدة.",
+      "edit_title": "تعديل التعيين",
+      "edit_description": "تحديث تفاصيل التعيين. التعطيل يزيله من قائمة مواقع المستخدم.",
+      "empty_title": "لا توجد تعيينات بعد",
+      "empty_description": "عيّن شخصًا لموقع لتفعيل تسجيل الحضور."
+    },
+    "locations": {
+      "title": "المواقع",
+      "description": "المتاجر ونقاط البيع التي يسجّل المروّجون فيها الحضور.",
+      "new_cta": "موقع جديد",
+      "no_cities_yet": "أنشئ مدينة أولًا.",
+      "columns": {
+        "name": "الاسم",
+        "city": "المدينة",
+        "coordinates": "الإحداثيات",
+        "geofence": "نصف قطر النطاق",
+        "status": "الحالة"
+      },
+      "form": {
+        "city_label": "المدينة",
+        "address_label": "العنوان",
+        "lat_label": "خط العرض",
+        "lng_label": "خط الطول",
+        "geofence_label": "نصف قطر النطاق الجغرافي",
+        "geofence_help": "بالمتر. الافتراضي ١٠٠. يتحقق نظام الحضور في المرحلة الثالثة من أن تسجيل الدخول يقع داخل هذه الدائرة.",
+        "active_label": "مفعَّل"
+      },
+      "new_title": "موقع جديد",
+      "new_description": "سجّل متجرًا أو نقطة بيع.",
+      "edit_title": "تعديل الموقع",
+      "edit_description": "تحديث تفاصيل الموقع. تؤثّر الإحداثيات على التحقق من الحضور لاحقًا.",
+      "empty_title": "لا توجد مواقع بعد",
+      "empty_description": "أضف موقعك الأول لبدء جدولة الورديّات."
+    },
+    "shifts": {
+      "title": "الورديّات",
+      "description": "الجدول المتكرر للحملة في موقع محدّد.",
+      "new_cta": "ورديّة جديدة",
+      "no_pairs_yet": "أنشئ حملة وعيّن لها موقعًا أولًا.",
+      "go_to_campaigns": "الانتقال إلى الحملات",
+      "columns": {
+        "campaign": "الحملة",
+        "location": "الموقع",
+        "time": "الوقت",
+        "days": "الأيام",
+        "status": "الحالة"
+      },
+      "form": {
+        "pair_label": "الحملة — الموقع",
+        "pair_help": "تظهر هنا فقط أزواج الحملة-الموقع المرتبطة مسبقًا.",
+        "start_time_label": "وقت البدء",
+        "end_time_label": "وقت الانتهاء",
+        "days_label": "أيام الأسبوع",
+        "days_help": "يبدأ الأسبوع من الأحد.",
+        "active_label": "مفعَّلة"
+      },
+      "new_title": "ورديّة جديدة",
+      "new_description": "حدّد متى تعمل هذه الحملة في هذا الموقع.",
+      "edit_title": "تعديل الورديّة",
+      "edit_description": "تحديث جدول الورديّة.",
+      "empty_title": "لا توجد ورديّات بعد",
+      "empty_description": "أنشئ ورديّة بعد إعداد حملة واحدة على الأقل مع مواقع معيّنة.",
+      "day_short": {
+        "sun": "أحد",
+        "mon": "إثنين",
+        "tue": "ثلاثاء",
+        "wed": "أربعاء",
+        "thu": "خميس",
+        "fri": "جمعة",
+        "sat": "سبت"
+      }
+    },
+    "cities": {
+      "title": "المدن",
+      "description": "تتبع المدن منطقةً وتستضيف موقعًا أو أكثر.",
+      "new_cta": "مدينة جديدة",
+      "filter_region_label": "المنطقة",
+      "filter_region_all": "كل المناطق",
+      "columns": {
+        "name": "الاسم",
+        "region": "المنطقة",
+        "status": "الحالة",
+        "created_at": "تاريخ الإنشاء"
+      },
+      "form": {
+        "region_label": "المنطقة",
+        "region_placeholder": "اختر منطقة",
+        "active_label": "مفعَّلة"
+      },
+      "new_title": "مدينة جديدة",
+      "new_description": "أضف مدينة لمنطقة موجودة.",
+      "edit_title": "تعديل المدينة",
+      "edit_description": "تحديث تفاصيل المدينة.",
+      "empty_title": "لا توجد مدن بعد",
+      "empty_description": "أنشئ مدينة قبل إضافة المواقع.",
+      "no_regions_yet": "أنشئ منطقة أولًا."
     }
   },
   "Supervisor": {
@@ -159,10 +440,37 @@
     }
   },
   "Client": {
-    "nav": { "dashboard": "لوحة التحكم" },
+    "nav": {
+      "dashboard": "لوحة التحكم",
+      "campaigns": "الحملات"
+    },
     "dashboard": {
       "title": "لوحة تحكم العميل",
       "description": "ستظهر هنا حملاتك وتقاريرك."
+    },
+    "campaigns": {
+      "title": "الحملات",
+      "description": "عرض للقراءة فقط للحملات المخصّصة لحسابك.",
+      "empty_title": "لا توجد حملات بعد",
+      "empty_description": "ستظهر هنا الحملات المخصّصة لك بمجرّد إعدادها من قِبل المسؤول.",
+      "columns": {
+        "name": "الاسم",
+        "dates": "التواريخ",
+        "status": "الحالة"
+      }
+    },
+    "campaign_detail": {
+      "objectives": "الأهداف",
+      "locations": "المواقع",
+      "no_locations": "لا توجد مواقع معيّنة لهذه الحملة بعد.",
+      "skus": "الـ SKU",
+      "no_skus": "لم تُهيَّأ أيّ SKU بعد.",
+      "sku_columns": {
+        "name": "الاسم",
+        "unit": "الوحدة",
+        "target": "الهدف",
+        "stock": "المخزون المخصَّص"
+      }
     }
   },
   "Roles": {
