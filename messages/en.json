@@ -164,6 +164,99 @@
         "description": "Invite your first team member to get started.",
         "cta": "Invite user"
       }
+    },
+    "i18n_field": {
+      "name_en": "Name (English)",
+      "name_ar": "Name (Arabic)",
+      "placeholder_en": "e.g. Almarai Ramadan 2026",
+      "placeholder_ar": "مثال: حملة المراعي رمضان ٢٠٢٦"
+    },
+    "common": {
+      "name_label": "Name",
+      "active_label": "Status",
+      "create_cta": "Create",
+      "create_loading": "Creating…",
+      "save_cta": "Save changes",
+      "save_loading": "Saving…",
+      "saved": "Changes saved.",
+      "back_to_list": "Back to list",
+      "errors": {
+        "duplicate": "A record with the same name already exists.",
+        "not_found": "Record not found.",
+        "unknown": "Something went wrong. Please try again."
+      }
+    },
+    "clients": {
+      "title": "Clients",
+      "description": "Tenants whose data is isolated by row-level security.",
+      "new_cta": "New client",
+      "columns": {
+        "name": "Name",
+        "contact_email": "Contact email",
+        "contact_phone": "Contact phone",
+        "status": "Status",
+        "created_at": "Created"
+      },
+      "form": {
+        "name_label": "Internal name",
+        "name_help": "Used in admin lists. Not shown to client users.",
+        "contact_email_label": "Contact email",
+        "contact_phone_label": "Contact phone",
+        "active_label": "Active"
+      },
+      "new_title": "New client",
+      "new_description": "Create a tenant. Client users you invite later will be locked to this tenant.",
+      "edit_title": "Edit client",
+      "edit_description": "Update tenant details.",
+      "empty_title": "No clients yet",
+      "empty_description": "Create your first tenant to start setting up campaigns."
+    },
+    "regions": {
+      "title": "Regions",
+      "description": "Top of the geographic hierarchy. Cities belong to a region.",
+      "new_cta": "New region",
+      "columns": {
+        "name": "Name",
+        "country": "Country",
+        "status": "Status",
+        "created_at": "Created"
+      },
+      "form": {
+        "country_code_label": "Country code",
+        "country_code_help": "ISO 3166-1 alpha-2 (e.g. JO, AE, SA).",
+        "active_label": "Active"
+      },
+      "new_title": "New region",
+      "new_description": "Add a region for an existing country.",
+      "edit_title": "Edit region",
+      "edit_description": "Update region details.",
+      "empty_title": "No regions yet",
+      "empty_description": "Create a region before adding cities or locations."
+    },
+    "cities": {
+      "title": "Cities",
+      "description": "Cities sit beneath a region and host one or more locations.",
+      "new_cta": "New city",
+      "filter_region_label": "Region",
+      "filter_region_all": "All regions",
+      "columns": {
+        "name": "Name",
+        "region": "Region",
+        "status": "Status",
+        "created_at": "Created"
+      },
+      "form": {
+        "region_label": "Region",
+        "region_placeholder": "Select a region",
+        "active_label": "Active"
+      },
+      "new_title": "New city",
+      "new_description": "Add a city to an existing region.",
+      "edit_title": "Edit city",
+      "edit_description": "Update city details.",
+      "empty_title": "No cities yet",
+      "empty_description": "Create a city before adding locations.",
+      "no_regions_yet": "Create a region first."
     }
   },
   "Supervisor": {

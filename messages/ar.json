@@ -164,6 +164,99 @@
         "description": "ادعُ أول عضو في فريقك للبدء.",
         "cta": "دعوة مستخدم"
       }
+    },
+    "i18n_field": {
+      "name_en": "الاسم (إنجليزي)",
+      "name_ar": "الاسم (عربي)",
+      "placeholder_en": "e.g. Almarai Ramadan 2026",
+      "placeholder_ar": "مثال: حملة المراعي رمضان ٢٠٢٦"
+    },
+    "common": {
+      "name_label": "الاسم",
+      "active_label": "الحالة",
+      "create_cta": "إنشاء",
+      "create_loading": "جارٍ الإنشاء…",
+      "save_cta": "حفظ التغييرات",
+      "save_loading": "جارٍ الحفظ…",
+      "saved": "تم حفظ التغييرات.",
+      "back_to_list": "العودة إلى القائمة",
+      "errors": {
+        "duplicate": "يوجد سجل بنفس الاسم بالفعل.",
+        "not_found": "لم يتم العثور على السجل.",
+        "unknown": "حدث خطأ ما. يرجى المحاولة مرة أخرى."
+      }
+    },
+    "clients": {
+      "title": "العملاء",
+      "description": "المستأجرون الذين تُعزل بياناتهم عبر سياسات أمان الصفوف.",
+      "new_cta": "عميل جديد",
+      "columns": {
+        "name": "الاسم",
+        "contact_email": "البريد الإلكتروني للتواصل",
+        "contact_phone": "هاتف التواصل",
+        "status": "الحالة",
+        "created_at": "تاريخ الإنشاء"
+      },
+      "form": {
+        "name_label": "الاسم الداخلي",
+        "name_help": "يُستخدم في قوائم المسؤول. لا يُعرض لمستخدمي العميل.",
+        "contact_email_label": "البريد الإلكتروني للتواصل",
+        "contact_phone_label": "هاتف التواصل",
+        "active_label": "مفعَّل"
+      },
+      "new_title": "عميل جديد",
+      "new_description": "أنشئ مستأجرًا جديدًا. سيُحجز كل مستخدم عميل تدعوه لاحقًا داخل هذا المستأجر.",
+      "edit_title": "تعديل العميل",
+      "edit_description": "تحديث تفاصيل المستأجر.",
+      "empty_title": "لا يوجد عملاء بعد",
+      "empty_description": "أنشئ مستأجرك الأول لبدء إعداد الحملات."
+    },
+    "regions": {
+      "title": "المناطق",
+      "description": "أعلى مستوى في التسلسل الجغرافي. تنتمي المدن إلى منطقة.",
+      "new_cta": "منطقة جديدة",
+      "columns": {
+        "name": "الاسم",
+        "country": "الدولة",
+        "status": "الحالة",
+        "created_at": "تاريخ الإنشاء"
+      },
+      "form": {
+        "country_code_label": "رمز الدولة",
+        "country_code_help": "ISO 3166-1 alpha-2 (مثل JO، AE، SA).",
+        "active_label": "مفعَّلة"
+      },
+      "new_title": "منطقة جديدة",
+      "new_description": "أضف منطقة لدولة موجودة.",
+      "edit_title": "تعديل المنطقة",
+      "edit_description": "تحديث تفاصيل المنطقة.",
+      "empty_title": "لا توجد مناطق بعد",
+      "empty_description": "أنشئ منطقة قبل إضافة المدن أو المواقع."
+    },
+    "cities": {
+      "title": "المدن",
+      "description": "تتبع المدن منطقةً وتستضيف موقعًا أو أكثر.",
+      "new_cta": "مدينة جديدة",
+      "filter_region_label": "المنطقة",
+      "filter_region_all": "كل المناطق",
+      "columns": {
+        "name": "الاسم",
+        "region": "المنطقة",
+        "status": "الحالة",
+        "created_at": "تاريخ الإنشاء"
+      },
+      "form": {
+        "region_label": "المنطقة",
+        "region_placeholder": "اختر منطقة",
+        "active_label": "مفعَّلة"
+      },
+      "new_title": "مدينة جديدة",
+      "new_description": "أضف مدينة لمنطقة موجودة.",
+      "edit_title": "تعديل المدينة",
+      "edit_description": "تحديث تفاصيل المدينة.",
+      "empty_title": "لا توجد مدن بعد",
+      "empty_description": "أنشئ مدينة قبل إضافة المواقع.",
+      "no_regions_yet": "أنشئ منطقة أولًا."
     }
   },
   "Supervisor": {
