@@ -98,7 +98,8 @@
       "locations": "Locations",
       "regions": "Regions",
       "shifts": "Shifts",
-      "assignments": "Assignments"
+      "assignments": "Assignments",
+      "reports": "Reports"
     },
     "dashboard": {
       "title": "Admin dashboard",
@@ -423,13 +424,19 @@
       "empty_title": "No cities yet",
       "empty_description": "Create a city before adding locations.",
       "no_regions_yet": "Create a region first."
+    },
+    "reports": {
+      "title": "All reports",
+      "subtitle": "Every campaign across every location."
     }
   },
   "Supervisor": {
     "nav": {
       "dashboard": "Dashboard",
       "attendance": "Attendance",
-      "visits": "Site visits"
+      "visits": "Site visits",
+      "reports": "Reports",
+      "tasks": "Tasks"
     },
     "dashboard": {
       "title": "Supervisor dashboard",
@@ -518,6 +525,82 @@
       "photo_open": "Visit photo",
       "within_geofence": "Within",
       "outside_geofence": "Outside"
+    },
+    "reports": {
+      "title": "Reports",
+      "subtitle": "Review daily reports submitted by your promoters.",
+      "empty": "No reports match these filters.",
+      "filter": {
+        "all": "All",
+        "draft": "Draft",
+        "submitted": "Submitted",
+        "approved": "Approved",
+        "rejected": "Rejected"
+      },
+      "rejected_heading": "Report rejected — reason:",
+      "funnel_heading": "Funnel",
+      "kpis_heading": "KPIs",
+      "kpis_pending": "KPIs will be computed shortly after submit.",
+      "sku_breakdown": "SKU breakdown",
+      "no_sku_entries": "No SKU entries on this report.",
+      "sku_col": "SKU",
+      "contribution_col": "Contribution",
+      "photos_heading": "Photos",
+      "review_heading": "Review",
+      "approve": "Approve",
+      "reject": "Reject",
+      "reject_reason_placeholder": "Write the rejection reason (required to reject)",
+      "kpi": {
+        "interaction": "Interaction",
+        "engagement": "Engagement",
+        "sampling": "Sampling",
+        "conversion": "Conversion",
+        "sample_to_conversion": "Sample → Conversion"
+      },
+      "errors": {
+        "invalid_input": "Invalid input.",
+        "reason_required": "A reason is required to reject.",
+        "not_found": "Report not found.",
+        "not_submitted": "This report isn't pending review.",
+        "approve_failed": "Approve failed.",
+        "reject_failed": "Reject failed.",
+        "location_not_assigned": "You're not assigned to this location."
+      }
+    },
+    "tasks": {
+      "title": "Tasks",
+      "subtitle": "Assign work to promoters at your locations.",
+      "create_heading": "Create task",
+      "list_heading": "All tasks",
+      "empty": "No tasks yet.",
+      "create": "Create",
+      "create_success": "Task created.",
+      "form": {
+        "campaign": "Campaign",
+        "location": "Location",
+        "assignee": "Assignee",
+        "pick_assignee": "Select a promoter…",
+        "due_date": "Due date",
+        "title_en": "Title (English)",
+        "title_ar": "Title (Arabic)",
+        "desc_en": "Description (English)",
+        "desc_ar": "Description (Arabic)"
+      },
+      "col": {
+        "title": "Title",
+        "assignee": "Assignee",
+        "location": "Location",
+        "campaign": "Campaign",
+        "due": "Due",
+        "status": "Status"
+      },
+      "errors": {
+        "required": "Fill in all required fields.",
+        "invalid_input": "Invalid input.",
+        "duplicate": "Task already exists.",
+        "create_failed": "Create failed.",
+        "location_not_assigned": "You're not assigned to that location."
+      }
     }
   },
   "Promoter": {
@@ -627,6 +710,16 @@
         "photo_not_jpeg": "Please upload a JPEG.",
         "upload_failed": "Photo upload failed.",
         "offline_queued": "You're offline — the action is queued."
+      },
+      "cols": {
+        "date": "Date",
+        "campaign": "Campaign",
+        "location": "Location",
+        "promoter": "Promoter",
+        "contacts": "Contacts",
+        "samples": "Samples",
+        "sales": "Sales",
+        "status": "Status"
       }
     },
     "tasks": {

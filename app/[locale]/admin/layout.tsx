@@ -12,6 +12,7 @@ const NAV = [
   { href: '/admin/regions', labelKey: 'Admin.nav.regions' },
   { href: '/admin/shifts', labelKey: 'Admin.nav.shifts' },
   { href: '/admin/assignments', labelKey: 'Admin.nav.assignments' },
+  { href: '/admin/reports', labelKey: 'Admin.nav.reports' },
 ];
 
 export default async function AdminLayout({

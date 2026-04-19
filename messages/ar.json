@@ -98,7 +98,8 @@
       "locations": "المواقع",
       "regions": "المناطق",
       "shifts": "الورديّات",
-      "assignments": "التعيينات"
+      "assignments": "التعيينات",
+      "reports": "التقارير"
     },
     "dashboard": {
       "title": "لوحة تحكم المدير",
@@ -423,13 +424,19 @@
       "empty_title": "لا توجد مدن بعد",
       "empty_description": "أنشئ مدينة قبل إضافة المواقع.",
       "no_regions_yet": "أنشئ منطقة أولًا."
+    },
+    "reports": {
+      "title": "كل التقارير",
+      "subtitle": "كل الحملات على كل المواقع."
     }
   },
   "Supervisor": {
     "nav": {
       "dashboard": "لوحة التحكم",
       "attendance": "الحضور",
-      "visits": "زيارات المواقع"
+      "visits": "زيارات المواقع",
+      "reports": "التقارير",
+      "tasks": "المهام"
     },
     "dashboard": {
       "title": "لوحة تحكم المشرف",
@@ -518,6 +525,82 @@
       "photo_open": "صورة الزيارة",
       "within_geofence": "داخل النطاق",
       "outside_geofence": "خارج النطاق"
+    },
+    "reports": {
+      "title": "التقارير",
+      "subtitle": "راجع التقارير اليومية المقدّمة من فريقك.",
+      "empty": "لا توجد تقارير تطابق هذه الفلاتر.",
+      "filter": {
+        "all": "الكل",
+        "draft": "مسودة",
+        "submitted": "مُرسل",
+        "approved": "معتمد",
+        "rejected": "مرفوض"
+      },
+      "rejected_heading": "تم رفض التقرير — السبب:",
+      "funnel_heading": "القمع",
+      "kpis_heading": "مؤشرات الأداء",
+      "kpis_pending": "ستُحسب المؤشرات بعد الإرسال بقليل.",
+      "sku_breakdown": "تفصيل المنتجات",
+      "no_sku_entries": "لا توجد إدخالات منتجات في هذا التقرير.",
+      "sku_col": "المنتج",
+      "contribution_col": "المساهمة",
+      "photos_heading": "الصور",
+      "review_heading": "المراجعة",
+      "approve": "اعتماد",
+      "reject": "رفض",
+      "reject_reason_placeholder": "اكتب سبب الرفض (مطلوب)",
+      "kpi": {
+        "interaction": "التفاعل",
+        "engagement": "المشاركة",
+        "sampling": "العيّنات",
+        "conversion": "التحويل",
+        "sample_to_conversion": "من عيّنة إلى شراء"
+      },
+      "errors": {
+        "invalid_input": "بيانات غير صحيحة.",
+        "reason_required": "الرجاء كتابة سبب الرفض.",
+        "not_found": "التقرير غير موجود.",
+        "not_submitted": "هذا التقرير ليس قيد المراجعة.",
+        "approve_failed": "فشل الاعتماد.",
+        "reject_failed": "فشل الرفض.",
+        "location_not_assigned": "لست مُعيّناً على هذا الموقع."
+      }
+    },
+    "tasks": {
+      "title": "المهام",
+      "subtitle": "عيّن المهام للمنشطين على مواقعك.",
+      "create_heading": "إنشاء مهمة",
+      "list_heading": "كل المهام",
+      "empty": "لا توجد مهام بعد.",
+      "create": "إنشاء",
+      "create_success": "تم إنشاء المهمة.",
+      "form": {
+        "campaign": "الحملة",
+        "location": "الموقع",
+        "assignee": "المُكلَّف",
+        "pick_assignee": "اختر منشطاً…",
+        "due_date": "تاريخ الاستحقاق",
+        "title_en": "العنوان (إنكليزي)",
+        "title_ar": "العنوان (عربي)",
+        "desc_en": "الوصف (إنكليزي)",
+        "desc_ar": "الوصف (عربي)"
+      },
+      "col": {
+        "title": "العنوان",
+        "assignee": "المُكلَّف",
+        "location": "الموقع",
+        "campaign": "الحملة",
+        "due": "الاستحقاق",
+        "status": "الحالة"
+      },
+      "errors": {
+        "required": "يُرجى تعبئة الحقول المطلوبة.",
+        "invalid_input": "بيانات غير صحيحة.",
+        "duplicate": "المهمة موجودة مسبقاً.",
+        "create_failed": "فشل الإنشاء.",
+        "location_not_assigned": "لست مُعيّناً على هذا الموقع."
+      }
     }
   },
   "Promoter": {
@@ -627,6 +710,16 @@
         "photo_not_jpeg": "يُرجى رفع JPEG.",
         "upload_failed": "فشل رفع الصورة.",
         "offline_queued": "أنت غير متصل — تمت إضافة العملية للطابور."
+      },
+      "cols": {
+        "date": "التاريخ",
+        "campaign": "الحملة",
+        "location": "الموقع",
+        "promoter": "المنشط",
+        "contacts": "الاتصالات",
+        "samples": "العينات",
+        "sales": "المبيعات",
+        "status": "الحالة"
       }
     },
     "tasks": {
