@@ -523,7 +523,9 @@
   "Promoter": {
     "nav": {
       "dashboard": "Dashboard",
-      "attendance": "Attendance"
+      "attendance": "Attendance",
+      "reports_today": "Today's report",
+      "tasks": "Tasks"
     },
     "dashboard": {
       "title": "Promoter dashboard",
@@ -580,6 +582,74 @@
       "override_request_submit": "Send request",
       "override_request_sent": "Request sent. Your supervisor will review it.",
       "override_request_cta": "Request override"
+    },
+    "reports": {
+      "title": "Today's report",
+      "subtitle": "Report for {date}",
+      "no_shift_title": "No shift today",
+      "no_shift_description": "You don't have an active shift today. Contact your supervisor if this looks wrong.",
+      "save_draft": "Save draft",
+      "submit": "Submit",
+      "status_new": "New",
+      "status_draft": "Draft",
+      "status_submitted": "Submitted",
+      "status_approved": "Approved",
+      "status_rejected": "Rejected",
+      "offline": "Offline",
+      "queued_count": "{count} queued",
+      "rejected_heading": "This report was rejected",
+      "fields": {
+        "traffic": "Total traffic",
+        "contacts": "Contacts",
+        "engaged": "Engaged",
+        "samples": "Samples",
+        "sales": "Sales",
+        "notes": "Notes"
+      },
+      "skus_heading": "Per-SKU sales and samples",
+      "no_skus": "No active SKUs in this campaign.",
+      "totals_summary": "Totals — samples: {samples} · sales: {sales}",
+      "photo": {
+        "setup": "Setup photo",
+        "during": "During shift",
+        "end_of_shift": "End of shift"
+      },
+      "tap_to_capture": "Tap to capture",
+      "uploading": "Uploading…",
+      "errors": {
+        "invalid_input": "Invalid input.",
+        "not_found": "Report not found.",
+        "frozen": "This report has been reviewed and can't be edited.",
+        "location_not_assigned": "You're not assigned to this location.",
+        "submit_failed": "Submit failed. Please try again.",
+        "save_first": "Save a draft before adding photos.",
+        "photo_too_large": "Photo too large.",
+        "photo_not_jpeg": "Please upload a JPEG.",
+        "upload_failed": "Photo upload failed.",
+        "offline_queued": "You're offline — the action is queued."
+      }
+    },
+    "tasks": {
+      "title": "Tasks",
+      "subtitle": "Assigned to you by your supervisor.",
+      "open_heading": "Open",
+      "done_heading": "Recently completed",
+      "empty_open_title": "No open tasks",
+      "empty_open_description": "You're all caught up.",
+      "mark_in_progress": "Start",
+      "mark_done": "Mark done",
+      "due": "Due {date}",
+      "status_open": "Open",
+      "status_in_progress": "In progress",
+      "status_done": "Done",
+      "status_cancelled": "Cancelled",
+      "errors": {
+        "invalid_input": "Invalid input.",
+        "not_found": "Task not found.",
+        "not_yours": "That task isn't assigned to you.",
+        "invalid_transition": "Can't change to that status.",
+        "update_failed": "Update failed."
+      }
     }
   },
   "Client": {
