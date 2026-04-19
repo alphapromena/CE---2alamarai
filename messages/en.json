@@ -63,6 +63,7 @@
     },
     "errors": {
       "invalid_credentials": "Invalid email or password.",
+      "deactivated": "Your account has been deactivated. Contact an administrator.",
       "rate_limited": "Too many attempts. Please wait a moment and try again.",
       "email_invalid": "Enter a valid email address.",
       "password_too_short": "Password must be at least 8 characters.",
