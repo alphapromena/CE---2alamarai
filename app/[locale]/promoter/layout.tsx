@@ -3,7 +3,10 @@ import { setRequestLocale } from 'next-intl/server';
 import { requireRole } from '@/lib/auth/guards';
 import { AppShell } from '@/components/features/app/app-shell';
 
-const NAV = [{ href: '/promoter/dashboard', labelKey: 'Promoter.nav.dashboard' }];
+const NAV = [
+  { href: '/promoter/dashboard', labelKey: 'Promoter.nav.dashboard' },
+  { href: '/promoter/attendance', labelKey: 'Promoter.nav.attendance' },
+];
 
 export default async function PromoterLayout({
   children,

@@ -1,7 +1,10 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
-import { todayLocalDateString } from '@/lib/attendance/shift-time';
+import {
+  SHIFT_TZ_OFFSET_MINUTES,
+  todayLocalDateString,
+} from '@/lib/attendance/shift-time';
 
 export type AttendanceRow = {
   id: string;
@@ -111,4 +114,111 @@ export async function signAttendancePhotoUrl(
     .createSignedUrl(path, ttlSeconds);
   if (error || !data) return null;
   return data.signedUrl;
+}
+
+export type PromoterShiftAssignment = {
+  assignment_id: string;
+  location_id: string;
+  location_name_i18n: { ar?: string; en?: string };
+  location_lat: number;
+  location_lng: number;
+  geofence_radius_m: number;
+  shift_id: string | null;
+  shift_start_time: string | null;
+  shift_end_time: string | null;
+  campaign_id: string;
+  campaign_name_i18n: { ar?: string; en?: string };
+};
+
+/**
+ * Today's active assignments for a promoter, joined with location + shift +
+ * campaign. Filters shifts by days_of_week against today's Asia/Amman
+ * weekday. Assignments without a shift are included unconditionally (ad-hoc
+ * coverage).
+ *
+ * Note: uses the admin client for the join; the caller (the authenticated
+ * promoter) is passed in explicitly and filtered on. RLS equivalents would
+ * have required several queries; the explicit filter keeps this to one.
+ */
+export async function listTodaysPromoterAssignments(
+  userId: string,
+): Promise<PromoterShiftAssignment[]> {
+  const admin = createAdminSupabase();
+  const now = new Date();
+  const localDow = new Date(now.getTime() + SHIFT_TZ_OFFSET_MINUTES * 60_000).getUTCDay();
+  const today = todayLocalDateString(now);
+
+  const { data, error } = await admin
+    .from('user_assignments')
+    .select(
+      `
+      id,
+      location_id,
+      shift_id,
+      starts_on,
+      ends_on,
+      location:locations ( name_i18n, lat, lng, geofence_radius_m, active ),
+      shift:shifts (
+        start_time, end_time, days_of_week, active, campaign_id,
+        campaign:campaigns ( name_i18n, status )
+      )
+      `,
+    )
+    .eq('user_id', userId)
+    .eq('active', true)
+    .eq('role_scope', 'promoter');
+
+  if (error || !data) return [];
+
+  type Row = {
+    id: string;
+    location_id: string;
+    shift_id: string | null;
+    starts_on: string | null;
+    ends_on: string | null;
+    location: {
+      name_i18n: { ar?: string; en?: string };
+      lat: number;
+      lng: number;
+      geofence_radius_m: number;
+      active: boolean;
+    } | null;
+    shift: {
+      start_time: string;
+      end_time: string;
+      days_of_week: number[];
+      active: boolean;
+      campaign_id: string;
+      campaign: { name_i18n: { ar?: string; en?: string }; status: string } | null;
+    } | null;
+  };
+
+  const out: PromoterShiftAssignment[] = [];
+  for (const raw of data as unknown as Row[]) {
+    if (!raw.location || !raw.location.active) continue;
+    if (raw.starts_on && raw.starts_on > today) continue;
+    if (raw.ends_on && raw.ends_on < today) continue;
+    if (raw.shift) {
+      if (!raw.shift.active) continue;
+      if (!raw.shift.days_of_week.includes(localDow)) continue;
+      if (!raw.shift.campaign) continue;
+      if (raw.shift.campaign.status === 'cancelled' || raw.shift.campaign.status === 'completed') {
+        continue;
+      }
+      out.push({
+        assignment_id: raw.id,
+        location_id: raw.location_id,
+        location_name_i18n: raw.location.name_i18n,
+        location_lat: raw.location.lat,
+        location_lng: raw.location.lng,
+        geofence_radius_m: raw.location.geofence_radius_m,
+        shift_id: raw.shift_id,
+        shift_start_time: raw.shift.start_time,
+        shift_end_time: raw.shift.end_time,
+        campaign_id: raw.shift.campaign_id,
+        campaign_name_i18n: raw.shift.campaign.name_i18n,
+      });
+    }
+  }
+  return out;
 }
