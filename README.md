@@ -25,15 +25,14 @@ See `PLAN.md` for the complete list.
 
 ## Local Development
 
-> Full setup instructions will be added in Phase 0.
-
 ### Prerequisites
-- Node.js 20+
-- pnpm 9+
-- Supabase CLI
-- A Supabase project (or local Supabase via `supabase start`)
 
-### Quick start (placeholder — finalized in Phase 0)
+- Node.js 20+ (tested on 22)
+- pnpm 10+ (the repo declares `packageManager` so corepack will pick the right version automatically)
+- Supabase CLI (only required once Phases 1+ start adding migrations)
+- Docker (only required if running local Supabase via `supabase start`)
+
+### Quick start
 
 ```bash
 # 1. Install dependencies
@@ -42,17 +41,44 @@ pnpm install
 # 2. Copy env template and fill in values
 cp .env.example .env.local
 
-# 3. Run local Supabase (optional, if not using hosted)
+# 3. (Optional, Phases 1+) Boot local Supabase
 supabase start
 
-# 4. Apply migrations
-supabase db push
-
-# 5. Start dev server
+# 4. Start the Next.js dev server
 pnpm dev
 ```
 
-Open http://localhost:3000/en or http://localhost:3000/ar.
+Open http://localhost:3000 — the i18n middleware will redirect you to your preferred locale. Direct links:
+
+- http://localhost:3000/en — English landing
+- http://localhost:3000/ar — Arabic landing (RTL)
+- http://localhost:3000/en/hello — bilingual demo with shadcn Button + RTL logical-property check
+- http://localhost:3000/ar/hello — same page, mirrored
+
+### Scripts
+
+| Command | What it does |
+|---|---|
+| `pnpm dev` | Start Next.js dev server on :3000 |
+| `pnpm build` | Production build (also runs lint + typecheck) |
+| `pnpm start` | Serve the production build |
+| `pnpm typecheck` | `tsc --noEmit` — strict TypeScript check |
+| `pnpm lint` | ESLint flat config (next/core-web-vitals + typescript + prettier) |
+| `pnpm format` | Prettier write — formats code + Tailwind class ordering |
+| `pnpm format:check` | Prettier check (CI-friendly) |
+
+### Project layout
+
+See `PLAN.md` §3. Key directories:
+
+- `app/[locale]/` — App Router pages, scoped under `/en` and `/ar`
+- `components/ui/` — shadcn primitives (Button only at Phase 0; others added when used)
+- `i18n/` — next-intl routing, request config, locale-aware navigation
+- `messages/` — translation JSON per locale
+- `lib/` — shared utilities (`cn()` helper)
+- `middleware.ts` — i18n routing + security headers (CSP, HSTS, X-Frame-Options, Referrer-Policy, Permissions-Policy)
+- `public/manifest.json`, `public/sw.js` — PWA scaffold (hand-written service worker, no Workbox)
+- `supabase/` — config, migrations, Edge Functions, RLS tests (populated in Phases 1+)
 
 ## Environment Variables
 
@@ -65,11 +91,23 @@ Key variables:
 
 ## Deployment
 
-> Finalized in Phase 0.
+### Frontend (Vercel)
 
-- **Frontend:** deploy to Vercel. Configure env vars in the Vercel dashboard.
-- **Backend:** Supabase project (separate envs for preview and production recommended).
-- **Migrations:** apply via `supabase db push` in CI.
+1. Import the repo into Vercel. Framework preset auto-detects Next.js.
+2. Set the env vars from `.env.example` in the Vercel project settings (use separate values for Preview vs Production).
+3. The build command is `pnpm build` (Vercel runs it automatically). Output is `.next/`.
+4. PWA assets in `public/` are served as static files.
+
+### Backend (Supabase)
+
+1. Create a Supabase project (recommend separate orgs/projects for preview and production).
+2. Note the project ref and copy the URL / anon key / service-role key into the corresponding env vars.
+3. Link the local CLI: `supabase link --project-ref <ref>`.
+4. From Phase 1 onwards, migrations live in `supabase/migrations/` and are applied via `supabase db push` (manually or in CI).
+
+### Security headers
+
+Sent by `middleware.ts` on every page response: CSP (production tightening planned in a later phase), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(self), geolocation=(self), microphone=()`, and `Strict-Transport-Security` in production.
 
 ## Contributing
 
