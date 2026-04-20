@@ -1144,7 +1144,9 @@
       "empty": "No break requests yet.",
       "start_break": "Start break",
       "end_break": "End break",
-      "cap_hint": "Max duration for this campaign: {cap} min"
+      "cap_hint": "Max duration for this campaign: {cap} min",
+      "location": "Location",
+      "no_campaign": "No campaign assigned — check your shifts."
     },
     "supervisor": {
       "title": "Break requests",
