@@ -18,6 +18,7 @@ const NAV = [
   { href: '/admin/performance', labelKey: 'Admin.nav.performance' },
   { href: '/admin/live', labelKey: 'Admin.nav.live' },
   { href: '/admin/exports', labelKey: 'Admin.nav.exports' },
+  { href: '/admin/imports', labelKey: 'Admin.nav.imports' },
 ];
 
 export default async function AdminLayout({
