@@ -252,6 +252,24 @@ export function AttendanceClient({
       setSuccessKey(leg === 'in' ? 'success_checked_in' : 'success_checked_out');
       setPhase('done');
       resetCapture();
+      // Fire-and-forget location-trust signal check. Must never block or slow
+      // check-in; errors are silently swallowed. Only fires on check-in.
+      if (leg === 'in' && coords) {
+        try {
+          void fetch('/api/attendance/location-trust', {
+            method: 'POST',
+            keepalive: true,
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              attendance_id: resp.attendance_id,
+              lat: coords.lat,
+              lng: coords.lng,
+            }),
+          });
+        } catch {
+          // swallow — this signal must never affect the check-in flow
+        }
+      }
       // Reload so the server-rendered status reflects the DB.
       window.setTimeout(() => window.location.reload(), 600);
     } catch (err: unknown) {
