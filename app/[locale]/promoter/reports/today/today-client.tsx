@@ -339,8 +339,13 @@ function ReportForm({
       setUploadingKind(kind);
       setFormError(null);
       try {
+        const { compressJpeg } = await import('@/lib/images/compress');
+        const compressed = await compressJpeg(file);
+        const toUpload: Blob = compressed.skipped
+          ? file
+          : new File([compressed.blob], file.name, { type: 'image/jpeg' });
         const fd = new FormData();
-        fd.append('file', file);
+        fd.append('file', toUpload);
         fd.append('daily_report_id', rid);
         fd.append('photo_kind', kind);
         const res = await fetch('/api/activity-photos/upload', { method: 'POST', body: fd });
