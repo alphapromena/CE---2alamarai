@@ -36,6 +36,7 @@ const ALERT_VARIANT: Record<AlertType, StatusPillVariant> = {
   no_usage: 'warning',
   low_performance: 'warning',
   no_activity: 'warning',
+  location_trust_low: 'warning',
 };
 
 function pickLocalizedName(
