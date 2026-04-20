@@ -67,6 +67,7 @@ export default async function SupervisorVisitsPage({
                   <th className="px-4 py-2.5 text-start">{t('columns.visited_at')}</th>
                   <th className="px-4 py-2.5 text-start">{t('columns.campaign')}</th>
                   <th className="px-4 py-2.5 text-start">{t('columns.location')}</th>
+                  <th className="px-4 py-2.5 text-start">{t('columns.promoter')}</th>
                   <th className="px-4 py-2.5 text-end">{t('columns.distance')}</th>
                   <th className="px-4 py-2.5 text-start">{t('columns.outcome')}</th>
                   <th className="px-4 py-2.5 text-start">{t('columns.notes')}</th>
@@ -86,6 +87,18 @@ export default async function SupervisorVisitsPage({
                     </td>
                     <td className="px-4 py-3 text-sm">
                       {pickName(v.location_name_i18n, locale)}
+                    </td>
+                    <td className="px-4 py-3 text-sm">
+                      {v.promoter_id ? (
+                        <Link
+                          href={`/${locale}/supervisor/promoters/${v.promoter_id}`}
+                          className="text-accent hover:underline"
+                        >
+                          {v.promoter_name ?? v.promoter_id.slice(0, 8)}
+                        </Link>
+                      ) : (
+                        <span className="text-fg-muted">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-end text-sm">
                       <div className="flex items-center justify-end gap-1.5">

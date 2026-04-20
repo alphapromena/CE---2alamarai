@@ -131,6 +131,27 @@ export async function listLiveAttendanceJoined(opts?: {
 }
 
 /**
+ * Recent attendance rows for a single user (RLS-aware). Supervisors see rows
+ * only at their assigned locations; admins see all. Used by the supervisor
+ * promoter-detail page.
+ */
+export async function listAttendanceForUser(
+  userId: string,
+  limit = 30,
+): Promise<AttendanceRow[]> {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from('attendance')
+    .select(ATTENDANCE_COLS)
+    .eq('user_id', userId)
+    .order('attendance_date', { ascending: false })
+    .order('check_in_time', { ascending: false, nullsFirst: false })
+    .limit(limit);
+  if (error) return [];
+  return (data ?? []) as AttendanceRow[];
+}
+
+/**
  * Single attendance row. Admin client (service role); caller is responsible
  * for authorising access before calling this helper.
  */
