@@ -676,3 +676,136 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - A client signs an operational agreement that covers per-promoter visibility (then widen the builder for that tenant).
   - Phase 9 polish adds location-level rollups to the client surface (matching the D-028 item 6 revisit clause).
 
+---
+
+## D-034 — Phase 9 email provider: Resend, env-gated, no npm dep; in-app notification always fires
+
+- **Date:** 2026-04-20
+- **Phase:** Phase 9 (Hardening)
+- **Question:** D-031 deferred email delivery for export-ready signals. Which provider, how tightly coupled, and what happens when the provider fails?
+- **Decision:**
+  1. **Provider: Resend.** Called via `fetch('https://api.resend.com/emails', …)` directly — no npm dep. Same posture as D-032 (zero-dep XLSX writer) and consistent with the "provider choice belongs in one swappable file" rationale. Swapping to Postmark/SES is a one-file rewrite of `lib/email/send.ts`.
+  2. **Env-gated.** `RESEND_API_KEY` + `RESEND_FROM_EMAIL` are both optional. If either is unset, `sendEmail()` returns `{ status: 'skipped', reason }` with a structured log line; nothing throws. The rest of the platform keeps working with in-app notifications only.
+  3. **In-app notification always fires.** `notifyExportReady()` inserts a `notifications` row regardless of email success/skip/failure. The bell + Realtime channel (Phase 7) are the authoritative delivery surface; email is a convenience. This matches the D-029 posture of "notifications table is the single source of truth; delivery channels layer on top."
+  4. **Email link = in-app page, not a signed URL.** The CTA in the email points at `/[locale]/admin/exports?job=<id>`. When the user clicks, `getExportDownloadUrlAction` mints a fresh short-TTL signed URL that checks their session first. Long-lived signed URLs would bypass the re-auth check on every download (rejected in D-031) — same logic here.
+  5. **Fire-and-forget from the Server Action.** `queueExportAction` awaits `notifyExportReady` (to ensure logs + the notifications row land) but errors in that call are caught inside the function and logged; they never fail the export itself. The export is already saved to storage before the notification attempt.
+- **Rationale:**
+  - Adding `@resend/node` wouldn't save meaningful lines against the 40-line `send.ts` and would be one more dep to audit.
+  - Env-gating keeps the rollout reversible: a brand-new tenant can run the platform without email plumbing and enable it later without a code change.
+  - Email infrastructure is failure-prone in ways the platform can't fix (DNS, bounces, provider outages). Putting it on the critical path would couple export success to a third-party that's not part of the SLA.
+- **Alternatives considered:**
+  - **Postmark / SES.** Rejected for v1 on preference — Resend has the cleanest API for a simple transactional path. Swap is trivial via `lib/email/send.ts`.
+  - **Supabase Auth email templates.** Rejected: those are for auth flows (invite / reset); overloading them for export notifications muddies the email-template UX + bounce-handling surface.
+  - **Hard dependency on email success.** Rejected: couples the export happy-path to a provider we don't own.
+- **Implementation:**
+  - `lib/email/send.ts` — generic `sendEmail({to, subject, html, text})` + `isEmailConfigured()` helper.
+  - `lib/email/templates.ts` — pure `exportReadyTemplate(locale, name, job_id, app_url)` returning `{subject, html, text}`. Bilingual (en + ar) with dir="rtl" on Arabic.
+  - `lib/email/export-notify.ts` — orchestrator: resolve email via the Phase-9 `admin_get_user_emails` RPC + profile for preferred_language, compose, send, insert notifications row.
+  - `lib/exports/actions.ts` — `queueExportAction` calls `notifyExportReady(job.id, me.id)` after the storage upload.
+  - `supabase/migrations/20260426030000_phase9_notification_kind_export.sql` — `ALTER TYPE ... ADD VALUE IF NOT EXISTS 'export_ready'`.
+  - Tests: 5 send-path cases (skip reasons × 2, successful call shape, http error, fetch exception) + 3 template cases (en + ar + URL encoding).
+- **Revisit when:**
+  - Ops picks a different provider — change `lib/email/send.ts` only.
+  - Bounce / complaint webhooks matter operationally — add a new Edge Function + provider-webhook secret; `notifications.payload` already has room for delivery status.
+  - Email becomes the primary delivery surface (e.g. scheduled reports to clients who don't log in daily) — promote it above the in-app notification and re-evaluate the fire-and-forget coupling.
+
+---
+
+## D-035 — Phase 9 rate limiting: DB-backed fixed-window counters; fail-open; no Upstash
+
+- **Date:** 2026-04-20
+- **Phase:** Phase 9 (Hardening)
+- **Question:** Rate-limit the abuse-prone Server Actions (login / reset / feedback / export) with what backend, what algorithm, and what failure mode?
+- **Decision:**
+  1. **DB-backed** via a new `public.rate_limits (key, window_start, count, updated_at)` table + `check_rate_limit(p_key, p_window_seconds, p_max_requests)` SECURITY DEFINER RPC. RLS on the table has no policies; all I/O is through the RPC.
+  2. **Fixed-window** counter (not sliding, not token-bucket). Atomic via `INSERT … ON CONFLICT (key) DO UPDATE` with a conditional window reset inside the SET clause; Postgres serialises on the row's xmin so no explicit lock is needed.
+  3. **No Upstash / no Redis.** Keeps the zero-new-dep posture (D-032 / D-034). These boundary paths are bursty and infrequent per-subject; the DB handles them fine. If a truly high-throughput path appears (not today), we'd reach for Redis then.
+  4. **Subject key = user-id when authed, `x-forwarded-for` first hop otherwise.** Authed subject dominates the public IP key so a shared-office NAT doesn't punish legit users sharing an egress address.
+  5. **Fail-open on DB error.** If the RPC returns an error, the check returns `{ allowed: true }` with a `warn` log. Breaking legit users during an infrastructure glitch is strictly worse than leaking one free window to a potential attacker — every other primitive (Supabase's own auth rate limits, audit logs) still catches them.
+  6. **Initial policies (per-subject, per-window):**
+     - `login`:           10 / 60 s
+     - `reset_request`:    5 / 300 s
+     - `reset_confirm`:   10 / 300 s
+     - `feedback_submit`: 20 / 60 s
+     - `export_queue`:    10 / 60 s
+  7. **GC.** `gc_rate_limits()` deletes rows idle > 24 h. Scheduled daily via pg_cron (example SQL in the migration header). No-op if not scheduled; the table grows ~1 row per (subject × action) with a 60-byte footprint.
+- **Rationale:**
+  - DB for rate limits mirrors the "one transactional source of truth" posture we already took with the audit log (D-011 boundary) and rate_limits join for free — an over-limit counts as a normal DB row and shows up in forensic queries.
+  - Fixed-window is the simplest algorithm that gets the job done; sliding-window + token-bucket add state + math for marginal smoothness on boundary traffic we don't see.
+  - Fail-open is the standard posture for anti-abuse rate limits. Fail-closed is reserved for budget / billing controls where we can't afford a free lunch.
+- **Alternatives considered:**
+  - **Upstash / Redis.** Rejected for v1: new vendor, new secret, new failure mode, and Redis rate limits fail-closed by default which would break legit users if Upstash had a bad hour.
+  - **Next.js middleware + in-memory counters.** Rejected: Vercel serverless is multi-region + multi-instance; per-process counters aren't counters, they're noise.
+  - **Token-bucket.** Considered. Deferred — the boundary paths don't benefit from burst tolerance; 10/min on login is the right shape either way.
+  - **Fail-closed.** Considered. Rejected per the rationale above.
+- **Implementation:**
+  - Migration: `supabase/migrations/20260426020000_phase9_rate_limits.sql`.
+  - Client: `lib/rate-limit/check.ts` with `RATE_LIMITS` registry + `checkRateLimit(keyName, userId?)`.
+  - Wired into: `loginAction`, `resetRequestAction` (replies ok silently to avoid leaking rate-limit state), `resetConfirmAction`, `submitFeedbackAction`, `queueExportAction`.
+  - Bilingual copy: `rate_limited` key added under `Exports.errors` and `Feedback.form.errors`; `Auth.errors.rate_limited` already existed from Phase 1.
+  - Tests: 6 cases (policy registry sanity, RPC key shape with/without user id, allowed/denied, fail-open on DB error + empty data).
+- **Revisit when:**
+  - A public Server Action starts seeing >1 qps per subject — switch to sliding-window or move that path to Upstash.
+  - A brand pushes for per-tenant rate policies — add `tenant_id` to the key and widen the registry.
+  - Fail-closed becomes the right posture (e.g. rate limiting export generation cost because it's expensive) — flip the fallback on that one policy only.
+
+---
+
+## D-036 — Web Push deferred to Phase 9.1
+
+- **Date:** 2026-04-20
+- **Phase:** Phase 9 (Hardening) — deferred to Phase 9.1
+- **Question:** D-029 item 6 deferred Web Push from Phase 7 to Phase 9. Should Phase 9 ship it?
+- **Decision:** **Defer to optional Phase 9.1.** Web Push is a well-scoped, self-contained follow-up that needs 2–3 hours of focused work done right. Phase 9's core hardening items (error boundaries, indexes, rate limiting, email, observability) all landed cleanly; shipping a half-done VAPID + subscription UI would be strictly worse than a clean deferral.
+- **Rationale:**
+  - VAPID key management, service-worker push handling (with iOS Safari's specific quirks around user-gesture requirements), per-user subscription storage, and notification payload shaping each have their own testing matrix. Real-device testing on iOS + Android + desktop is not a vitest job.
+  - The `notifications` table (Phase 7) already carries `kind + payload`, which is everything a push envelope needs. The integration is bolted on top, not a structural change.
+  - Phase 9's exit criteria don't require push — the in-app bell + Realtime channel (D-029 item 1) covers the core notifications UX.
+- **Alternatives considered:**
+  - **Ship a minimal Web Push path in Phase 9.** Rejected: minimal in this space means "skips the iOS testing," which is equivalent to not shipping it.
+  - **Cancel Web Push permanently.** Rejected: the ask is legitimate and the foundation is already in place.
+- **Implementation plan (Phase 9.1 scope):**
+  - Migration: new `push_subscriptions (user_id, endpoint, p256dh, auth, user_agent, created_at, active)` table with self-only RLS.
+  - Client: subscribe button in notification-bell dropdown (all roles); `pushManager.subscribe({ userVisibleOnly, applicationServerKey })`; POST subscription to a Server Action that upserts the row.
+  - Service worker: `self.addEventListener('push', …)` reading `event.data.json()` and calling `self.registration.showNotification(title, opts)`.
+  - Edge Function `send-web-push` invoked from `detect-live-issues` + notifications fan-out paths; uses Web Push protocol headers (VAPID + aes128gcm) either via a Deno library or by hand.
+  - Env: `NEXT_PUBLIC_VAPID_PUBLIC_KEY` + `VAPID_PRIVATE_KEY` + `VAPID_SUBJECT` (mailto). Generated via `npx web-push generate-vapid-keys`.
+  - Real-device test matrix: iOS 16.4+ Safari PWA (home-screen install required for push on iOS), Android Chrome, desktop Chrome/Firefox.
+- **Revisit when:**
+  - Ops signs off on the Phase 9.1 scope + gets VAPID keys generated + rotation plan agreed.
+  - A user persona — likely supervisor — is missing push badly enough in field feedback to justify the work.
+
+---
+
+## D-037 — Phase 9 observability: structured JSON logs always; Sentry soft-attach via env; promoter idle-timeout companion
+
+- **Date:** 2026-04-20
+- **Phase:** Phase 9 (Hardening)
+- **Question:** How do we add production observability without forcing a vendor choice, and how do we handle session hygiene on shared-phone promoter devices?
+- **Decision:**
+  1. **Always-on structured logging.** `lib/observability/logger.ts` emits JSON lines to stdout via `console.log/warn/error` (Vercel + Supabase both capture these). Level-gated by `LOG_LEVEL` (`debug|info|warn|error`, default `info`). Recursive redaction on every payload — the key set overlaps with `lib/auth/audit.ts` (password / token / access_token / refresh_token / api_key / authorization / cookie / secret / service_role_key) plus case-insensitive match.
+  2. **Sentry as a soft-attach.** `reportError()` always writes the error as a structured log line. If `SENTRY_DSN` is set AND `globalThis.Sentry.captureException` is mounted (e.g. from an `instrumentation.ts` that `require`s `@sentry/nextjs`), it also forwards. If not, everything still works via stdout logs. This keeps the feature additive — ops can pick Sentry later by installing the SDK + setting the env var + adding instrumentation.ts; no Phase 9 code change needed.
+  3. **Client-side mirror.** `lib/observability/report-client.ts` is a minimal client bundle that does the same Sentry check against `window.Sentry`. Wired into `ErrorFallback` (step 2) and `global-error.tsx`.
+  4. **Existing `console.error/warn` call sites migrated:** `lib/auth/audit.ts`, `lib/kpis/invoke.ts`, `lib/stock/actions-helper.ts` now use the structured logger. Browser-side `console.warn` in `supervisor/visits/new/new-visit-client.tsx` is left as-is (client context, already visible to the user).
+  5. **Companion: promoter idle-timeout.** `components/features/idle-watcher.tsx` auto-calls `logoutAction()` after 30 min of no activity on promoter pages. Activity = mouse / keyboard / touch / visibilitychange. 60 s grace warning with "Stay signed in". Retail phones are often left on shelves unlocked; this closes the stale-session exposure. In-progress drafts survive via D-010 IndexedDB + D-009 idempotency keys — loggin back in replays them cleanly.
+  6. **No Sentry npm dep at this time.** Recording the contract here so ops can enable it without a new phase: install `@sentry/nextjs`, add `instrumentation.ts` with `Sentry.init({ dsn: process.env.SENTRY_DSN })`, and everything described above picks it up.
+- **Rationale:**
+  - One interface that always works + optional vendor attach = no coupling to a vendor decision.
+  - Structured JSON is the right default: `vercel logs` + Supabase log drain (pg_net on audit inserts) + Axiom/Logtail if ops wants that tier later all read JSON natively.
+  - Redaction at the logger level means every new call site gets it for free; we don't need per-call discipline.
+  - The idle-timeout belongs in this entry because it's the client-side observability surface (when a user's session goes away, we want the audit trail + notifications bell empty state to both reflect that) and it was scoped together in the Phase 9 plan.
+- **Alternatives considered:**
+  - **Install `@sentry/nextjs` in Phase 9.** Rejected: vendor lock + new dep. The soft-attach contract lets ops pick Sentry or any other SDK that exposes `captureException` via instrumentation.
+  - **Custom log schema (e.g. pino).** Rejected: pino would be a dep, and the JSON shape we ship matches the common denominator of Axiom + Logtail + Datadog without it.
+  - **Skip the idle-timeout; rely on Supabase's JWT expiry.** Rejected: Supabase sessions are ~1 hour default — that's an hour of exposure on a shared phone. Client-side nudge + server-side signOut is the cheap defense-in-depth move.
+  - **60-minute idle threshold.** Considered. 30 is the right shop-floor number; a promoter actively running a shift will have activity inside 30 min; a promoter who doesn't shouldn't be logged in.
+- **Implementation:**
+  - `lib/observability/logger.ts` (server) + `lib/observability/report-client.ts` (client, no `server-only` import so it doesn't pull server code into the browser bundle).
+  - `lib/test-utils/server-only-stub.ts` + vitest alias for `server-only` — enables unit-testing server modules in node. 7 new logger tests (JSON shape, level gating, redaction, Sentry pass-through with + without DSN, Sentry exception isolation).
+  - `components/features/idle-watcher.tsx` + en/ar copy under `IdleWatcher.*` namespace. Wired into `app/[locale]/promoter/layout.tsx` only.
+- **Revisit when:**
+  - Ops enables Sentry — install + instrumentation per the contract; no Phase code changes.
+  - Log volume grows enough to need sampling — add a `logger.sample(p)` helper and gate the `debug` level through it.
+  - Idle-timeout threshold rejected by field teams as too aggressive — move it behind `kpi_config.idle_timeout_minutes` per the D-019 / D-027 / D-028 / D-029 pattern.
+  - Supervisor / admin roles ever run from shared devices — extend `IdleWatcher` to their layouts with a role-appropriate threshold.
+

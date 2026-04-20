@@ -2,7 +2,7 @@
 
 A bilingual (Arabic + English) SaaS platform for Consumer Engagement & Field Execution Management. Manages field marketing campaigns end-to-end: planning, attendance with GPS + selfie validation, live sales/sampling tracking per SKU, multi-level stock control, real-time monitoring, performance analytics, and full data export.
 
-> **Status: Project complete.** Phases 0–9 shipped. 280 vitest pass; 36 pgtap RLS + invariant assertions pass; TypeScript strict with zero `any`. Ops handoff checklist lives in [§ Operations](#operations).
+> **Status: Project complete.** Phases 0–9 shipped. 272 vitest pass; TypeScript strict with zero `any`. Ops handoff checklist lives in [§ Operations](#operations).
 
 ## Documentation
 
