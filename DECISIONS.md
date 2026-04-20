@@ -809,3 +809,46 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - Idle-timeout threshold rejected by field teams as too aggressive — move it behind `kpi_config.idle_timeout_minutes` per the D-019 / D-027 / D-028 / D-029 pattern.
   - Supervisor / admin roles ever run from shared devices — extend `IdleWatcher` to their layouts with a role-appropriate threshold.
 
+---
+
+## D-038 — PWA v1: hand-written SW, zero-dep icon generator, single-locale manifest name
+
+- **Date:** 2026-04-20
+- **Phase:** Phase 10.1 (Full PWA)
+- **Question:** How do we take the Phase 0/9 PWA scaffolding (minimal manifest, hand-written SW, stub offline.html) to a 100 Lighthouse PWA score — installable on Android + iOS, bilingual offline page, update prompt, install banner — without adopting a PWA framework?
+- **Decision:**
+  1. **No Workbox / @serwist / next-pwa.** Upgrade `public/sw.js` in place. Three named caches under a `ce-v2-` prefix (`shell`, `static`, `runtime`); cleanup on `activate` deletes anything without that prefix. Strategies: network-first for navigations (falls back to the bilingual offline page precached at install), network-first-with-3 s-timeout for same-origin `GET /api/*`, stale-while-revalidate for static assets + `/_next/static/*`, pass-through for cross-origin. Non-GET is never intercepted — D-010 offline queue owns writes. `message`-channel `SKIP_WAITING` drives the update toast.
+  2. **In-house PNG icon generator.** `scripts/generate-pwa-icons.mjs` emits the full Android / maskable / apple-touch / favicon / iOS splash chain using only Node's `zlib` + a hand-rolled CRC32 + raw PNG chunk writers. Same posture as D-032 (in-house OOXML + STORED zip for XLSX). The placeholder artwork is a solid accent-color square with a centered white disc; the manifest reads real PNGs on disk so no runtime rendering is needed. Regenerate via `pnpm generate:icons` when brand artwork ships.
+  3. **Maskable variant at 0.48 scale.** Single 512×512 maskable (purpose `maskable`) with the mark inset to 48 % of canvas so it sits comfortably inside Android's 80 % safe zone (0.48 / 0.80 = 0.6 effective). All non-maskable sizes use the full 0.6 scale.
+  4. **Manifest is single-locale (English).** `name` / `short_name` / shortcut `name`s are English. Rationale: the install sheet renders before the app boots a locale, and the user's OS language may differ from their app preference. Shortcut URLs point at `/en/promoter/attendance` etc.; unauthenticated users land on `/en/login` per existing middleware, and authed users are redirected by next-intl to their preferred locale on landing. A server-rendered `/manifest.webmanifest` route with per-request `Accept-Language` was considered and rejected: adds a dynamic route for marginal polish, and iOS doesn't refetch the manifest after install anyway.
+  5. **Install banner: single component, two paths.** `components/features/app/install-prompt.tsx` captures `beforeinstallprompt` for Android/desktop Chrome and renders a CTA banner; on iOS Safari it falls back to a share-button instructions banner (WebKit exposes no install event). Suppressed when `display-mode: standalone` is active or `navigator.standalone` is true. Dismissal persists in `sessionStorage` only — a browser restart re-offers the banner, which matches the "gentle nudge" UX we want.
+  6. **Update prompt.** `ServiceWorkerRegister` watches for `registration.updatefound` + `installing.state === 'installed'` + existing `navigator.serviceWorker.controller`. First install is silent; only updates notify. Tap → `postMessage({type:'SKIP_WAITING'})` → SW calls `skipWaiting()` → `controllerchange` → guarded single reload.
+  7. **Offline page is a Next.js route, not a static HTML.** `app/[locale]/offline/page.tsx` with `dynamic = 'force-static'` so the SW can precache the rendered HTML at install. Bilingual via `Errors.offline_*` (reused) + new `Pwa.offline_queued_hint`. SW picks the fallback from the navigation request's URL prefix (`/ar` → `/ar/offline`, else `/en/offline`).
+  8. **Apple-touch-startup-image ships only one size this pass.** iPhone 14/15 Pro portrait 1179×2556. Every other device size is a tracked follow-up under this decision. Absence of a matching splash on other devices is a cosmetic deduction only — installability + Lighthouse PWA score are unaffected. Next.js's metadata API doesn't type `apple-touch-startup-image`, so the link is emitted via a raw `<head>` block.
+  9. **Preserve the offline write-queue.** `lib/offline/queue.ts` (D-010 / Phase 7) is not touched and the SW never intercepts non-GET requests. Attendance check-ins, sales entries, and daily reports continue to queue in IndexedDB and replay via the on-page flush loop.
+- **Rationale:**
+  - The existing SW is ~100 LOC and the cache strategy split is another ~30. Workbox adds ~10 KB gzipped plus a config DSL for behavior we can inline; the cost/benefit doesn't land for a three-strategy SW.
+  - The icon generator emits <10 KB of compressed output for the whole set and runs in ~200 ms. A run-time `sharp` + font pipeline would either need a new dep (`sharp` or `pwa-asset-generator`) or a build-time plugin — both strictly worse than writing twenty lines of PNG chunk code.
+  - Single-locale manifest + locale-prefixed shortcuts keeps the feature purely static. No edge function, no Accept-Language parsing, no `no-store` cache headers on manifest requests.
+- **Alternatives considered:**
+  - **`next-pwa` / `@serwist/next`.** Rejected: dep weight + opinionated SW that would displace the hand-written strategies we already have and that mesh with the offline queue.
+  - **`sharp` or `pwa-asset-generator` for icons.** Rejected: `sharp` is a native dep with platform-specific binaries; `pwa-asset-generator` pulls Puppeteer. Neither fits the zero-dep posture.
+  - **Dynamic `/manifest.webmanifest` route with per-request locale.** Rejected (item 4 rationale).
+  - **Workbox `precacheAndRoute` + generated manifest.** Rejected: couples SW to the build pipeline and invalidates the "rerun anytime" property of the current SW.
+- **Implementation:**
+  - `public/manifest.json` — full icon set, maskable variant, shortcuts, `id`, `orientation: portrait-primary`.
+  - `public/sw.js` — versioned caches, three strategies, `SKIP_WAITING` message handler.
+  - `public/icons/*.png` + `scripts/generate-pwa-icons.mjs` + `pnpm generate:icons` script.
+  - `app/[locale]/offline/page.tsx` + sibling client-only `retry-button.tsx`.
+  - `components/sw-register.tsx` — update toast via `registration.updatefound`.
+  - `components/features/app/install-prompt.tsx` — Android/iOS banner.
+  - `app/[locale]/layout.tsx` — `metadata.icons`, raw `<link rel="apple-touch-startup-image">`, `viewport.viewportFit: cover`, `<InstallPrompt />` mount.
+  - `middleware.ts` — drop the stale `offline.html` exclusion.
+  - Bilingual strings under new `Pwa` namespace in `messages/{ar,en}.json`.
+  - Vitest: `lib/__tests__/manifest.test.ts` validates required manifest fields, icon-purpose split, and shortcut URL shape.
+- **Revisit when:**
+  - Real-device testing flags any splash-screen regression — add the missing apple-touch-startup-image sizes (iPhone SE, iPhone Plus, iPad family) via the icon generator; follow the media-query list in https://web.dev/learn/pwa/web-app-manifest.
+  - Background Sync becomes production-ready on iOS — graduate `lib/offline/queue.ts` from the on-page flush loop to the SW's `sync` event and drop the periodic interval.
+  - Push lands (D-036 / Phase 9.1) — add `self.addEventListener('push', …)` to this same `sw.js` file; no framework migration needed.
+  - Brand assets finalize — replace the placeholder render logic in `generate-pwa-icons.mjs` and commit the new PNG set.
+
