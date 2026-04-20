@@ -252,12 +252,8 @@ values (
 create temporary table demo_client on commit drop as
   select id from public.clients where name = 'Almarai';
 
--- Re-link the client-role profile (client@almarai.com) to the new Almarai row.
-update public.profiles p
-  set client_id = (select id from demo_client),
-      full_name = (select full_name_ar from demo_users where slot = 'client_1'),
-      preferred_language = 'ar'
-  where p.id = (select user_id from demo_users where slot = 'client_1');
+-- Client-role profile (client@almarai.com) is re-linked in Stage 2.7 along
+-- with all other demo profile updates, under a disabled self-update guard.
 
 -- ----------------------------------------------------------------------------
 -- 2.2 Region (Jordan) + 3 cities
@@ -479,6 +475,273 @@ select s.id          as shift_id,
 from public.shifts s
 join demo_campaigns dc on dc.id = s.campaign_id
 join demo_locations dl on dl.id = s.location_id;
+
+-- ----------------------------------------------------------------------------
+-- 2.7 Profile updates + user_assignments
+--
+-- The profiles_self_update_guard_trg enforces that only admins may change
+-- role / active / client_id. In SQL Editor auth.uid() is NULL, so is_admin()
+-- returns false and the guard would reject the role flip. We disable it for
+-- the duration of stage 2.7 and re-enable before moving on. The
+-- user_assignments sync trigger (which updates profiles.assigned_locations)
+-- is allowed by the guard anyway (nested trigger path); we still disable the
+-- guard uniformly to keep the stage self-contained.
+-- ----------------------------------------------------------------------------
+alter table public.profiles disable trigger profiles_self_update_guard_trg;
+
+update public.profiles p
+  set role               = du.role::public.user_role,
+      full_name          = du.full_name_ar,
+      preferred_language = 'ar',
+      client_id          = case when du.role = 'client'
+                                then (select id from demo_client)
+                                else null
+                           end,
+      active             = true
+  from demo_users du
+  where p.id = du.user_id
+    and du.email <> 'admin@almarai.com';
+
+alter table public.profiles enable trigger profiles_self_update_guard_trg;
+
+-- Promoter assignments: 12 singles + 3 multi-cover = 18 assignment rows.
+create temporary table demo_promoter_assignment_input (
+  promoter_slot  text not null,
+  campaign_slot  text not null,
+  location_slot  text not null
+) on commit drop;
+
+insert into demo_promoter_assignment_input values
+  ('promoter_01', 'camp_laban',  'loc_amman_carrefour_city'),
+  ('promoter_02', 'camp_laban',  'loc_amman_safeway_7th'),
+  ('promoter_03', 'camp_laban',  'loc_amman_cozmo_abdoun'),
+  ('promoter_04', 'camp_laban',  'loc_amman_miles_sweifieh'),
+  ('promoter_05', 'camp_laban',  'loc_zarqa_safeway'),
+  ('promoter_06', 'camp_laban',  'loc_zarqa_miles_newcity'),
+  ('promoter_07', 'camp_laban',  'loc_irbid_carrefour'),
+  ('promoter_08', 'camp_laban',  'loc_irbid_safeway'),
+  ('promoter_09', 'camp_juice',  'loc_amman_carrefour_city'),
+  ('promoter_10', 'camp_juice',  'loc_amman_safeway_7th'),
+  ('promoter_11', 'camp_juice',  'loc_amman_cozmo_abdoun'),
+  ('promoter_12', 'camp_juice',  'loc_amman_miles_sweifieh'),
+  -- Multi-cover:
+  ('promoter_13', 'camp_laban',  'loc_zarqa_safeway'),
+  ('promoter_13', 'camp_laban',  'loc_irbid_carrefour'),
+  ('promoter_14', 'camp_laban',  'loc_amman_carrefour_city'),
+  ('promoter_14', 'camp_juice',  'loc_amman_carrefour_city'),
+  ('promoter_15', 'camp_laban',  'loc_amman_safeway_7th'),
+  ('promoter_15', 'camp_juice',  'loc_amman_safeway_7th');
+
+insert into public.user_assignments (user_id, location_id, shift_id, role_scope, active)
+select du.user_id,
+       ds.location_id,
+       ds.shift_id,
+       'promoter'::public.user_role,
+       true
+from demo_promoter_assignment_input pai
+join demo_users du  on du.slot = pai.promoter_slot
+join demo_shifts ds on ds.campaign_slot = pai.campaign_slot
+                   and ds.location_slot = pai.location_slot;
+
+-- Supervisor assignments. role_scope='supervisor', shift_id NULL.
+create temporary table demo_supervisor_assignment_input (
+  supervisor_slot text not null,
+  location_slot   text not null
+) on commit drop;
+
+insert into demo_supervisor_assignment_input values
+  -- Supervisor 1 covers the 4 Amman locations
+  ('supervisor_1', 'loc_amman_carrefour_city'),
+  ('supervisor_1', 'loc_amman_safeway_7th'),
+  ('supervisor_1', 'loc_amman_cozmo_abdoun'),
+  ('supervisor_1', 'loc_amman_miles_sweifieh'),
+  -- Supervisor 2 covers the 2 Zarqa + 2 Irbid locations
+  ('supervisor_2', 'loc_zarqa_safeway'),
+  ('supervisor_2', 'loc_zarqa_miles_newcity'),
+  ('supervisor_2', 'loc_irbid_carrefour'),
+  ('supervisor_2', 'loc_irbid_safeway'),
+  -- Supervisor 3 covers one from each city for cross-coverage
+  ('supervisor_3', 'loc_amman_cozmo_abdoun'),
+  ('supervisor_3', 'loc_zarqa_safeway'),
+  ('supervisor_3', 'loc_irbid_carrefour');
+
+insert into public.user_assignments (user_id, location_id, shift_id, role_scope, active)
+select du.user_id,
+       dl.id,
+       null,
+       'supervisor'::public.user_role,
+       true
+from demo_supervisor_assignment_input sai
+join demo_users du     on du.slot = sai.supervisor_slot
+join demo_locations dl on dl.slot = sai.location_slot;
+
+-- ----------------------------------------------------------------------------
+-- 2.8 Attendance (30-day rolling window)
+--
+-- For every (promoter assignment, day in past 30) where the day's DOW matches
+-- the shift's days_of_week, produce one attendance row. Distribution:
+--   * ~5% absent (all check-in/out fields NULL)
+--   * ~10% late (check_in 10-40 min after shift start)
+--   * ~85% on-time (check_in 0-10 min before shift start)
+--   * ~3% outside geofence (is_within_geofence = false, distance 150-300 m)
+--   * ~3% early leave on past days (checked_out at end_time - 10..40 min)
+-- days_ago = 0 rows have no check_out (still mid-shift in demo terms).
+-- ----------------------------------------------------------------------------
+with base as (
+  select ua.user_id,
+         s.campaign_id,
+         s.location_id,
+         s.id as shift_id,
+         s.start_time,
+         s.end_time,
+         s.days_of_week,
+         dl.lat as loc_lat,
+         dl.lng as loc_lng,
+         gs.n as days_ago,
+         (current_date - gs.n)::date as attendance_date
+  from public.user_assignments ua
+  join public.shifts s
+    on s.id = ua.shift_id
+   and s.active = true
+  join demo_locations dl on dl.id = ua.location_id
+  cross join generate_series(0, 29) as gs(n)
+  where ua.role_scope = 'promoter'
+    and ua.active = true
+    and ua.location_id in (select id from demo_locations)
+    and extract(dow from (current_date - gs.n)::date)::smallint = any (s.days_of_week)
+),
+rolled as (
+  select b.*,
+         random() as r_absent,
+         random() as r_late,
+         random() as r_geo,
+         random() as r_early,
+         random() as r_ci_jit,
+         random() as r_co_jit,
+         random() as r_lat_jit,
+         random() as r_lng_jit
+  from base b
+),
+decided as (
+  select r.*,
+         (r.r_absent < 0.05)                          as is_absent,
+         (r.r_late   < 0.10 and r.r_absent >= 0.05)   as is_late,
+         (r.r_geo    < 0.03 and r.r_absent >= 0.05)   as is_out_of_geofence,
+         (r.days_ago > 0 and r.r_early < 0.03 and r.r_absent >= 0.05)
+                                                      as is_early_leave
+  from rolled r
+),
+composed as (
+  select d.*,
+         -- check_in offset: late -> +10..+40 min, else -10..0 min
+         case
+           when d.is_late then (10 + floor(d.r_ci_jit * 30))::int
+           else            (-floor(d.r_ci_jit * 10))::int
+         end as ci_offset_min,
+         -- check_out offset: early_leave -> -40..-10 min, else -5..+15 min
+         case
+           when d.is_early_leave then -(10 + floor(d.r_co_jit * 30))::int
+           else                        (-5 + floor(d.r_co_jit * 20))::int
+         end as co_offset_min,
+         -- geofence jitter radius in degrees (~0.0005 deg ≈ 50 m within;
+         -- ~0.0025 deg ≈ 275 m outside)
+         case when d.is_out_of_geofence then 0.00250 else 0.00045 end as jitter_deg,
+         -- recorded haversine distance in metres
+         case when d.is_out_of_geofence
+              then (150 + floor(d.r_geo * 150))::int
+              else ( 10 + floor(d.r_geo *  80))::int
+         end as distance_m
+  from decided d
+)
+insert into public.attendance (
+  user_id, campaign_id, location_id, shift_id, attendance_date,
+  check_in_time, check_in_lat, check_in_lng, check_in_photo_path, check_in_distance_m,
+  check_out_time, check_out_lat, check_out_lng, check_out_photo_path, check_out_distance_m,
+  status, is_within_geofence,
+  idempotency_key_check_in, idempotency_key_check_out,
+  created_at
+)
+select
+  c.user_id,
+  c.campaign_id,
+  c.location_id,
+  c.shift_id,
+  c.attendance_date,
+  case when c.is_absent then null
+       else (c.attendance_date::timestamp + c.start_time) at time zone 'Asia/Amman'
+          + (c.ci_offset_min * interval '1 minute')
+  end,
+  case when c.is_absent then null
+       else c.loc_lat + (c.r_lat_jit * 2 - 1) * c.jitter_deg
+  end,
+  case when c.is_absent then null
+       else c.loc_lng + (c.r_lng_jit * 2 - 1) * c.jitter_deg
+  end,
+  case when c.is_absent then null
+       else 'demo/checkin_' || gen_random_uuid()::text || '.jpg'
+  end,
+  case when c.is_absent then null else c.distance_m end,
+  case when c.is_absent or c.days_ago = 0 then null
+       else (c.attendance_date::timestamp + c.end_time) at time zone 'Asia/Amman'
+          + (c.co_offset_min * interval '1 minute')
+  end,
+  case when c.is_absent or c.days_ago = 0 then null
+       else c.loc_lat + (c.r_lat_jit * 2 - 1) * c.jitter_deg * 0.6
+  end,
+  case when c.is_absent or c.days_ago = 0 then null
+       else c.loc_lng + (c.r_lng_jit * 2 - 1) * c.jitter_deg * 0.6
+  end,
+  case when c.is_absent or c.days_ago = 0 then null
+       else 'demo/checkout_' || gen_random_uuid()::text || '.jpg'
+  end,
+  case when c.is_absent or c.days_ago = 0 then null
+       else (10 + floor(random() * 80))::int
+  end,
+  case
+    when c.is_absent        then 'absent'::public.attendance_status
+    when c.days_ago = 0 and c.is_late then 'late'::public.attendance_status
+    when c.days_ago = 0     then 'checked_in'::public.attendance_status
+    when c.is_early_leave   then 'early_leave'::public.attendance_status
+    else                         'checked_out'::public.attendance_status
+  end,
+  not c.is_out_of_geofence,
+  case when c.is_absent then null else gen_random_uuid() end,
+  case when c.is_absent or c.days_ago = 0 then null else gen_random_uuid() end,
+  -- Stamp created_at to the real attendance day so Phase 6 daily rollups bucket
+  -- the rows into their correct historical buckets.
+  (c.attendance_date::timestamp + c.start_time) at time zone 'Asia/Amman'
+on conflict (user_id, attendance_date, campaign_id, location_id) do nothing;
+
+-- ----------------------------------------------------------------------------
+-- 2.9 location_pings every 15 min between check-in and check-out.
+-- Only for attendance rows that actually checked out (i.e. not absent, not
+-- still open). Coordinates drift within ~40 m of the location.
+-- ----------------------------------------------------------------------------
+insert into public.location_pings (
+  attendance_id, promoter_id, lat, lng, accuracy_m, battery_pct, captured_at, created_at
+)
+select
+  a.id,
+  a.user_id,
+  dl.lat + (random() * 2 - 1) * 0.00035,
+  dl.lng + (random() * 2 - 1) * 0.00035,
+  (5 + floor(random() * 16))::double precision,
+  (85 + floor(random() * 16))::int,
+  ping_ts,
+  ping_ts
+from public.attendance a
+join demo_locations dl on dl.id = a.location_id
+cross join lateral (
+  select gs.ts as ping_ts
+  from generate_series(
+    a.check_in_time + interval '5 minutes',
+    a.check_out_time - interval '5 minutes',
+    interval '15 minutes'
+  ) as gs(ts)
+) pings
+where a.check_in_time is not null
+  and a.check_out_time is not null
+  and a.campaign_id in (select id from demo_campaigns);
 
 commit;
 
