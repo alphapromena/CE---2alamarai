@@ -1118,7 +1118,18 @@
     "reconciliation_mismatch": "Reconciliation mismatch: declared {declared}, expected {expected} (Δ {diff})",
     "no_usage": "No usage for {hours_since}h on stock received ({received})",
     "low_performance": "Low performance on {tier_metric}: {metric_value} below threshold {threshold}",
-    "no_activity": "No activity reported since check-in ({hours_since_check_in}h, threshold {threshold_hours}h)"
+    "no_activity": "No activity reported since check-in ({hours_since_check_in}h, threshold {threshold_hours}h)",
+    "location_trust_low": "Unreliable location signals at check-in"
+  },
+  "LocationTrust": {
+    "summary": "Unreliable location signals",
+    "reasons": {
+      "vpn": "VPN detected",
+      "proxy": "Proxy detected",
+      "fraud_score_high": "High fraud score",
+      "country_mismatch": "IP country does not match device location"
+    },
+    "footer_note": "Check-in was allowed — this is a verification signal, not a block."
   },
   "Roles": {
     "admin": "Admin",

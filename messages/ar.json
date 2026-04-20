@@ -1118,7 +1118,18 @@
     "reconciliation_mismatch": "عدم تطابق في الجرد: المعلَن {declared}، المتوقَّع {expected} (الفرق {diff})",
     "no_usage": "لا يوجد استخدام منذ {hours_since} ساعة على مخزون مستلم ({received})",
     "low_performance": "أداء منخفض في {tier_metric}: {metric_value} دون الحد {threshold}",
-    "no_activity": "لا يوجد نشاط مسجَّل منذ تسجيل الدخول ({hours_since_check_in} ساعة، الحد {threshold_hours} ساعة)"
+    "no_activity": "لا يوجد نشاط مسجَّل منذ تسجيل الدخول ({hours_since_check_in} ساعة، الحد {threshold_hours} ساعة)",
+    "location_trust_low": "إشارات موقع غير موثوقة عند تسجيل الحضور"
+  },
+  "LocationTrust": {
+    "summary": "إشارات موقع غير موثوقة",
+    "reasons": {
+      "vpn": "تم رصد شبكة افتراضية (VPN)",
+      "proxy": "تم رصد وسيط (Proxy)",
+      "fraud_score_high": "درجة احتيال مرتفعة",
+      "country_mismatch": "دولة عنوان الإنترنت لا تطابق موقع الجهاز"
+    },
+    "footer_note": "تم السماح بتسجيل الحضور — هذه إشارة تحقق، لا تمنع العمل."
   },
   "Roles": {
     "admin": "مدير",
