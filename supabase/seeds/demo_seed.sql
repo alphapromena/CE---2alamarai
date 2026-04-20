@@ -710,6 +710,7 @@ select
   -- Stamp created_at to the real attendance day so Phase 6 daily rollups bucket
   -- the rows into their correct historical buckets.
   (c.attendance_date::timestamp + c.start_time) at time zone 'Asia/Amman'
+from composed c
 on conflict (user_id, attendance_date, campaign_id, location_id) do nothing;
 
 -- ----------------------------------------------------------------------------
