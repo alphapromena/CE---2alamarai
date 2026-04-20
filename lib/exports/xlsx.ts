@@ -182,7 +182,7 @@ export function buildXlsx(sheets: readonly Sheet[]): Uint8Array {
   const encoder = new TextEncoder();
   const seen = new Set<string>();
   const names = sheets.map((s, idx) => {
-    let base = sanitizeSheetName(s.name, `Sheet${idx + 1}`);
+    const base = sanitizeSheetName(s.name, `Sheet${idx + 1}`);
     let candidate = base;
     let suffix = 2;
     while (seen.has(candidate.toLowerCase())) {

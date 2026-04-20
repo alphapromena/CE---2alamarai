@@ -14,18 +14,10 @@ import {
   firstIssueMessage,
 } from '@/lib/imports/schemas';
 import { isImportTarget, type ImportTarget } from '@/lib/imports/templates';
+import type { BulkImportState, RowFailure } from './state';
 
 const MAX_FILE_BYTES = 2 * 1024 * 1024;
-export const TEMP_PROMOTER_PASSWORD = 'Demo@1234';
-
-export type RowFailure = { row: number; error: string };
-
-export type BulkImportState =
-  | { kind: 'idle' }
-  | { kind: 'error'; error: string }
-  | { kind: 'done'; target: ImportTarget; successCount: number; failedRows: RowFailure[] };
-
-export const initialBulkImportState: BulkImportState = { kind: 'idle' };
+const TEMP_PROMOTER_PASSWORD = 'Demo@1234';
 
 const REVALIDATE_PATH: Record<ImportTarget, string> = {
   products: '/admin/campaigns',

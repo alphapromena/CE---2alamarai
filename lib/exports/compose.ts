@@ -27,7 +27,7 @@ function composeCsvZip(sheets: readonly Sheet[]): Uint8Array {
   const encoder = new TextEncoder();
   const seen = new Set<string>();
   const entries: ZipEntry[] = sheets.map((s, i) => {
-    let base = slugifySheetName(s.name, i);
+    const base = slugifySheetName(s.name, i);
     let candidate = `${base}.csv`;
     let suffix = 2;
     while (seen.has(candidate)) {
