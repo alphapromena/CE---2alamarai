@@ -1420,5 +1420,17 @@
         "rate_limited": "You're sending feedback very fast. Wait a moment."
       }
     }
+  },
+  "Pwa": {
+    "offline_retry": "Retry",
+    "offline_queued_hint": "Your work is queued locally and will sync when you're back online.",
+    "update_available": "New version available — tap to refresh",
+    "update_cta": "Refresh",
+    "install_title": "Install app",
+    "install_description": "Add Promoter to your home screen for faster access.",
+    "install_cta": "Install",
+    "install_ios_title": "Install on iPhone",
+    "install_ios_description": "Tap the share button, then 'Add to Home Screen'.",
+    "dismiss": "Dismiss"
   }
 }

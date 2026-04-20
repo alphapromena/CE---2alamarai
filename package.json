@@ -12,7 +12,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "generate:icons": "node scripts/generate-pwa-icons.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
