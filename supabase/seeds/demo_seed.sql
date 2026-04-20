@@ -235,22 +235,250 @@ update public.profiles p
 
 -- ============================================================================
 -- STAGE 2: Insert demo data. Order matters for FK + invariant triggers.
--- (Added in subsequent commits -- see the commit history for this file.)
 -- ============================================================================
 
--- STAGE 2.1 client
--- STAGE 2.2 regions + cities
--- STAGE 2.3 locations
--- STAGE 2.4 campaigns + campaign_locations
--- STAGE 2.5 skus
--- STAGE 2.6 shifts
--- STAGE 2.7 profile updates + user_assignments
--- STAGE 2.8 attendance (30-day rolling)
--- STAGE 2.9 location_pings
--- STAGE 2.10 daily_reports + sales_entries
--- STAGE 2.11 break_requests
--- STAGE 2.12 stock_movements (allocation -> distribution -> usage -> return)
--- STAGE 2.13 supervisor_visits
+-- ----------------------------------------------------------------------------
+-- 2.1 Client (Almarai)
+-- ----------------------------------------------------------------------------
+insert into public.clients (name, name_i18n, contact_email, contact_phone, active)
+values (
+  'Almarai',
+  jsonb_build_object('en', 'Almarai', 'ar', 'المراعي'),
+  'contact@almarai.com',
+  '+962-6-500-5000',
+  true
+);
+
+create temporary table demo_client on commit drop as
+  select id from public.clients where name = 'Almarai';
+
+-- Re-link the client-role profile (client@almarai.com) to the new Almarai row.
+update public.profiles p
+  set client_id = (select id from demo_client),
+      full_name = (select full_name_ar from demo_users where slot = 'client_1'),
+      preferred_language = 'ar'
+  where p.id = (select user_id from demo_users where slot = 'client_1');
+
+-- ----------------------------------------------------------------------------
+-- 2.2 Region (Jordan) + 3 cities
+-- ----------------------------------------------------------------------------
+insert into public.regions (name_i18n, country_code, active)
+values (jsonb_build_object('en', 'Jordan', 'ar', 'الأردن'), 'JO', true);
+
+create temporary table demo_region on commit drop as
+  select id from public.regions
+  where country_code = 'JO' and name_i18n->>'en' = 'Jordan';
+
+insert into public.cities (region_id, name_i18n, active)
+select (select id from demo_region), name_i18n, true
+from (values
+  (jsonb_build_object('en', 'Amman', 'ar', 'عمان')),
+  (jsonb_build_object('en', 'Zarqa', 'ar', 'الزرقاء')),
+  (jsonb_build_object('en', 'Irbid', 'ar', 'اربد'))
+) as v(name_i18n);
+
+create temporary table demo_cities on commit drop as
+  select id, name_i18n->>'en' as city_key
+  from public.cities
+  where region_id = (select id from demo_region)
+    and name_i18n->>'en' in ('Amman', 'Zarqa', 'Irbid');
+
+-- ----------------------------------------------------------------------------
+-- 2.3 Locations (8)
+-- Real-ish Jordanian coordinates; geofence 100 m; bilingual + Arabic address.
+-- ----------------------------------------------------------------------------
+create temporary table demo_location_input (
+  slot         text primary key,
+  city_key     text not null,
+  name_en      text not null,
+  name_ar      text not null,
+  address_ar   text not null,
+  lat          double precision not null,
+  lng          double precision not null
+) on commit drop;
+
+insert into demo_location_input values
+  ('loc_amman_carrefour_city', 'Amman', 'Carrefour City Mall',         'كارفور سيتي مول',
+   'شارع الملكة رانيا العبدالله، عمان',           31.97420, 35.85690),
+  ('loc_amman_safeway_7th',    'Amman', 'Safeway 7th Circle',          'سيفوي الدوار السابع',
+   'الدوار السابع، عمان',                          31.94670, 35.87450),
+  ('loc_amman_cozmo_abdoun',   'Amman', 'Cozmo Abdoun',                'كوزمو عبدون',
+   'شارع عبدون الشمالي، عمان',                    31.93930, 35.87220),
+  ('loc_amman_miles_sweifieh', 'Amman', 'Miles Supermarket Sweifieh',  'ميلز سوبرماركت الصويفية',
+   'شارع الوكالات، الصويفية، عمان',               31.93390, 35.86890),
+  ('loc_zarqa_safeway',        'Zarqa', 'Safeway Zarqa',               'سيفوي الزرقاء',
+   'شارع الملك عبدالله الثاني، الزرقاء',          32.07320, 36.08810),
+  ('loc_zarqa_miles_newcity',  'Zarqa', 'Miles Zarqa New City',        'ميلز الزرقاء المدينة الجديدة',
+   'المدينة الجديدة، الزرقاء',                    32.05870, 36.09530),
+  ('loc_irbid_carrefour',      'Irbid', 'Carrefour Irbid',             'كارفور اربد',
+   'شارع الحصن، اربد',                            32.55510, 35.84920),
+  ('loc_irbid_safeway',        'Irbid', 'Safeway Irbid',               'سيفوي اربد',
+   'شارع الملك حسين، اربد',                       32.54210, 35.85380);
+
+insert into public.locations (city_id, name_i18n, address, lat, lng, geofence_radius_m, active)
+select
+  (select id from demo_cities where city_key = li.city_key),
+  jsonb_build_object('en', li.name_en, 'ar', li.name_ar),
+  li.address_ar,
+  li.lat,
+  li.lng,
+  100,
+  true
+from demo_location_input li;
+
+create temporary table demo_locations on commit drop as
+select l.id,
+       li.slot,
+       li.city_key,
+       li.lat,
+       li.lng
+from demo_location_input li
+join public.locations l
+  on l.city_id = (select id from demo_cities where city_key = li.city_key)
+ and l.name_i18n->>'en' = li.name_en;
+
+-- ----------------------------------------------------------------------------
+-- 2.4 Campaigns (3) + campaign_locations
+-- ----------------------------------------------------------------------------
+create temporary table demo_campaign_input (
+  slot         text primary key,
+  name_en      text not null,
+  name_ar      text not null,
+  start_offset int  not null,  -- days relative to today; negative = past
+  end_offset   int  not null,
+  status       public.campaign_status not null,
+  objectives   text
+) on commit drop;
+
+insert into demo_campaign_input values
+  ('camp_laban',   'Almarai Laban Ramadan 2026', 'المراعي لبن رمضان 2026',
+   -30, 45, 'active',
+   'Sampling + sales push for Laban 1L and 500ml ahead of Ramadan; target 2000 samples per SKU.'),
+  ('camp_juice',   'Almarai Juice Summer',       'المراعي عصائر الصيف',
+   -21, 60, 'active',
+   'Mango and orange juice sampling across the four Amman locations for the summer peak.'),
+  ('camp_cheese',  'Almarai Cheese Promo',       'المراعي عرض الأجبان',
+   -45, -2, 'completed',
+   'Feta and mozzarella promotion at the Zarqa and Irbid stores (completed).');
+
+insert into public.campaigns (client_id, name_i18n, start_date, end_date, objectives, status, kpi_config)
+select (select id from demo_client),
+       jsonb_build_object('en', ci.name_en, 'ar', ci.name_ar),
+       (current_date + ci.start_offset)::date,
+       (current_date + ci.end_offset)::date,
+       ci.objectives,
+       ci.status,
+       jsonb_build_object('sampling_rate_denominator', 'contacts')
+from demo_campaign_input ci;
+
+create temporary table demo_campaigns on commit drop as
+select c.id, ci.slot
+from demo_campaign_input ci
+join public.campaigns c
+  on c.client_id = (select id from demo_client)
+ and c.name_i18n->>'en' = ci.name_en;
+
+-- campaign_locations mapping
+--   Laban  -> all 8 locations
+--   Juice  -> the 4 Amman locations
+--   Cheese -> the 2 Zarqa + 2 Irbid locations (completed)
+create temporary table demo_campaign_locations (
+  campaign_slot text not null,
+  location_slot text not null
+) on commit drop;
+
+insert into demo_campaign_locations values
+  ('camp_laban',  'loc_amman_carrefour_city'),
+  ('camp_laban',  'loc_amman_safeway_7th'),
+  ('camp_laban',  'loc_amman_cozmo_abdoun'),
+  ('camp_laban',  'loc_amman_miles_sweifieh'),
+  ('camp_laban',  'loc_zarqa_safeway'),
+  ('camp_laban',  'loc_zarqa_miles_newcity'),
+  ('camp_laban',  'loc_irbid_carrefour'),
+  ('camp_laban',  'loc_irbid_safeway'),
+  ('camp_juice',  'loc_amman_carrefour_city'),
+  ('camp_juice',  'loc_amman_safeway_7th'),
+  ('camp_juice',  'loc_amman_cozmo_abdoun'),
+  ('camp_juice',  'loc_amman_miles_sweifieh'),
+  ('camp_cheese', 'loc_zarqa_safeway'),
+  ('camp_cheese', 'loc_zarqa_miles_newcity'),
+  ('camp_cheese', 'loc_irbid_carrefour'),
+  ('camp_cheese', 'loc_irbid_safeway');
+
+insert into public.campaign_locations (campaign_id, location_id)
+select (select id from demo_campaigns where slot = dcl.campaign_slot),
+       (select id from demo_locations where slot = dcl.location_slot)
+from demo_campaign_locations dcl;
+
+-- ----------------------------------------------------------------------------
+-- 2.5 SKUs (6; two per campaign)
+-- Unit is 'pieces' / 'قطع'. See header for JOD prices (no price column).
+-- ----------------------------------------------------------------------------
+create temporary table demo_sku_input (
+  slot           text primary key,
+  campaign_slot  text not null,
+  name_en        text not null,
+  name_ar        text not null,
+  target         int  not null,
+  stock_allocated int not null
+) on commit drop;
+
+insert into demo_sku_input values
+  ('sku_laban_1l',     'camp_laban',  'Laban 1L',          'لبن 1 لتر',         2000, 3000),
+  ('sku_laban_500ml',  'camp_laban',  'Laban 500ml',       'لبن 500 مل',        2000, 3000),
+  ('sku_juice_mango',  'camp_juice',  'Mango Juice 1L',    'عصير مانجو 1 لتر',  2000, 3000),
+  ('sku_juice_orange', 'camp_juice',  'Orange Juice 1L',   'عصير برتقال 1 لتر', 2000, 3000),
+  ('sku_cheese_feta',  'camp_cheese', 'Feta 500g',         'جبنة فيتا 500 غ',   1500, 2000),
+  ('sku_cheese_mozz',  'camp_cheese', 'Mozzarella 250g',   'موزاريلا 250 غ',    1500, 2000);
+
+insert into public.skus (campaign_id, name_i18n, unit_i18n, target, stock_allocated, kind, active)
+select (select id from demo_campaigns where slot = si.campaign_slot),
+       jsonb_build_object('en', si.name_en, 'ar', si.name_ar),
+       jsonb_build_object('en', 'pieces', 'ar', 'قطع'),
+       si.target,
+       si.stock_allocated,
+       'sample'::public.sku_kind,
+       true
+from demo_sku_input si;
+
+create temporary table demo_skus on commit drop as
+select s.id, si.slot, si.campaign_slot
+from demo_sku_input si
+join demo_campaigns dc on dc.slot = si.campaign_slot
+join public.skus s
+  on s.campaign_id = dc.id
+ and s.name_i18n->>'en' = si.name_en;
+
+-- ----------------------------------------------------------------------------
+-- 2.6 Shifts (12; one per active campaign-location pair)
+-- Laban active -> 8 shifts. Juice active -> 4 shifts. Cheese completed -> 0.
+-- 09:00-17:00, Sunday (dow=0) through Thursday (dow=4).
+-- ----------------------------------------------------------------------------
+insert into public.shifts (campaign_id, location_id, start_time, end_time, days_of_week, active)
+select c.id,
+       l.id,
+       time '09:00',
+       time '17:00',
+       array[0, 1, 2, 3, 4]::smallint[],
+       true
+from demo_campaign_locations dcl
+join demo_campaigns c     on c.slot = dcl.campaign_slot
+join demo_locations  l    on l.slot = dcl.location_slot
+join demo_campaign_input ci on ci.slot = dcl.campaign_slot
+where ci.status = 'active';
+
+create temporary table demo_shifts on commit drop as
+select s.id          as shift_id,
+       dc.slot       as campaign_slot,
+       dl.slot       as location_slot,
+       s.campaign_id,
+       s.location_id,
+       s.start_time,
+       s.end_time,
+       s.days_of_week
+from public.shifts s
+join demo_campaigns dc on dc.id = s.campaign_id
+join demo_locations dl on dl.id = s.location_id;
 
 commit;
 
