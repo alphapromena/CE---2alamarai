@@ -31,6 +31,17 @@
     "results_count": "{count, plural, =0 {No results} one {# result} other {# results}}",
     "error_generic": "Something went wrong. Please try again."
   },
+  "Errors": {
+    "page_title": "Something went wrong",
+    "page_description": "An unexpected error occurred while loading this page.",
+    "retry": "Try again",
+    "go_home": "Go to dashboard",
+    "error_id": "Error ID: {id}",
+    "not_found_title": "Page not found",
+    "not_found_description": "The page you're looking for doesn't exist or has been moved.",
+    "offline_title": "You're offline",
+    "offline_description": "Check your connection and try again."
+  },
   "Auth": {
     "brand": "Promoter Monitoring",
     "login": {
