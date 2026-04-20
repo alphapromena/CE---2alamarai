@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { setRequestLocale } from 'next-intl/server';
 import { requireRole } from '@/lib/auth/guards';
 import { AppShell } from '@/components/features/app/app-shell';
+import { NotificationBellServer } from '@/components/features/notifications/notification-bell-server';
 
 const NAV = [
   { href: '/promoter/dashboard', labelKey: 'Promoter.nav.dashboard' },
@@ -9,6 +10,7 @@ const NAV = [
   { href: '/promoter/reports/today', labelKey: 'Promoter.nav.reports_today' },
   { href: '/promoter/tasks', labelKey: 'Promoter.nav.tasks' },
   { href: '/promoter/stock', labelKey: 'Promoter.nav.stock' },
+  { href: '/promoter/breaks', labelKey: 'Promoter.nav.breaks' },
 ];
 
 export default async function PromoterLayout({
@@ -22,7 +24,12 @@ export default async function PromoterLayout({
   setRequestLocale(locale);
   const profile = await requireRole('promoter');
   return (
-    <AppShell role={profile.role} fullName={profile.full_name} nav={NAV}>
+    <AppShell
+      role={profile.role}
+      fullName={profile.full_name}
+      nav={NAV}
+      bell={<NotificationBellServer />}
+    >
       {children}
     </AppShell>
   );

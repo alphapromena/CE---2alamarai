@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { setRequestLocale } from 'next-intl/server';
 import { requireRole } from '@/lib/auth/guards';
 import { AppShell } from '@/components/features/app/app-shell';
+import { NotificationBellServer } from '@/components/features/notifications/notification-bell-server';
 
 const NAV = [
   { href: '/client/dashboard', labelKey: 'Client.nav.dashboard' },
@@ -21,7 +22,12 @@ export default async function ClientLayout({
   setRequestLocale(locale);
   const profile = await requireRole('client');
   return (
-    <AppShell role={profile.role} fullName={profile.full_name} nav={NAV}>
+    <AppShell
+      role={profile.role}
+      fullName={profile.full_name}
+      nav={NAV}
+      bell={<NotificationBellServer />}
+    >
       {children}
     </AppShell>
   );

@@ -13,11 +13,14 @@ export function AppShell({
   role,
   fullName,
   nav,
+  bell,
   children,
 }: {
   role: UserRole;
   fullName: string;
   nav: NavItem[];
+  /** Optional server-rendered bell component injected by the per-role layout. */
+  bell?: ReactNode;
   children: ReactNode;
 }) {
   const tBrand = useTranslations('Auth');
@@ -41,6 +44,7 @@ export function AppShell({
             ))}
           </nav>
           <div className="ms-auto flex items-center gap-3">
+            {bell}
             <div className="flex flex-col items-end leading-tight">
               <span className="text-sm font-medium">{fullName}</span>
               <span className="text-xs text-fg-muted">{tRoles(role)}</span>
