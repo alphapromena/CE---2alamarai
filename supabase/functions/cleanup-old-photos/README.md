@@ -65,3 +65,26 @@ select cron.schedule(
   $$
 );
 ```
+
+## Companion retention job — `gc_location_pings()` (Feature 5 / D-042)
+
+The Feature 5 migration ships a pure-SQL retention function
+`public.gc_location_pings()` that deletes `location_pings` rows older than
+**30 days**. Because it's a DB function (not an Edge Function) it can be
+scheduled directly from `pg_cron` without an HTTP hop:
+
+```sql
+select cron.schedule(
+  'gc-location-pings',
+  '15 3 * * *',
+  $$ select public.gc_location_pings(); $$
+);
+```
+
+Run it once manually after migrating to confirm permissions:
+
+```sql
+select public.gc_location_pings();
+```
+
+Returns the number of deleted rows. Safe to re-run — idempotent.
