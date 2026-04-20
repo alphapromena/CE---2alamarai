@@ -13,6 +13,10 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': path.resolve(dirname, '.'),
+      // `server-only` throws at import time outside a React Server Component,
+      // which is fine in production but prevents us from unit-testing modules
+      // that import it. Stub it to a no-op under vitest.
+      'server-only': path.resolve(dirname, 'lib/test-utils/server-only-stub.ts'),
     },
   },
 });

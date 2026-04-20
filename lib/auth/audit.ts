@@ -1,6 +1,7 @@
 import 'server-only';
 import { headers } from 'next/headers';
 import { createAdminSupabase } from '@/lib/supabase/admin';
+import { logError } from '@/lib/observability/logger';
 
 export type AuditEventInput = {
   action: string;
@@ -62,10 +63,10 @@ export async function logAuditEvent(input: AuditEventInput): Promise<void> {
 
   if (error) {
     // Never throw from audit — we don't want audit failure to break an auth flow.
-    console.error('audit_log insert failed', {
+    logError('audit_log insert failed', {
       action: input.action,
       entity: input.entity,
-      message: error.message,
+      db_error: error.message,
     });
   }
 }
