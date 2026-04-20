@@ -120,6 +120,7 @@
       "stock": "Stock",
       "performance": "Performance",
       "live": "Live",
+      "field_visits": "Field visits",
       "exports": "Exports",
       "imports": "Imports"
     },
