@@ -5,6 +5,7 @@ import { getLocale } from 'next-intl/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/lib/auth/audit';
 import { requestResetSchema } from '@/lib/validations/auth';
+import { checkRateLimit } from '@/lib/rate-limit/check';
 
 export type ResetRequestState = { ok: boolean; error: string | null };
 
@@ -21,6 +22,18 @@ export async function resetRequestAction(
 ): Promise<ResetRequestState> {
   const locale = await getLocale();
   const h = await headers();
+
+  const rl = await checkRateLimit('reset_request');
+  if (!rl.allowed) {
+    await logAuditEvent({
+      actor_id: null,
+      action: 'auth.reset_request_rate_limited',
+      entity: 'auth',
+      after: { count: rl.count, reset_at: rl.resetAt.toISOString() },
+    });
+    // Still reply 'ok' to avoid leaking rate-limit state to scrapers.
+    return { ok: true, error: null };
+  }
 
   const parsed = requestResetSchema.safeParse({ email: formData.get('email') });
   if (!parsed.success) {

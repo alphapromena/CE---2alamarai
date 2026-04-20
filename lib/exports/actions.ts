@@ -4,6 +4,7 @@ import { revalidatePath } from 'next/cache';
 import { requireSessionProfile } from '@/lib/auth/guards';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { checkRateLimit } from '@/lib/rate-limit/check';
 import { composeExport } from './compose';
 import { assembleExportInput } from './assemble';
 import type { ExportRole, ExportScope } from './types';
@@ -107,6 +108,9 @@ export async function queueExportAction(
     return { error: 'forbidden' };
   }
   const role: ExportRole = me.role;
+
+  const rl = await checkRateLimit('export_queue', me.id);
+  if (!rl.allowed) return { error: 'rate_limited' };
 
   const parsed = queueExportSchema.safeParse(input);
   if (!parsed.success) return { error: 'invalid_input' };

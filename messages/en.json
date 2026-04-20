@@ -1292,7 +1292,8 @@
       "no_accessible_campaigns": "None of the selected campaigns are accessible.",
       "no_accessible_locations": "None of the selected locations are accessible.",
       "insert_failed": "Couldn't queue the export. Try again.",
-      "generation_failed": "Export generation failed. See details."
+      "generation_failed": "Export generation failed. See details.",
+      "rate_limited": "Too many export requests. Please wait a moment."
     },
     "new": {
       "title": "New export",
@@ -1371,7 +1372,8 @@
         "no_assignment": "Pick the campaign + location first.",
         "empty_body": "Write something before submitting.",
         "invalid_input": "The submission was invalid.",
-        "insert_failed": "Couldn't save your feedback. Try again."
+        "insert_failed": "Couldn't save your feedback. Try again.",
+        "rate_limited": "You're sending feedback very fast. Wait a moment."
       }
     }
   }
