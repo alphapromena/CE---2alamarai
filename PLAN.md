@@ -377,6 +377,27 @@ Not in scope for this phase. Scoped as a contained follow-up:
 
 **Exit criteria:** Production-ready and demoable end-to-end across all 11 modules with seeded data. ✅ MET — project complete.
 
+### Post-project Feature 2 — VPN / Location Trust Detection — SHIPPED ✅
+Scope delivered:
+- Additive migration `20260428000000_feature2_location_trust.sql` — new `alert_type` value `location_trust_low` and new `public.ip_reputation` cache table (RLS enabled, no policies = service-role-only).
+- `lib/location-trust/ipqs.ts` — IPQualityScore client with 24h Supabase-backed cache + 3s `AbortSignal.timeout`, graceful `null` on any failure path (missing key, HTTP error, timeout, `success=false`, non-2xx). Never throws.
+- `lib/location-trust/detect.ts` — pure `detectLocationTrust` + bundled 13-country MENA bounding-box table for the country-mismatch signal. Fraud-score threshold is 85.
+- `lib/location-trust/record.ts` — fire-and-forget orchestrator that inserts a `location_trust_low` alert (`severity=warning`) with `message_params.reasons` + `trust_signals` only when any signal fires. Absolute no-throw guarantee.
+- `POST /api/attendance/location-trust` route handler — zod-validated body, `requireRole('promoter')`, attendance ownership check, IP extraction from `x-forwarded-for` with `x-real-ip` fallback, `void recordLocationTrustCheck(...)` (no await), always returns `202`.
+- Promoter PWA wiring: `fetch(..., { keepalive: true })` right after check-in success, inside try/catch, no await — check-in latency unchanged.
+- Supervisor alert UI: new `components/features/alerts/location-trust-detail.tsx` (ShieldAlert icon + translated summary + reason pills + bilingual footer note); `AlertType` union, `ALERT_VARIANT` map and the attendance alert-item switch all extended.
+- Full bilingual (en + ar) copy under a new `LocationTrust` namespace + new `alerts.location_trust_low` key.
+- `IPQUALITYSCORE_API_KEY` env var (optional; unset = no-op).
+
+**Test matrix:** 321 vitest pass (up from 301 — +20 across `ipqs.test.ts`, `detect.test.ts`, `record.test.ts`). TypeScript strict clean. `pnpm build` clean.
+
+**Decisions finalised:** D-039.
+
+**Open before merge:**
+1. Apply the migration manually via Supabase SQL Editor: `20260428000000_feature2_location_trust.sql`.
+2. Optional env var: set `IPQUALITYSCORE_API_KEY` to enable the signal. Unset = feature no-ops (still shippable).
+3. No new Edge Functions; no new secrets besides the optional IPQS key.
+
 ---
 
 ## 7. Risk Notes

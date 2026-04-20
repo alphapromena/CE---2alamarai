@@ -22,6 +22,7 @@ import type { AlertRow } from '@/lib/queries/alerts';
 import type { CampaignRef, LocationRef } from '@/lib/queries/supervisor-scope';
 import { ApproveOverrideForm } from './approve-override-form';
 import { ResolveAlertForm } from './resolve-alert-form';
+import { LocationTrustDetail } from '@/components/features/alerts/location-trust-detail';
 
 const POLL_INTERVAL_MS = 30_000;
 
@@ -449,6 +450,8 @@ function AlertItem({
   t: ReturnType<typeof useTranslations>;
   locale: string;
 }) {
+  const tLocationTrust = useTranslations('LocationTrust');
+
   const typeLabel = useMemo(() => {
     switch (alert.alert_type) {
       case 'late_check_in':
@@ -463,38 +466,45 @@ function AlertItem({
         return t('override_pending');
       case 'absent':
         return t('status_absent');
+      case 'location_trust_low':
+        return tLocationTrust('summary');
       default:
         return alert.alert_type;
     }
-  }, [alert.alert_type, t]);
+  }, [alert.alert_type, t, tLocationTrust]);
 
   const variant: StatusPillVariant =
     alert.severity === 'critical' ? 'danger' : alert.severity === 'info' ? 'info' : 'warning';
 
   return (
-    <li className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
-      <StatusPill variant={variant} label={typeLabel} />
-      <span className="text-fg-secondary">
-        {new Date(alert.created_at).toLocaleString(locale === 'ar' ? 'ar-JO' : 'en-JO', {
-          hour: '2-digit',
-          minute: '2-digit',
-          day: '2-digit',
-          month: '2-digit',
-        })}
-      </span>
-      <span className="ms-auto flex items-center gap-2">
-        {alert.alert_type === 'geofence_override_requested' && alert.attendance_id ? (
-          <ApproveOverrideForm
-            attendanceId={alert.attendance_id}
-            defaultReason={
-              typeof alert.message_params?.reason === 'string'
-                ? alert.message_params.reason
-                : undefined
-            }
-          />
-        ) : null}
-        <ResolveAlertForm alertId={alert.id} />
-      </span>
+    <li className="flex flex-col gap-2 px-4 py-3 text-sm">
+      <div className="flex flex-wrap items-center gap-3">
+        <StatusPill variant={variant} label={typeLabel} />
+        <span className="text-fg-secondary">
+          {new Date(alert.created_at).toLocaleString(locale === 'ar' ? 'ar-JO' : 'en-JO', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: '2-digit',
+            month: '2-digit',
+          })}
+        </span>
+        <span className="ms-auto flex items-center gap-2">
+          {alert.alert_type === 'geofence_override_requested' && alert.attendance_id ? (
+            <ApproveOverrideForm
+              attendanceId={alert.attendance_id}
+              defaultReason={
+                typeof alert.message_params?.reason === 'string'
+                  ? alert.message_params.reason
+                  : undefined
+              }
+            />
+          ) : null}
+          <ResolveAlertForm alertId={alert.id} />
+        </span>
+      </div>
+      {alert.alert_type === 'location_trust_low' ? (
+        <LocationTrustDetail messageParams={alert.message_params} />
+      ) : null}
     </li>
   );
 }

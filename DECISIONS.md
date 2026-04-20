@@ -809,3 +809,44 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - Idle-timeout threshold rejected by field teams as too aggressive — move it behind `kpi_config.idle_timeout_minutes` per the D-019 / D-027 / D-028 / D-029 pattern.
   - Supervisor / admin roles ever run from shared devices — extend `IdleWatcher` to their layouts with a role-appropriate threshold.
 
+---
+
+## D-039 — Feature 2 location trust detection: IPQS free-tier, 24h cache, signal-only never-blocking, false-positive risk explicitly accepted
+
+- **Date:** 2026-04-20
+- **Phase:** Post-project Feature 2 (VPN / Location Trust Detection)
+- **Question:** How do we surface VPN / proxy / spoofed-location signals at promoter check-in without adding a blocker on a flow that is already fragile (mobile carriers, roaming, retail Wi-Fi), and without coupling to a specific IP reputation vendor?
+- **Decision:**
+  1. **IPQualityScore free-tier provider.** `lib/location-trust/ipqs.ts` calls the public endpoint with the key in `IPQUALITYSCORE_API_KEY`. Unset key = feature no-ops (same posture as `SENTRY_DSN` / `RESEND_API_KEY` in D-034 / D-037). Swappable by replacing the single file; the detector in `detect.ts` depends only on the normalised `IpReputationResult` shape.
+  2. **24h Supabase-backed cache.** `public.ip_reputation` stores one row per IP with `raw_response`. Lookups read-through with a 24h freshness window; misses fetch + upsert. RLS is enabled with no policies, so only the service-role path reads/writes — no client bundle, no authenticated reader.
+  3. **Fire-and-forget wiring.** The check-in flow is the Supabase Edge Function `geo-validate-checkin`; we do not modify it. Instead, a new Next.js Route Handler `POST /api/attendance/location-trust` is called from the promoter PWA with `fetch(..., { keepalive: true })` immediately after a successful check-in. The handler extracts the source IP from `x-forwarded-for` (first hop) with `x-real-ip` fallback, verifies attendance ownership, and kicks off `recordLocationTrustCheck(...)` without awaiting it. The handler always responds 202. The orchestrator is guaranteed never to throw.
+  4. **Signal, not block.** When suspicious (VPN / proxy / fraud_score ≥ 85 / country mismatch) we insert a `location_trust_low` alert (`severity=warning`) with `message_params.reasons` + `message_params.trust_signals`. Check-in is never rejected, delayed, or retried. The UI footer ("Check-in was allowed — verification signal, not a block") documents this to supervisors.
+  5. **Country mismatch via a bundled MENA bounding-box table** (13 countries: JO, SA, AE, EG, BH, QA, KW, OM, LB, IQ, SY, YE, PS). Neighbour-accurate only. Points outside the covered region return `null` → no mismatch is flagged, deliberately avoiding false-positives at coverage edges. We accept the tradeoff that travellers outside MENA won't get a country-mismatch signal; the VPN / proxy / fraud_score signals still fire.
+  6. **False-positive risk is explicitly accepted.** Mobile carrier NAT sometimes geolocates to neighbouring countries or data-centre ranges (flagged as proxy/VPN). Corporate egress, home-router routing through a corporate VPN, and frequent travellers all fall in the same bucket. Because this is a signal and not a block, false-positives cost the supervisor one click to dismiss; the cost of a false-negative (spoofed attendance) is much higher.
+- **Rationale:**
+  - Free-tier IPQS is the cheapest off-the-shelf option with a documented JSON shape; the normalisation layer makes it swappable.
+  - Caching in Postgres (vs. another Redis dep) mirrors D-035's anti-Upstash posture. `ip_reputation` is a new low-traffic table; the composite `(ip_address, checked_at desc)` index is enough.
+  - Fire-and-forget via a Route Handler (not a Server Action) keeps the promoter check-in client-side latency unchanged: the client does not await the trust check. `keepalive: true` lets the browser finish the request even if the page reloads.
+  - A signal-only posture keeps parity with the existing alert-centric model (D-019). Blocking on IP-based signals on retail Wi-Fi would be a field support disaster.
+- **Alternatives considered:**
+  - **Extend the `geo-validate-checkin` Edge Function.** Rejected: tightens coupling to a flow that is already doing too much (EXIF strip, geofence math, alert fan-out); Deno runtime adds test surface; `EdgeRuntime.waitUntil` semantics are non-uniform.
+  - **Server Action wrapper around the Edge Function.** Rejected: the check-in is already a `supabase.functions.invoke` call from the client; wrapping it in a Server Action introduces a second round-trip for no benefit.
+  - **Geolocate the IP via an external API (MaxMind, ipapi, etc.) instead of a bundled box table.** Rejected as overkill for the country-mismatch signal — a bbox table resolves 13 operationally-relevant countries in <1µs without a second network call.
+  - **Block check-in on high-fraud-score.** Rejected per D-019: the platform surfaces signals; supervisors decide.
+  - **30-day or 7-day cache.** Rejected: IPs rotate (DHCP, mobile-carrier pools), and IPQS reclassifies over time; 24h is the documented sweet spot for this signal.
+- **Implementation:**
+  - Migration: `supabase/migrations/20260428000000_feature2_location_trust.sql` (additive: enum value + `ip_reputation` table + composite index + RLS enabled with no policies).
+  - `lib/location-trust/ipqs.ts` (server-only), `lib/location-trust/detect.ts` (pure), `lib/location-trust/record.ts` (server-only), `lib/validations/location-trust.ts` (zod).
+  - `app/api/attendance/location-trust/route.ts` — Route Handler.
+  - `app/[locale]/promoter/attendance/attendance-client.tsx` — client-side `fetch(..., { keepalive: true })` right after check-in success (no await).
+  - `components/features/alerts/location-trust-detail.tsx` — detail block with `ShieldAlert` + reason pills + footer note.
+  - `components/features/live/live-dashboard-client.tsx` + `lib/queries/alerts.ts` — extend the `AlertType` union and the `ALERT_VARIANT` map.
+  - i18n: new `LocationTrust` namespace in ar + en; new `alerts.location_trust_low` key.
+  - Env: `IPQUALITYSCORE_API_KEY` (optional, unset = no-op).
+  - 20 new vitest cases under `lib/location-trust/*.test.ts` (321 total, up from 301 baseline).
+- **Revisit when:**
+  - IPQS rate limits bite (free tier) — swap to a paid plan or a different provider by editing `ipqs.ts` only.
+  - Supervisors routinely dismiss `location_trust_low` alerts as noise — tighten the fraud-score threshold or gate the country-mismatch check behind a `kpi_config.require_country_match` flag per the D-019 / D-027 / D-028 soft-add pattern.
+  - The feature needs to cover promoters outside MENA — replace the bundled bbox table with an IP-geolocation service or a world-covering bbox file.
+  - The same IP is shared by many promoters (corporate egress) — add per-user rate-limiting on the alert so a bad corporate IP doesn't fan out N alerts per check-in.
+

@@ -13,7 +13,8 @@ export type AlertType =
   | 'reconciliation_mismatch'
   | 'no_usage'
   | 'low_performance'
-  | 'no_activity';
+  | 'no_activity'
+  | 'location_trust_low';
 
 export type AlertRow = {
   id: string;
