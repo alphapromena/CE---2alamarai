@@ -850,3 +850,56 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - The feature needs to cover promoters outside MENA — replace the bundled bbox table with an IP-geolocation service or a world-covering bbox file.
   - The same IP is shared by many promoters (corporate egress) — add per-user rate-limiting on the alert so a bad corporate IP doesn't fan out N alerts per check-in.
 
+---
+
+## D-040 — Per-client promoter visibility toggles: privacy-first default, admin override per tenant
+
+- **Date:** 2026-04-20
+- **Phase:** Post-project Feature 3 (Configurable Promoter Visibility)
+- **Question:** D-019 item 3, D-028 item 6, and D-033 together lock every client tenant into the same aggregates-only posture: no promoter names, no photos, no alerts, no per-row data. Some tenants have signed operational agreements that cover deeper visibility (e.g. a brand paying the promoters directly). The only way to satisfy those tenants today is to change source code, which cannot be scoped to one client. How do we add a per-tenant escape hatch without silently changing the default posture for the other tenants?
+- **Decision:**
+  1. **Four boolean toggles live on `public.clients`**, added in migration `20260420010000_feature3_client_visibility.sql`:
+     - `show_promoter_names` — promoter real name instead of the display id.
+     - `show_promoter_photos` — selfie / activity photo URLs included.
+     - `show_promoter_alerts` — promoter-scoped alert rows included.
+     - `show_promoter_full_profile` — per-promoter rows instead of aggregates.
+     All four are `NOT NULL DEFAULT false`. Every existing tenant (and every new tenant that an admin does not explicitly configure) retains the D-019 / D-028 / D-033 aggregates-only posture byte-for-byte.
+  2. **Admin-only editable, audit-logged.** A new "Visibility settings" section on the admin client edit form (`components/features/admin/client-form.tsx`) renders the four checkboxes plus a warning banner: "Enabling any option exposes personal data to this client — review the privacy agreement before turning it on." The `updateClientAction` Server Action (`requireAdmin()`-guarded, already audit-logged) picks them up via the extended Zod schema; the `before` / `after` diff in `audit_log` captures every flip for compliance review.
+  3. **No new RLS policy.** The existing `clients_select_self_tenant` policy already lets a client read their own `clients` row; the new columns flow through it automatically. Cross-tenant isolation is unchanged — a client can never read another tenant's toggles regardless of their own flags. `clients_update_admin` still gates writes to admin-only.
+  4. **`promoter_display_id` is a deterministic pseudonym, not a mapping table.** `promoterDisplayId(uuid)` = `'P' + sha256(uuid).slice(0, 6).toUpperCase()`. ~16.7M distinct values; stable across exports and pages; no DB state to maintain. When `show_promoter_names=false` every surface that would render a promoter emits this id instead of the real name.
+  5. **Server-side enforcement at two layers, defence in depth.**
+     - `lib/auth/client-visibility.ts::getClientVisibility(clientId)` loads the flags with a safe default — any DB error returns `ZERO_VISIBILITY` so transient failures never accidentally leak data.
+     - `lib/auth/client-visibility.ts::scrubPromoterFields()` applies field-level redaction per flag. Callers that forget to pass flags get the all-false safe default via a literal constant (`ALL_FALSE_VISIBILITY` in `builders.ts`), not via ambient globals.
+  6. **Phase 8 export builders extend, not replace, the D-033 shape.** When `role='client'` and `show_promoter_full_profile=true`, the orchestrator appends a new `Promoters` sheet after the aggregate sheets (`lib/exports/builders.ts::buildClientPromoterSheet`). The identity column is the display id; `show_promoter_names=true` adds a second `Promoter name` column with the real name. The existing aggregate sheets remain unchanged regardless of the flags. All-false tenants get byte-identical output to the pre-D-040 shape — vitest `client toggles` describe block proves this.
+  7. **Out of v1:** expanding the client `live` / `performance` pages to render promoter data when the flags are true. Those surfaces currently show no promoter data at all; widening them is a UX change deferred to a follow-up. The helper (`getClientVisibility` + `scrubPromoterFields`) is ready; only the query-layer joins and the page components need extending.
+- **Rationale:**
+  - Columns on `clients` rather than a side-car table: one row per client is wasteful, the flags are always loaded together with the client context, and it mirrors the existing `active` column pattern exactly.
+  - Defaults false so the change is zero-impact until an admin makes a deliberate, audited decision. D-019 / D-028 / D-033 remain the documented posture for every tenant that hasn't explicitly opted in.
+  - No new RLS policy keeps the cross-tenant isolation story simple — every existing pgtap test for client isolation continues to apply unchanged.
+  - Deterministic display id avoids a mapping-table migration (`promoter_display_ids` with a sequence per tenant), which would also have to be backfilled for existing promoters and kept in sync.
+  - Styled native checkboxes (matching the existing `active` field) avoid pulling `@radix-ui/react-switch` into the bundle for a form that is rarely used; consistency with the rest of admin matters more than a polished toggle visual.
+  - The aggregate sheets are intentionally preserved when `show_promoter_full_profile=true` — a client who opted in still gets the KPI roll-ups they already depended on, plus the new per-promoter sheet. No breakage for existing users of the export.
+- **Alternatives considered:**
+  - **Side-car `client_settings` table.** Rejected: adds a join for every visibility check, zero benefit over four columns.
+  - **Single JSONB `visibility_config` column.** Rejected: weaker typing, no per-field defaults, harder to grep, more migration ceremony when we add the fifth flag.
+  - **Sequential display id via a `promoter_display_ids` table.** Rejected: requires a migration + backfill; benefit (short "P01" instead of "P7A3F2B") is small and cosmetic; the hashed form is stable and collision-rare.
+  - **Per-field UI flags that default `null` (unset).** Rejected: three-state flags invite bugs where the UI reads `null` as "inherit" and silently opens data. `false` as the unopinionated default is safer.
+  - **RLS-level enforcement (new policies referencing `show_promoter_*`).** Rejected for v1: today the client role has zero direct RLS access to `attendance`, `daily_reports`, `kpi_snapshots`, `consumer_feedback`, `supervisor_visits`, so there are no policies to toggle. When the query layer grows surfaces that need the flags (see Revisit), the policies can be added on a case-by-case basis alongside each surface.
+  - **Per-campaign visibility overrides within a client.** Rejected for v1: no tenant has asked for sub-client granularity. Revisit via a structured JSONB column if needed.
+- **Implementation:**
+  - Migration: `supabase/migrations/20260420010000_feature3_client_visibility.sql` (additive, IF NOT EXISTS, single-line comments).
+  - Helper: `lib/auth/client-visibility.ts` — `ClientVisibility`, `ZERO_VISIBILITY`, `getClientVisibility`, `promoterDisplayId`, `scrubPromoterFields`.
+  - Schema: `lib/validations/clients.ts` extended with 4 booleans defaulting to `false`.
+  - Query type: `lib/queries/clients.ts::ClientRow` + `SELECT_COLUMNS` extended so the admin form can prefill.
+  - Server Action: `app/[locale]/admin/clients/actions.ts` reads the 4 checkboxes, threads them into insert + update payloads, and captures `before` / `after` in `logAuditEvent`.
+  - UI: `components/features/admin/client-form.tsx` "Visibility settings" section — warning banner + 4 styled native checkboxes + per-toggle helper text.
+  - i18n: `Admin.clients.form.visibility.{title, warning, names_label/help, photos_label/help, alerts_label/help, profile_label/help}` in ar + en.
+  - Export types: `lib/exports/types.ts::ExportClientVisibility` + `ExportInput.clientVisibility` (optional).
+  - Export builder: `lib/exports/builders.ts::buildClientPromoterSheet` + `buildAllSheets` appends the Promoters sheet when the flag is on.
+  - Tests: `lib/auth/client-visibility.test.ts` (9 cases), `lib/exports/builders.test.ts` new `client toggles (D-040)` describe (5 cases), `supabase/tests/feature3.test.sql` (11 pgtap cases: defaults, admin update, client self-read, cross-tenant denial both sides). Vitest: 321 → 335.
+- **Revisit when:**
+  - A tenant asks to see promoter photos or alerts. Today the flags are honoured at the builder's scrub helper, but the query layer (`lib/queries/*`) does not select photo URLs or alert rows for the client role. Widen the query-layer select list + the page components gated on the flag.
+  - A tenant asks to see per-promoter data on the `/client/live` or `/client/performance` pages. Current surfaces render no promoter data at all; extend the page-level query to call `getClientVisibility(clientId)` and branch. The helper + display id + scrub are ready.
+  - Per-campaign visibility overrides are requested. Revisit by replacing the four booleans with a structured JSONB column (`visibility_config`) that can hold a per-campaign map.
+  - A legal or compliance review requires that toggled-on fields be read-only or approved by a second party. Today any admin can flip any flag; if dual-control becomes a requirement, wire it through a pending-approval table similar to the reconciliation flow (D-032 pattern).
+
