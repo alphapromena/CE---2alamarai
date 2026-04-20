@@ -419,7 +419,6 @@ export function AttendanceClient({
         <section className="space-y-4 rounded-lg border border-border bg-white p-6">
           <CaptureBlock
             t={t}
-            leg={leg}
             coords={coords}
             geoError={geoError}
             phase={phase}
@@ -469,7 +468,6 @@ export function AttendanceClient({
 
 function CaptureBlock({
   t,
-  leg,
   coords,
   geoError,
   phase,
@@ -479,7 +477,6 @@ function CaptureBlock({
   onRetake,
 }: {
   t: ReturnType<typeof useTranslations>;
-  leg: 'in' | 'out';
   coords: Coords | null;
   geoError: GeoError | null;
   phase: Phase;
