@@ -11,7 +11,9 @@ export type AlertType =
   | 'low_stock'
   | 'over_consumption'
   | 'reconciliation_mismatch'
-  | 'no_usage';
+  | 'no_usage'
+  | 'low_performance'
+  | 'no_activity';
 
 export type AlertRow = {
   id: string;

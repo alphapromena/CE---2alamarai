@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { setRequestLocale } from 'next-intl/server';
 import { requireAdmin } from '@/lib/auth/guards';
 import { AppShell } from '@/components/features/app/app-shell';
+import { NotificationBellServer } from '@/components/features/notifications/notification-bell-server';
 
 const NAV = [
   { href: '/admin/dashboard', labelKey: 'Admin.nav.dashboard' },
@@ -15,6 +16,7 @@ const NAV = [
   { href: '/admin/reports', labelKey: 'Admin.nav.reports' },
   { href: '/admin/stock', labelKey: 'Admin.nav.stock' },
   { href: '/admin/performance', labelKey: 'Admin.nav.performance' },
+  { href: '/admin/live', labelKey: 'Admin.nav.live' },
 ];
 
 export default async function AdminLayout({
@@ -28,7 +30,12 @@ export default async function AdminLayout({
   setRequestLocale(locale);
   const profile = await requireAdmin();
   return (
-    <AppShell role={profile.role} fullName={profile.full_name} nav={NAV}>
+    <AppShell
+      role={profile.role}
+      fullName={profile.full_name}
+      nav={NAV}
+      bell={<NotificationBellServer />}
+    >
       {children}
     </AppShell>
   );

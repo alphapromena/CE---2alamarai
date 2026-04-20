@@ -100,6 +100,12 @@ verify_jwt = false
 [functions.compute-kpis]
 verify_jwt = true
 
+# Phase 7 sweep (cron-invoked). Same trust model as detect-attendance-issues:
+# no user session, CRON_SECRET enforced via x-cron-secret header in the
+# function body.
+[functions.detect-live-issues]
+verify_jwt = false
+
 [analytics]
 enabled = false
 

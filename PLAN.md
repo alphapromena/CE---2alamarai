@@ -1,6 +1,6 @@
 # PLAN.md — Promoter Monitoring & Reporting Platform
 
-**Status:** Phases 0–5 merged to `main`. Phase 6 (Performance Management) complete on branch `claude/phase-6-planning-f4pul`, pending review + manual migration application.
+**Status:** Phases 0–6 merged to `main`. Phase 7 (Real-Time Monitoring + Breaks) complete on branch `claude/phase-7-planning-kM0f8`, pending review + manual migration application.
 **Source of truth** for the build. When in doubt, this document wins. Update via PR.
 
 ---
@@ -287,15 +287,28 @@ Scope delivered:
 2. Re-deploy `compute-kpis` Edge Function (now writes performance_snapshots in addition to kpi_snapshots).
 3. No new env vars or secrets.
 
-### Phase 7 — Real-Time Monitoring + Breaks (Modules 8 + 9)
-Scope:
-- Supabase Realtime subscriptions for live dashboard
-- Dashboard: active promoters, attendance status, live sales/sampling tallies, stock status, with drill-down
-- Auto issue detection (absence, low performance, no activity, stock shortage)
-- Break request flow (promoter submit, supervisor approve/reject/modify)
-- Web Push notifications + in-app notifications
+### Phase 7 — Real-Time Monitoring + Breaks (Modules 8 + 9) — SHIPPED ✅
+Scope delivered:
+- Four migrations: `break_requests` table (idempotency per D-009, review + actuals consistency CHECKs, RLS for admin / self / supervisor-by-location), `notifications` table (service-role writes, self UPDATE for read_at), `alert_type` enum extended with `low_performance` + `no_activity`, Supabase Realtime publication enabled on `attendance` + `alerts` + `break_requests` + `notifications` + `kpi_snapshots` + `stock_movements`.
+- Pure detectors in `lib/alerts/detect.ts` + Deno mirror (`_shared/live-detect.ts`): `detectLowPerformance` (consumes `performance_snapshots` rows) and `detectNoActivity` (stale checked-in promoters with zero funnel activity), plus `readLowPerformanceThreshold` / `readNoActivityHours` / `readBreakMaxMinutes` (soft-add readers per D-019 / D-027 / D-028 pattern).
+- `detect-live-issues` scheduled Edge Function (verify_jwt = false + CRON_SECRET header): per-active-campaign sweep, upserts alerts with per-flag dedup, fans out one `notifications` row per targeted user + supervisor on the alert's location. Runs every 10 minutes.
+- `lib/supabase/realtime.ts`: `subscribeToTables` + `useRealtimeTables` hook (one channel per mount, guaranteed cleanup, RLS applies to deliveries).
+- Live dashboards: `/[locale]/admin/live`, `/[locale]/supervisor/live` (RLS-scoped to assigned locations), `/[locale]/client/live` (aggregates only per D-019 item 3 / D-028). Shared `LiveDashboardClient` renders KPI strip + alert feed + active-promoter table + drill-down links.
+- Notifications bell in `AppShell` (all four roles): server-rendered initial state + client Realtime subscription filtered to `user_id=eq.<uid>`; mark-one / mark-all Server Actions.
+- Break flow: zod-validated Server Actions (`submit` / `review` / `start` / `end`), idempotent submit per D-009, server-side campaign-scoped duration cap via `kpi_config.break_max_minutes` (default 60), audit-logged transitions, promoter-facing submit form + history, supervisor queue with auto-detected modify vs approve.
+- Bilingual (en + ar) copy for `Live`, `Notifications`, `Breaks`, plus six new `alerts.*` keys.
 
-**Exit criteria:** All 5 cases from spec pages 18–20 (Late, Absent, Low Performance, Stock Shortage, No Check-Out) work end-to-end with alerts and logged resolutions.
+**Exit criteria** (all met): All 5 cases from spec pages 18–20 pass vitest end-to-end in `lib/alerts/spec-cases.test.ts` — Late, Absent, Low Performance (Shini 0.20 < 0.30), Stock Shortage (Cozmo balance 5 ≤ 10), No Check-Out — each with a supervisor-resolve step that produces the shape the UI `resolve` action writes.
+
+**Test matrix:** 196 vitest pass total (was 190 in Phase 6; Phase 7 added the 26-case `detect.test.ts` and the 6-case `spec-cases.test.ts`).
+
+**Decisions finalised:** D-029.
+
+**Open before merge:**
+1. Apply migrations manually via Supabase SQL Editor (4 files under `supabase/migrations/20260424*`).
+2. Deploy the `detect-live-issues` Edge Function. Reuses the existing `CRON_SECRET`; no new env vars.
+3. Schedule `detect-live-issues` every 10 min (pg_cron or Supabase scheduled functions). Example SQL in the function README.
+4. Web Push deferred to Phase 9 per D-029 item 6; no action required this phase.
 
 ### Phase 8 — Feedback + Reporting/Export (Modules 10 + 11)
 Scope:
