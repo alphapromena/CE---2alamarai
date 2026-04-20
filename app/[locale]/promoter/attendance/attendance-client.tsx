@@ -165,7 +165,7 @@ export function AttendanceClient({
   }, []);
 
   const onPhotoChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0] ?? null;
       if (!file) return;
       if (file.type !== 'image/jpeg') {
@@ -176,9 +176,14 @@ export function AttendanceClient({
         setErrorKey('photo_too_large');
         return;
       }
+      // Client-side resize + re-encode before upload (Phase 9). Falls
+      // back to the original on any error, and server still re-validates.
+      const { compressJpeg } = await import('@/lib/images/compress');
+      const compressed = await compressJpeg(file);
+      const finalBlob: Blob = compressed.blob;
       if (photoUrl) URL.revokeObjectURL(photoUrl);
-      setPhotoBlob(file);
-      setPhotoUrl(URL.createObjectURL(file));
+      setPhotoBlob(finalBlob);
+      setPhotoUrl(URL.createObjectURL(finalBlob));
       setErrorKey(null);
       setPhase('photo_ready');
     },

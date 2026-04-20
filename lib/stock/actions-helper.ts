@@ -2,6 +2,7 @@ import 'server-only';
 
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import type { StockEntityType, StockMovementKind } from './ledger';
 
 /**
@@ -377,8 +378,8 @@ export async function emitOverConsumptionAlert(input: {
     },
   });
   if (error) {
-    console.error('emitOverConsumptionAlert insert failed', {
-      message: error.message,
+    logError('emitOverConsumptionAlert insert failed', {
+      db_error: error.message,
       promoter_id: input.promoter_id,
       sku_id: input.sku_id,
     });

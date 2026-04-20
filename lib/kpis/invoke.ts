@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { logWarn } from '@/lib/observability/logger';
 
 /**
  * Trigger the compute-kpis Edge Function for one daily_report. Called from
@@ -17,7 +18,7 @@ export async function invokeComputeKpis(dailyReportId: string): Promise<void> {
       body: { daily_report_id: dailyReportId },
     });
   } catch (err) {
-    console.warn('compute-kpis invoke failed (sweep will retry)', {
+    logWarn('compute-kpis invoke failed (sweep will retry)', {
       daily_report_id: dailyReportId,
       error: err instanceof Error ? err.message : String(err),
     });

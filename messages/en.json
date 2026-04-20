@@ -31,6 +31,22 @@
     "results_count": "{count, plural, =0 {No results} one {# result} other {# results}}",
     "error_generic": "Something went wrong. Please try again."
   },
+  "IdleWatcher": {
+    "title": "You'll be signed out soon",
+    "description": "For your security, you'll be signed out after 30 minutes of inactivity.",
+    "stay": "Stay signed in"
+  },
+  "Errors": {
+    "page_title": "Something went wrong",
+    "page_description": "An unexpected error occurred while loading this page.",
+    "retry": "Try again",
+    "go_home": "Go to dashboard",
+    "error_id": "Error ID: {id}",
+    "not_found_title": "Page not found",
+    "not_found_description": "The page you're looking for doesn't exist or has been moved.",
+    "offline_title": "You're offline",
+    "offline_description": "Check your connection and try again."
+  },
   "Auth": {
     "brand": "Promoter Monitoring",
     "login": {
@@ -1281,7 +1297,8 @@
       "no_accessible_campaigns": "None of the selected campaigns are accessible.",
       "no_accessible_locations": "None of the selected locations are accessible.",
       "insert_failed": "Couldn't queue the export. Try again.",
-      "generation_failed": "Export generation failed. See details."
+      "generation_failed": "Export generation failed. See details.",
+      "rate_limited": "Too many export requests. Please wait a moment."
     },
     "new": {
       "title": "New export",
@@ -1360,7 +1377,8 @@
         "no_assignment": "Pick the campaign + location first.",
         "empty_body": "Write something before submitting.",
         "invalid_input": "The submission was invalid.",
-        "insert_failed": "Couldn't save your feedback. Try again."
+        "insert_failed": "Couldn't save your feedback. Try again.",
+        "rate_limited": "You're sending feedback very fast. Wait a moment."
       }
     }
   }

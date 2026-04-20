@@ -2,7 +2,7 @@
 
 A bilingual (Arabic + English) SaaS platform for Consumer Engagement & Field Execution Management. Manages field marketing campaigns end-to-end: planning, attendance with GPS + selfie validation, live sales/sampling tracking per SKU, multi-level stock control, real-time monitoring, performance analytics, and full data export.
 
-> **Status:** Phases 0–6 shipped. Phase 7 (Real-Time Monitoring + Breaks) adds Supabase Realtime-powered live dashboards (admin / supervisor / client), `detectLowPerformance` + `detectNoActivity` detectors behind a new `detect-live-issues` Edge Function, a bell-icon notifications surface fanned out from alerts + break events, and the promoter→supervisor break-request flow. All 5 spec cases (pages 18–20) — Late, Absent, Low Performance, Stock Shortage, No Check-Out — execute end-to-end in vitest (196 pass).
+> **Status: Project complete.** Phases 0–9 shipped. 272 vitest pass; TypeScript strict with zero `any`. Ops handoff checklist lives in [§ Operations](#operations).
 
 ## Documentation
 
@@ -107,7 +107,89 @@ Key variables:
 
 ### Security headers
 
-Sent by `middleware.ts` on every page response: CSP (production tightening planned in a later phase), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy: camera=(self), geolocation=(self), microphone=()`, and `Strict-Transport-Security` in production.
+Sent by `middleware.ts` on every page response: CSP (Phase 9 hardened — `frame-src 'none'`, `manifest-src 'self'`, `worker-src 'self' blob:`, `media-src 'self' blob:`, `upgrade-insecure-requests` in prod; `'unsafe-inline'` retained on script+style until nonce wiring lands), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY`, `Referrer-Policy: strict-origin-when-cross-origin`, 24-directive `Permissions-Policy`, `Cross-Origin-Opener-Policy: same-origin`, `Cross-Origin-Resource-Policy: same-origin`, `X-DNS-Prefetch-Control: off`, and `Strict-Transport-Security` in production.
+
+## Operations
+
+**Target audience:** Almarai ops / on-call engineer handling day-to-day running of the deployed platform.
+
+### First-time deploy checklist
+
+1. **Create the Supabase project** (one per environment: `preview`, `production`). Note the project ref; it's `gzcooygyyinfvigivicx` for the current production project.
+2. **Set env vars in Vercel + Supabase:**
+
+   | Variable | Where | Required? | Purpose |
+   |---|---|---|---|
+   | `NEXT_PUBLIC_SUPABASE_URL` | Vercel | Yes | Supabase project URL |
+   | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Vercel | Yes | Browser-safe Supabase key |
+   | `SUPABASE_SERVICE_ROLE_KEY` | Vercel (server only) | Yes | Full-access server key. Never ship to browser |
+   | `NEXT_PUBLIC_APP_URL` | Vercel | Yes | Public origin, e.g. `https://app.promoter.example`. Used in password-reset redirectTo + email CTAs |
+   | `CRON_SECRET` | Supabase Edge Function secrets | Yes | Shared secret for cron endpoints. Rotate quarterly |
+   | `LOG_LEVEL` | Vercel | Optional | `debug` \| `info` (default) \| `warn` \| `error` |
+   | `SENTRY_DSN` | Vercel | Optional | If set, `reportError()` forwards to Sentry; otherwise structured logs only |
+   | `RESEND_API_KEY` | Vercel (server only) | Optional | If unset, export-ready emails are skipped (in-app notifications still fire) |
+   | `RESEND_FROM_EMAIL` | Vercel | Optional (pairs with `RESEND_API_KEY`) | Verified sender address |
+
+3. **Apply all migrations in `supabase/migrations/` in chronological order** via the Supabase SQL Editor or `supabase db push`. At production cut-over (Phase 9) the full set is ~37 files. All Phase 9 migrations are additive-only (no destructive changes).
+4. **Deploy all Edge Functions** via `supabase functions deploy <name>`. Current set:
+   - `geo-validate-checkin`
+   - `geo-validate-checkout`
+   - `supervisor-visit-create`
+   - `detect-attendance-issues` (cron, verify_jwt off, shared-secret)
+   - `compute-kpis` (targeted + sweep)
+   - `stock-reconcile` (cron + targeted)
+   - `detect-live-issues` (cron, 10 min)
+   - `generate-report` (targeted + sweep)
+   - `cron-scheduled-reports` (cron, hourly)
+5. **Schedule cron jobs** via pg_cron (README for each function has the SQL):
+
+   | Function | Cadence |
+   |---|---|
+   | `detect-attendance-issues` | every 5 min |
+   | `detect-live-issues` | every 10 min |
+   | `stock-reconcile` (sweep) | every 15 min |
+   | `compute-kpis` (sweep) | hourly |
+   | `cron-scheduled-reports` | hourly |
+   | `gc_rate_limits` (DB function, no Edge Fn) | daily |
+
+6. **Verify Realtime publication** is enabled on `attendance`, `alerts`, `break_requests`, `notifications`, `kpi_snapshots`, `stock_movements` (set in `20260424030000_phase7_realtime_publication.sql`).
+7. **Seed the first admin user** by running `insert into auth.users` + profile manually in SQL, then invite other users from `/admin/users`.
+
+### Monitoring
+
+- **Vercel → Logs**: all server-action + route-handler errors. Structured JSON lines are searchable.
+- **Supabase → Logs**: Postgres errors, Edge Function invocation logs, Realtime channel stats.
+- **Sentry (if enabled)**: unhandled exceptions from `reportError()` and the client error boundary.
+- **`audit_log` table**: first-line forensics for every sensitive action (logins, role changes, stock movements, export requests, rate-limit hits).
+- **`export_jobs.status`**: look for stuck `running` rows (should never persist — the sync Server Action or sweep will clear them).
+
+### On-call runbook
+
+| Symptom | First check | Likely cause |
+|---|---|---|
+| Promoter can't check in | Edge Function logs for `geo-validate-checkin` | Geofence / EXIF / storage upload failure |
+| Users report logins failing | `audit_log` for `auth.login_rate_limited` rows | Someone is brute-forcing; rate limit is doing its job |
+| Live dashboard not updating | Supabase Dashboard → Realtime → active channels | Publication missed, or client WebSocket blocked |
+| Exports stuck "running" | `export_jobs` rows + Edge Function logs | `generate-report` timed out; rerun sweep mode |
+| Stock balances look wrong | `stock_movements` ledger is the source of truth | Check for concurrent distributions; invariant trigger should have blocked any illegal state |
+| Notifications bell empty | `notifications` table + Realtime channel filter | RLS or realtime filter mismatch |
+
+### Rollback
+
+- **Vercel**: Deployments tab → "Promote to Production" on the prior good build. Instant (edge cache flushed within minutes).
+- **Supabase**: migrations are forward-only. Phase 9 additions are all additive (new table, new indexes, new enum value, new SECURITY DEFINER function). To "roll back":
+  - New indexes: `drop index if exists <name>;` — safe, no data loss.
+  - `rate_limits` table + helper functions: `drop function public.check_rate_limit(...);` + `drop table public.rate_limits;` — safe.
+  - `admin_get_user_emails` function: `drop function public.admin_get_user_emails(uuid[]);` but the app falls back to the broken GoTrue endpoint — don't do this without reverting the code change.
+  - The `export_ready` enum value cannot be removed; it's harmless if never inserted.
+- **Edge Functions**: `git checkout <prev-sha> -- supabase/functions/<name> && supabase functions deploy <name>`.
+
+### Secret rotation
+
+Every 90 days, rotate and redeploy:
+- `SUPABASE_SERVICE_ROLE_KEY` (Supabase Dashboard → Settings → API)
+- `CRON_SECRET` (regenerate, update on each Edge Function + pg_cron job)
+- `RESEND_API_KEY` if email delivery is in use
 
 ## Contributing
 

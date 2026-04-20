@@ -6,6 +6,7 @@ import { createServerSupabase } from '@/lib/supabase/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { logAuditEvent } from '@/lib/auth/audit';
 import { submitFeedbackSchema } from '@/lib/validations/feedback';
+import { checkRateLimit } from '@/lib/rate-limit/check';
 
 export type FeedbackActionState = { error: string | null; id?: string };
 
@@ -18,6 +19,10 @@ export async function submitFeedbackAction(
   input: unknown,
 ): Promise<FeedbackActionState> {
   const me = await requireRole('promoter', 'supervisor', 'admin');
+
+  const rl = await checkRateLimit('feedback_submit', me.id);
+  if (!rl.allowed) return { error: 'rate_limited' };
+
   const parsed = submitFeedbackSchema.safeParse(input);
   if (!parsed.success) return { error: 'invalid_input' };
   const body = parsed.data;

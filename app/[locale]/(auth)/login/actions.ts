@@ -6,6 +6,7 @@ import { createServerSupabase } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/lib/auth/audit';
 import { isUserRole, LANDING_PATH_BY_ROLE } from '@/lib/auth/roles';
 import { loginSchema } from '@/lib/validations/auth';
+import { checkRateLimit } from '@/lib/rate-limit/check';
 
 export type LoginActionState = { error: string | null };
 
@@ -14,6 +15,17 @@ export async function loginAction(
   formData: FormData,
 ): Promise<LoginActionState> {
   const locale = await getLocale();
+
+  const rl = await checkRateLimit('login');
+  if (!rl.allowed) {
+    await logAuditEvent({
+      actor_id: null,
+      action: 'auth.login_rate_limited',
+      entity: 'auth',
+      after: { count: rl.count, reset_at: rl.resetAt.toISOString() },
+    });
+    return { error: 'rate_limited' };
+  }
 
   const parsed = loginSchema.safeParse({
     email: formData.get('email'),

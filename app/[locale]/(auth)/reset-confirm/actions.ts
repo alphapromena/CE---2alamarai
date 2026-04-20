@@ -5,6 +5,7 @@ import { getLocale } from 'next-intl/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/lib/auth/audit';
 import { confirmResetSchema } from '@/lib/validations/auth';
+import { checkRateLimit } from '@/lib/rate-limit/check';
 
 export type ResetConfirmState = { error: string | null };
 
@@ -13,6 +14,11 @@ export async function resetConfirmAction(
   formData: FormData,
 ): Promise<ResetConfirmState> {
   const locale = await getLocale();
+
+  const rl = await checkRateLimit('reset_confirm');
+  if (!rl.allowed) {
+    return { error: 'rate_limited' };
+  }
 
   const parsed = confirmResetSchema.safeParse({
     password: formData.get('password'),

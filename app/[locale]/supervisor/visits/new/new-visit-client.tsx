@@ -79,7 +79,7 @@ export function NewVisitClient({
   }, []);
 
   const onPhotoChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
+    async (e: React.ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
       if (file.type !== 'image/jpeg') {
@@ -90,9 +90,12 @@ export function NewVisitClient({
         setError('photo_too_large');
         return;
       }
+      const { compressJpeg } = await import('@/lib/images/compress');
+      const compressed = await compressJpeg(file);
+      const finalBlob: Blob = compressed.blob;
       if (photoUrl) URL.revokeObjectURL(photoUrl);
-      setPhotoBlob(file);
-      setPhotoUrl(URL.createObjectURL(file));
+      setPhotoBlob(finalBlob);
+      setPhotoUrl(URL.createObjectURL(finalBlob));
       setError(null);
     },
     [photoUrl],
