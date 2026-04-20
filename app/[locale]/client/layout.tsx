@@ -7,6 +7,7 @@ const NAV = [
   { href: '/client/dashboard', labelKey: 'Client.nav.dashboard' },
   { href: '/client/campaigns', labelKey: 'Client.nav.campaigns' },
   { href: '/client/performance', labelKey: 'Client.nav.performance' },
+  { href: '/client/live', labelKey: 'Client.nav.live' },
 ];
 
 export default async function ClientLayout({

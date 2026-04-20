@@ -101,7 +101,8 @@
       "assignments": "Assignments",
       "reports": "Reports",
       "stock": "Stock",
-      "performance": "Performance"
+      "performance": "Performance",
+      "live": "Live"
     },
     "dashboard": {
       "title": "Admin dashboard",
@@ -531,7 +532,9 @@
       "reports": "Reports",
       "tasks": "Tasks",
       "stock": "Stock",
-      "performance": "Performance"
+      "performance": "Performance",
+      "live": "Live",
+      "breaks": "Breaks"
     },
     "dashboard": {
       "title": "Supervisor dashboard",
@@ -821,7 +824,8 @@
       "attendance": "Attendance",
       "reports_today": "Today's report",
       "tasks": "Tasks",
-      "stock": "Stock"
+      "stock": "Stock",
+      "breaks": "Breaks"
     },
     "dashboard": {
       "title": "Promoter dashboard",
@@ -1009,7 +1013,8 @@
     "nav": {
       "dashboard": "Dashboard",
       "campaigns": "Campaigns",
-      "performance": "Performance"
+      "performance": "Performance",
+      "live": "Live"
     },
     "dashboard": {
       "title": "Client dashboard",
@@ -1047,7 +1052,13 @@
     "early_leave": "Left before shift end",
     "absent": "Absent — no check-in past {cutoff_minutes} min cutoff",
     "missing_check_out": "Past shift end with no check-out",
-    "geofence_override_requested": "Override requested: {reason}"
+    "geofence_override_requested": "Override requested: {reason}",
+    "low_stock": "Low stock: balance {balance} ≤ threshold {threshold}",
+    "over_consumption": "Over-consumption: attempted {attempted} but only {available} available",
+    "reconciliation_mismatch": "Reconciliation mismatch: declared {declared}, expected {expected} (Δ {diff})",
+    "no_usage": "No usage for {hours_since}h on stock received ({received})",
+    "low_performance": "Low performance on {tier_metric}: {metric_value} below threshold {threshold}",
+    "no_activity": "No activity reported since check-in ({hours_since_check_in}h, threshold {threshold_hours}h)"
   },
   "Roles": {
     "admin": "Admin",
@@ -1058,6 +1069,102 @@
   "Languages": {
     "ar": "العربية",
     "en": "English"
+  },
+  "Live": {
+    "admin": {
+      "title": "Live monitoring",
+      "description": "Real-time attendance, alerts, and performance across all campaigns."
+    },
+    "supervisor": {
+      "title": "Live monitoring",
+      "description": "Real-time view of your assigned locations and promoters."
+    },
+    "client": {
+      "title": "Live monitoring",
+      "description": "Aggregate live view across your campaigns. Individual rows are not exposed."
+    },
+    "live": "Live",
+    "connecting": "Connecting",
+    "refreshing": "Refreshing…",
+    "refresh": "Refresh",
+    "auto_refresh_hint": "Auto-updates as events arrive",
+    "active": "Active",
+    "late": "Late",
+    "absent": "Absent",
+    "checked_out": "Checked out",
+    "missing_check_out": "Missing check-out",
+    "open_alerts": "Open alerts",
+    "alert_feed": "Alert feed",
+    "active_promoters": "Active promoters",
+    "aggregates": "Aggregates",
+    "locations_active": "Locations active",
+    "drill_down": "Drill down",
+    "empty_alerts_title": "No open alerts",
+    "empty_alerts_description": "You're all clear right now.",
+    "empty_active_title": "Nobody checked in yet",
+    "empty_active_description": "Active promoters will appear here as they check in.",
+    "promoter": "Promoter",
+    "location": "Location",
+    "status_col": "Status",
+    "check_in": "Check-in",
+    "status": {
+      "checked_in": "Checked in",
+      "checked_out": "Checked out",
+      "late": "Late",
+      "absent": "Absent",
+      "early_leave": "Early leave",
+      "missing_checkout": "Missing check-out"
+    }
+  },
+  "Notifications": {
+    "title": "Notifications",
+    "empty": "No notifications yet.",
+    "mark_all_read": "Mark all as read",
+    "mark_read": "Mark read",
+    "view_all": "View all",
+    "kind": {
+      "alert_new": "New alert",
+      "break_requested": "Break requested",
+      "break_approved": "Break approved",
+      "break_rejected": "Break rejected",
+      "break_modified": "Break modified",
+      "system": "System"
+    }
+  },
+  "Breaks": {
+    "promoter": {
+      "title": "Breaks",
+      "description": "Request a break and track approvals.",
+      "new": "Request a break",
+      "requested_start": "Start",
+      "duration_minutes": "Duration (minutes)",
+      "reason": "Reason (optional)",
+      "submit": "Submit request",
+      "history": "Your requests",
+      "empty": "No break requests yet.",
+      "start_break": "Start break",
+      "end_break": "End break",
+      "cap_hint": "Max duration for this campaign: {cap} min"
+    },
+    "supervisor": {
+      "title": "Break requests",
+      "description": "Approve, reject, or modify break requests from your promoters.",
+      "pending": "Pending",
+      "resolved": "Resolved",
+      "empty": "No pending break requests.",
+      "approve": "Approve",
+      "reject": "Reject",
+      "modify": "Modify",
+      "approved_start": "Approved start",
+      "approved_duration": "Approved duration",
+      "reviewer_reason": "Note"
+    },
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected",
+      "modified": "Modified"
+    }
   },
   "Performance": {
     "tier": {

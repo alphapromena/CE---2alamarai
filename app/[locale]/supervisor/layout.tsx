@@ -11,6 +11,7 @@ const NAV = [
   { href: '/supervisor/tasks', labelKey: 'Supervisor.nav.tasks' },
   { href: '/supervisor/stock', labelKey: 'Supervisor.nav.stock' },
   { href: '/supervisor/performance', labelKey: 'Supervisor.nav.performance' },
+  { href: '/supervisor/live', labelKey: 'Supervisor.nav.live' },
 ];
 
 export default async function SupervisorLayout({

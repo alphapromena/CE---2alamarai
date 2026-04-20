@@ -101,7 +101,8 @@
       "assignments": "التعيينات",
       "reports": "التقارير",
       "stock": "المخزون",
-      "performance": "الأداء"
+      "performance": "الأداء",
+      "live": "مباشر"
     },
     "dashboard": {
       "title": "لوحة تحكم المدير",
@@ -531,7 +532,9 @@
       "reports": "التقارير",
       "tasks": "المهام",
       "stock": "المخزون",
-      "performance": "الأداء"
+      "performance": "الأداء",
+      "live": "مباشر",
+      "breaks": "الاستراحات"
     },
     "dashboard": {
       "title": "لوحة تحكم المشرف",
@@ -821,7 +824,8 @@
       "attendance": "الحضور",
       "reports_today": "تقرير اليوم",
       "tasks": "المهام",
-      "stock": "المخزون"
+      "stock": "المخزون",
+      "breaks": "الاستراحات"
     },
     "dashboard": {
       "title": "لوحة تحكم المروِّج",
@@ -1009,7 +1013,8 @@
     "nav": {
       "dashboard": "لوحة التحكم",
       "campaigns": "الحملات",
-      "performance": "الأداء"
+      "performance": "الأداء",
+      "live": "مباشر"
     },
     "dashboard": {
       "title": "لوحة تحكم العميل",
@@ -1047,7 +1052,13 @@
     "early_leave": "انصرف قبل انتهاء الوردية",
     "absent": "غائب — لا يوجد تسجيل دخول بعد مهلة {cutoff_minutes} دقيقة",
     "missing_check_out": "تجاوز انتهاء الوردية بدون تسجيل خروج",
-    "geofence_override_requested": "طلب استثناء: {reason}"
+    "geofence_override_requested": "طلب استثناء: {reason}",
+    "low_stock": "مخزون منخفض: الرصيد {balance} ≤ الحد {threshold}",
+    "over_consumption": "استهلاك زائد: محاولة {attempted} والمتاح فقط {available}",
+    "reconciliation_mismatch": "عدم تطابق في الجرد: المعلَن {declared}، المتوقَّع {expected} (الفرق {diff})",
+    "no_usage": "لا يوجد استخدام منذ {hours_since} ساعة على مخزون مستلم ({received})",
+    "low_performance": "أداء منخفض في {tier_metric}: {metric_value} دون الحد {threshold}",
+    "no_activity": "لا يوجد نشاط مسجَّل منذ تسجيل الدخول ({hours_since_check_in} ساعة، الحد {threshold_hours} ساعة)"
   },
   "Roles": {
     "admin": "مدير",
@@ -1058,6 +1069,102 @@
   "Languages": {
     "ar": "العربية",
     "en": "English"
+  },
+  "Live": {
+    "admin": {
+      "title": "المراقبة المباشرة",
+      "description": "الحضور والتنبيهات والأداء في الوقت الفعلي عبر كل الحملات."
+    },
+    "supervisor": {
+      "title": "المراقبة المباشرة",
+      "description": "عرض مباشر للمواقع والمروِّجين المعيَّنين لك."
+    },
+    "client": {
+      "title": "المراقبة المباشرة",
+      "description": "ملخَّص مباشر لحملاتك. البيانات الفردية غير مكشوفة."
+    },
+    "live": "مباشر",
+    "connecting": "يتم الاتصال",
+    "refreshing": "يتم التحديث…",
+    "refresh": "تحديث",
+    "auto_refresh_hint": "يتم التحديث تلقائيًا عند وصول الأحداث",
+    "active": "نشِط",
+    "late": "متأخر",
+    "absent": "غائب",
+    "checked_out": "سجَّل خروج",
+    "missing_check_out": "بدون تسجيل خروج",
+    "open_alerts": "تنبيهات مفتوحة",
+    "alert_feed": "سجل التنبيهات",
+    "active_promoters": "المروِّجون النشِطون",
+    "aggregates": "الإجماليات",
+    "locations_active": "مواقع نشِطة",
+    "drill_down": "تعمُّق",
+    "empty_alerts_title": "لا يوجد تنبيهات مفتوحة",
+    "empty_alerts_description": "كل شيء على ما يرام الآن.",
+    "empty_active_title": "لم يسجِّل أحد الدخول بعد",
+    "empty_active_description": "سيظهر المروِّجون النشِطون هنا عند تسجيل الدخول.",
+    "promoter": "المروِّج",
+    "location": "الموقع",
+    "status_col": "الحالة",
+    "check_in": "تسجيل الدخول",
+    "status": {
+      "checked_in": "دخل",
+      "checked_out": "خرج",
+      "late": "متأخر",
+      "absent": "غائب",
+      "early_leave": "خروج مبكِّر",
+      "missing_checkout": "بدون تسجيل خروج"
+    }
+  },
+  "Notifications": {
+    "title": "الإشعارات",
+    "empty": "لا يوجد إشعارات بعد.",
+    "mark_all_read": "تعليم الكل كمقروء",
+    "mark_read": "تعليم كمقروء",
+    "view_all": "عرض الكل",
+    "kind": {
+      "alert_new": "تنبيه جديد",
+      "break_requested": "طلب استراحة",
+      "break_approved": "تمت الموافقة على الاستراحة",
+      "break_rejected": "رُفض طلب الاستراحة",
+      "break_modified": "عُدِّل طلب الاستراحة",
+      "system": "النظام"
+    }
+  },
+  "Breaks": {
+    "promoter": {
+      "title": "الاستراحات",
+      "description": "اطلب استراحة وتابع الموافقات.",
+      "new": "طلب استراحة",
+      "requested_start": "البداية",
+      "duration_minutes": "المدة (دقيقة)",
+      "reason": "السبب (اختياري)",
+      "submit": "إرسال الطلب",
+      "history": "طلباتك",
+      "empty": "لا يوجد طلبات استراحة بعد.",
+      "start_break": "بدء الاستراحة",
+      "end_break": "إنهاء الاستراحة",
+      "cap_hint": "الحد الأقصى لهذه الحملة: {cap} دقيقة"
+    },
+    "supervisor": {
+      "title": "طلبات الاستراحة",
+      "description": "الموافقة أو الرفض أو التعديل على طلبات الاستراحة من المروِّجين.",
+      "pending": "قيد الانتظار",
+      "resolved": "منتهية",
+      "empty": "لا يوجد طلبات استراحة قيد الانتظار.",
+      "approve": "موافقة",
+      "reject": "رفض",
+      "modify": "تعديل",
+      "approved_start": "بداية معتمدة",
+      "approved_duration": "مدة معتمدة",
+      "reviewer_reason": "ملاحظة"
+    },
+    "status": {
+      "pending": "قيد الانتظار",
+      "approved": "تمت الموافقة",
+      "rejected": "مرفوض",
+      "modified": "مُعدَّل"
+    }
   },
   "Performance": {
     "tier": {
