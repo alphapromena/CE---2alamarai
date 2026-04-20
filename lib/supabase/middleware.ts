@@ -26,5 +26,20 @@ export async function attachSupabaseSession(request: NextRequest, response: Next
     data: { user },
   } = await supabase.auth.getUser();
 
-  return { supabase, user };
+  let mustChangePassword = false;
+  if (user) {
+    // Phase 10: bulk-imported promoters log in with a temp password and must
+    // rotate it on next session. The middleware uses this flag to redirect
+    // them to /set-password until cleared. Failures are swallowed — gating
+    // login on a profiles read would deadlock first-time invitees whose row
+    // hasn't been materialised by the auth.users trigger yet.
+    const { data } = await supabase
+      .from('profiles')
+      .select('must_change_password')
+      .eq('id', user.id)
+      .maybeSingle();
+    mustChangePassword = data?.must_change_password === true;
+  }
+
+  return { supabase, user, mustChangePassword };
 }

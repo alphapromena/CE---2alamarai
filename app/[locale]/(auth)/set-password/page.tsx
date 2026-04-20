@@ -15,5 +15,11 @@ export default async function SetPasswordPage({ params }: { params: Promise<{ lo
     redirect(`/${locale}/login?error=invite_expired`);
   }
 
-  return <SetPasswordForm />;
+  const { data: profile } = await supabase
+    .from('profiles')
+    .select('must_change_password')
+    .eq('id', user.id)
+    .maybeSingle();
+
+  return <SetPasswordForm mustChange={profile?.must_change_password === true} />;
 }
