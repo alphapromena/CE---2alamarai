@@ -105,19 +105,20 @@ Deno.serve(async (req) => {
     return json({ error: 'invalid_metadata' }, { status: 400 });
   }
 
-  const image = form.get('image');
-  if (!(image instanceof File)) {
-    return json({ error: 'missing_image' }, { status: 400 });
-  }
-  if (image.type !== 'image/jpeg') {
-    return json({ error: 'unsupported_image_type', accepted: ['image/jpeg'] }, { status: 415 });
-  }
-  if (image.size > MAX_IMAGE_BYTES) {
-    return json({ error: 'image_too_large', max_bytes: MAX_IMAGE_BYTES }, { status: 413 });
-  }
-  const original = new Uint8Array(await image.arrayBuffer());
-  if (!isJpeg(original)) {
-    return json({ error: 'not_a_jpeg' }, { status: 400 });
+  // Feature 4 / D-041: image is OPTIONAL on check-out (mirror of check-in).
+  const imageField = form.get('image');
+  let original: Uint8Array | null = null;
+  if (imageField instanceof File) {
+    if (imageField.type !== 'image/jpeg') {
+      return json({ error: 'unsupported_image_type', accepted: ['image/jpeg'] }, { status: 415 });
+    }
+    if (imageField.size > MAX_IMAGE_BYTES) {
+      return json({ error: 'image_too_large', max_bytes: MAX_IMAGE_BYTES }, { status: 413 });
+    }
+    original = new Uint8Array(await imageField.arrayBuffer());
+    if (!isJpeg(original)) {
+      return json({ error: 'not_a_jpeg' }, { status: 400 });
+    }
   }
 
   // Idempotency read-through per D-009.
@@ -204,22 +205,25 @@ Deno.serve(async (req) => {
     ? classifyCheckOut({ shiftEnd, checkOutAt: capturedAt })
     : 'checked_out';
 
-  // EXIF strip + parse.
-  let stripped: Uint8Array;
-  try {
-    stripped = stripJpegMetadata(original);
-  } catch {
-    return json({ error: 'jpeg_strip_failed' }, { status: 400 });
-  }
-  const exifMinimal = parseJpegExifMinimal(original);
+  // EXIF strip + parse. Skipped when no image was provided.
+  let photoPath: string | null = null;
+  let exifMinimal: ReturnType<typeof parseJpegExifMinimal> | null = null;
+  if (original) {
+    let stripped: Uint8Array;
+    try {
+      stripped = stripJpegMetadata(original);
+    } catch {
+      return json({ error: 'jpeg_strip_failed' }, { status: 400 });
+    }
+    exifMinimal = parseJpegExifMinimal(original);
 
-  // Upload photo.
-  const photoPath = `attendance/${userId}/${attendance.attendance_date}/check_out_${meta.idempotency_key}.jpg`;
-  const { error: uploadErr } = await admin.storage
-    .from('attendance-photos')
-    .upload(photoPath, stripped, { contentType: 'image/jpeg', upsert: true });
-  if (uploadErr) {
-    return json({ error: 'photo_upload_failed', detail: uploadErr.message }, { status: 500 });
+    photoPath = `attendance/${userId}/${attendance.attendance_date}/check_out_${meta.idempotency_key}.jpg`;
+    const { error: uploadErr } = await admin.storage
+      .from('attendance-photos')
+      .upload(photoPath, stripped, { contentType: 'image/jpeg', upsert: true });
+    if (uploadErr) {
+      return json({ error: 'photo_upload_failed', detail: uploadErr.message }, { status: 500 });
+    }
   }
 
   // The overall attendance.status on check-out:
@@ -238,7 +242,7 @@ Deno.serve(async (req) => {
       check_out_lng: meta.lng,
       check_out_photo_path: photoPath,
       check_out_distance_m: distanceM,
-      check_out_exif_minimal: exifMinimal,
+      check_out_exif_minimal: exifMinimal ?? null,
       status: finalStatus,
       idempotency_key_check_out: meta.idempotency_key,
     })

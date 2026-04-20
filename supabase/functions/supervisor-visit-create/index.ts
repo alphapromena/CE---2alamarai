@@ -25,6 +25,7 @@ type VisitMetadata = {
   idempotency_key: string;
   campaign_id: string;
   location_id: string;
+  promoter_id?: string | null;
   lat: number;
   lng: number;
   captured_at: string;
@@ -49,6 +50,9 @@ function parseMetadata(raw: unknown): VisitMetadata | null {
   if (typeof m.idempotency_key !== 'string' || !uuidRegex().test(m.idempotency_key)) return null;
   if (typeof m.campaign_id !== 'string' || !uuidRegex().test(m.campaign_id)) return null;
   if (typeof m.location_id !== 'string' || !uuidRegex().test(m.location_id)) return null;
+  if (m.promoter_id !== undefined && m.promoter_id !== null) {
+    if (typeof m.promoter_id !== 'string' || !uuidRegex().test(m.promoter_id)) return null;
+  }
   if (typeof m.lat !== 'number' || m.lat < -90 || m.lat > 90) return null;
   if (typeof m.lng !== 'number' || m.lng < -180 || m.lng > 180) return null;
   if (typeof m.captured_at !== 'string' || Number.isNaN(Date.parse(m.captured_at))) return null;
@@ -180,6 +184,23 @@ Deno.serve(async (req) => {
     return json({ error: 'campaign_location_not_linked' }, { status: 400 });
   }
 
+  // Feature 4 / D-041: if a promoter is named, verify they are a real promoter
+  // assigned to this location. Prevents cross-location visit logging.
+  if (meta.promoter_id) {
+    const { data: prom } = await admin
+      .from('profiles')
+      .select('id, role, active, assigned_locations')
+      .eq('id', meta.promoter_id)
+      .maybeSingle();
+    if (!prom || !prom.active || prom.role !== 'promoter') {
+      return json({ error: 'promoter_not_found_or_invalid' }, { status: 400 });
+    }
+    const promLocs: string[] = prom.assigned_locations ?? [];
+    if (!promLocs.includes(meta.location_id)) {
+      return json({ error: 'promoter_not_at_location' }, { status: 400 });
+    }
+  }
+
   const distanceRaw = haversineDistance(loc.lat, loc.lng, meta.lat, meta.lng);
   const distanceM = Math.round(distanceRaw);
   const isWithinGeofence = distanceM <= loc.geofence_radius_m;
@@ -208,6 +229,7 @@ Deno.serve(async (req) => {
       supervisor_id: userId,
       campaign_id: meta.campaign_id,
       location_id: meta.location_id,
+      promoter_id: meta.promoter_id ?? null,
       visited_at: capturedAt.toISOString(),
       lat: meta.lat,
       lng: meta.lng,
@@ -224,6 +246,26 @@ Deno.serve(async (req) => {
 
   if (insErr || !inserted) {
     return json({ error: 'insert_failed', detail: insErr?.message }, { status: 500 });
+  }
+
+  // Feature 4 / D-041: notify the visited promoter. Fire-and-forget at the
+  // response layer — a notification failure must not roll back the visit.
+  if (meta.promoter_id) {
+    const notifRes = await admin.from('notifications').insert({
+      user_id: meta.promoter_id,
+      kind: 'supervisor_visit',
+      payload: {
+        visit_id: inserted.id,
+        supervisor_id: userId,
+        location_id: meta.location_id,
+        campaign_id: meta.campaign_id,
+        visited_at: capturedAt.toISOString(),
+        outcome: meta.outcome,
+      },
+    });
+    if (notifRes.error) {
+      console.warn('notification insert failed', notifRes.error.message);
+    }
   }
 
   return json({

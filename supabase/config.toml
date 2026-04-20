@@ -117,6 +117,11 @@ verify_jwt = false
 [functions.cron-scheduled-reports]
 verify_jwt = false
 
+# Feature 4 photo-retention sweep. Nightly; removes attendance + visit photos
+# older than 90 days. CRON_SECRET enforced via x-cron-secret header.
+[functions.cleanup-old-photos]
+verify_jwt = false
+
 [analytics]
 enabled = false
 

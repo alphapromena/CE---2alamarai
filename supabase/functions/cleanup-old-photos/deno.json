@@ -1,0 +1,12 @@
+{
+  "tasks": {
+    "serve": "deno run --allow-all --watch index.ts"
+  },
+  "imports": {
+    "@supabase/supabase-js": "https://esm.sh/@supabase/supabase-js@2.103.3"
+  },
+  "compilerOptions": {
+    "lib": ["deno.ns", "deno.window", "dom"],
+    "strict": true
+  }
+}
