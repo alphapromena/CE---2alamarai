@@ -524,3 +524,56 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - Dashboard p95 exceeds target (item 4) → layer a materialized view + cron refresh on top of the table.
   - Location-level rollups are agreed for the client surface (item 6) → relax the client RLS policy to include scope_kind = 'location'.
   - Charts need interactivity (zoom, hover tooltips, brush) → swap `Sparkline` for `recharts`.
+
+---
+
+## D-029 — Phase 7 live monitoring + breaks: per-page Realtime, notifications as DB rows, configurable live thresholds, 10-min sweep, Web Push deferred
+
+- **Date:** 2026-04-20
+- **Phase:** Phase 7 (Real-Time Monitoring + Breaks)
+- **Question:** Seven Phase-7 ambiguities resolved together because each shapes the same surface (live dashboards, detection cadence, break flow, notification delivery):
+  1. Realtime subscription scope: per-page or global app-level?
+  2. Notifications: DB rows + Realtime, broadcast channel, or polling?
+  3. Break duration cap: per-campaign config or hard-coded?
+  4. Low-performance threshold: what value / where configured?
+  5. No-activity threshold: what value / where configured?
+  6. Web Push: implement now or defer?
+  7. Detection sweep cadence.
+- **Decision:**
+  1. **Realtime subscriptions are per-page**, scoped to the channel `live-<scope>` (admin / supervisor) or `notifications-<user_id>` for the bell. One channel per mount; `useRealtimeTables` returns a cleanup function that calls `supabase.removeChannel` on unmount. No app-level global channel — stale subscriptions across navigations were the risk we explicitly wanted to avoid.
+  2. **Notifications are DB rows fanned out by the same Edge Function / Server Action that emits the alert**, with the bell subscribing to Realtime `postgres_changes` filtered to `user_id=eq.<uid>`. No broadcast channel (bypasses RLS), no polling fallback (Realtime is Phase 7's marquee feature — if it's not ready, the live dashboard isn't either). Retention is out-of-band; no schedule shipped in this phase.
+  3. **Break duration cap is per-campaign**, via `kpi_config.break_max_minutes` (default 60). Read through `readBreakMaxMinutes` (same soft-add pattern as D-019 / D-027). DB enforces a hard ceiling of 480 minutes (8h) — campaigns can tighten below that but never above.
+  4. **Low-performance threshold is per-campaign**, via `kpi_config.low_performance_threshold` (default 0.30 — matches the Phase 6 `tier_medium` lower bound from D-028). The metric tiered on is `kpi_config.tier_metric` (already defined by D-028). Strictly-below-threshold fires; at-or-above does not. Setting threshold to 0 disables the detector.
+  5. **No-activity threshold is per-campaign**, via `kpi_config.no_activity_hours` (default 3). Distinct from stock `no_usage_hours` (D-027, default 4): no_usage watches the sample ledger, no_activity watches the engagement funnel (contacts + engaged + samples + sales on `daily_reports`). A promoter can legitimately have zero samples dispensed but lots of customer contacts — both signals matter.
+  6. **Web Push is deferred.** The `notifications` table is push-ready (kind + payload), but no service-worker push-subscription UI ships in Phase 7. Revisiting in Phase 9 polish once iOS PWA push reliability is tested on target devices.
+  7. **Detection sweep every 10 minutes.** Matches `detect-attendance-issues` cadence; a single cron entry calls `detect-live-issues` with `x-cron-secret`. More frequent sweeps don't earn their cost (alerts dedupe on re-run, so a faster cadence just burns function invocations for no operational benefit). Scheduling is not wired in code — it's a deploy-time operation documented in the function's README.
+- **Rationale:**
+  - Per-page subscriptions avoid the leak class where a global channel keeps delivering events to a component that's no longer mounted. The one concession is the bell's user-scoped channel in the shell, which is intentionally tied to the session profile lifecycle.
+  - DB rows + Realtime keeps RLS as the single authorisation surface — every notification a client sees is one it could also have SELECTed. Broadcast channels bypass RLS and expand the attack surface.
+  - Per-campaign thresholds (items 3, 4, 5) mirror the already-established D-007 / D-019 / D-027 / D-028 pattern: one JSONB column, soft-add, no schema migrations when tuning defaults for a new brand.
+  - Deferring Web Push keeps the phase shippable within the 60–75 min budget the user specified; the rest of the phase is usable without it.
+  - A 10-minute sweep cadence is tight enough for operational response and relaxed enough for cost. Alert dedup keys (documented in `detect-live-issues/index.ts`) make the cadence safe to increase or decrease without risking duplicate noise.
+- **Implementation:**
+  - Migrations: `20260424000000_phase7_alerts_extend.sql` (enum + 2 values), `20260424010000_phase7_break_requests.sql`, `20260424020000_phase7_notifications.sql`, `20260424030000_phase7_realtime_publication.sql`.
+  - Pure detectors: `lib/alerts/detect.ts` + mirror `supabase/functions/_shared/live-detect.ts`.
+  - Edge Function: `supabase/functions/detect-live-issues/index.ts` (+ README + deno.json + `config.toml` entry).
+  - Realtime client: `lib/supabase/realtime.ts` with `subscribeToTables` + `useRealtimeTables` hook.
+  - Live dashboards: `LiveDashboardClient` shared across `/[locale]/admin/live`, `/[locale]/supervisor/live`, `/[locale]/client/live` (aggregates-only).
+  - Notifications: `lib/queries/notifications.ts`, `lib/notifications/actions.ts`, `NotificationBell` + `NotificationBellServer` wired into every role's `AppShell`.
+  - Breaks: `lib/validations/breaks.ts`, `lib/queries/breaks.ts`, `lib/breaks/actions.ts`, `/[locale]/promoter/breaks` (submit + history + start/end), `/[locale]/supervisor/breaks` (queue with approve/reject/modify + Realtime refresh).
+  - Tests: `lib/alerts/detect.test.ts` (26 cases incl. Case-3 Shini), `lib/alerts/spec-cases.test.ts` (5 spec cases — Late, Absent, Low Performance, Stock Shortage, No Check-Out — with supervisor resolve). Total: 196 vitest pass (was 190 in Phase 6; +6 new).
+  - Bilingual copy: `messages/en.json` + `messages/ar.json` extended with `Live`, `Notifications`, `Breaks`, and six new `alerts.*` keys.
+- **Alternatives considered:**
+  - **App-level Realtime client.** Rejected: coupling a global channel's lifecycle to per-page navigation is the classic leak pattern; per-page subs keep cleanup deterministic.
+  - **Notifications via broadcast channel.** Rejected: bypasses RLS, needs a parallel authorisation story.
+  - **Polling fallback for notifications.** Rejected: added complexity for a feature whose whole purpose is to replace polling. If Realtime is down, the dashboard isn't live — we should fix Realtime.
+  - **Hard-coded 60-min break cap.** Rejected: same reasoning as D-019 / D-027 (guaranteed first-customer-disagreement migration).
+  - **Hard-coded 0.30 low-performance threshold.** Rejected: same.
+  - **Ship Web Push this phase.** Rejected: service-worker push subscription + VAPID keys + per-platform quirks are a separate feature that would risk the phase-7 timebox. Phase 9 polish is the right home.
+  - **5-min or 1-min sweep cadence.** Rejected: operationally the difference between 5 and 10 minutes is noise; the difference between 10 min and a shift-length gap is real. 10 min is the least frequent schedule that still feels "live."
+- **Revisit when:**
+  - Real-device testing shows iOS Realtime WebSocket flakiness significant enough to force a polling fallback for the bell.
+  - A customer wants per-user (not per-campaign) thresholds → move the readers to a per-user JSONB on `profiles` and fall back to `kpi_config`.
+  - Web Push is greenlit → `notifications.payload` already carries what a push envelope needs; add a `push_subscriptions` table and a `send-web-push` Edge Function.
+  - Sweep cadence becomes measurably too coarse (alert latency complaints from ops) → halve it and monitor.
+
