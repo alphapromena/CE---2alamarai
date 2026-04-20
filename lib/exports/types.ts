@@ -165,12 +165,24 @@ export type FeedbackRaw = {
   competitor_brands: string[];
 };
 
+/** Per-tenant promoter-visibility toggles threaded into the builders so the
+ *  client role can be widened on a per-client basis (D-040). See
+ *  `lib/auth/client-visibility.ts`. All-false preserves D-033 exactly. */
+export type ExportClientVisibility = {
+  show_promoter_names: boolean;
+  show_promoter_photos: boolean;
+  show_promoter_alerts: boolean;
+  show_promoter_full_profile: boolean;
+};
+
 /** Full bundle the builders consume (partial — only the requested domains
  *  need be populated). */
 export type ExportInput = {
   scope: ExportScope;
   role: ExportRole;
   locale: 'ar' | 'en';
+  /** Optional. Only consulted when role === 'client'. Omitted ⇒ all-false. */
+  clientVisibility?: ExportClientVisibility;
   attendance?: AttendanceRaw[];
   daily_reports?: DailyReportRaw[];
   sales_entries?: SalesEntryRaw[];

@@ -3,6 +3,7 @@ import {
   buildActivitySheets,
   buildAllSheets,
   buildAttendanceSheets,
+  buildClientPromoterSheet,
   buildFeedbackSheets,
   buildPerformanceSheets,
   buildStockSheets,
@@ -11,6 +12,7 @@ import {
 import type {
   AttendanceRaw,
   DailyReportRaw,
+  ExportClientVisibility,
   ExportInput,
   FeedbackRaw,
   PerformanceRaw,
@@ -495,5 +497,112 @@ describe('buildAllSheets (orchestrator)', () => {
     const s = sheets[0];
     // LOC_A.name.ar = صفوي الجبيهة
     expect(s?.rows[0]?.[2]).toBe('صفوي الجبيهة');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// D-040 — per-client promoter visibility toggles
+// ---------------------------------------------------------------------------
+describe('client toggles (D-040)', () => {
+  function visibility(overrides: Partial<ExportClientVisibility> = {}): ExportClientVisibility {
+    return {
+      show_promoter_names: false,
+      show_promoter_photos: false,
+      show_promoter_alerts: false,
+      show_promoter_full_profile: false,
+      ...overrides,
+    };
+  }
+
+  const clientInput = (vis?: ExportClientVisibility): ExportInput => ({
+    role: 'client',
+    locale: 'en',
+    clientVisibility: vis,
+    scope: {
+      campaign_ids: [CAMP.id],
+      location_ids: [],
+      sku_ids: [],
+      from_date: '2026-04-18',
+      to_date: '2026-04-18',
+      domains: ['attendance', 'activity', 'stock', 'performance', 'supervisor_actions', 'feedback'],
+    },
+    attendance,
+    daily_reports: reports,
+    sales_entries: salesEntries,
+    stock,
+    performance,
+    supervisor_visits: visits,
+    feedback,
+  });
+
+  it('all-false: client output matches the pre-D-040 aggregate-only shape exactly', () => {
+    const baseline = buildAllSheets(clientInput()).map((s) => s.name);
+    const allFalse = buildAllSheets(clientInput(visibility())).map((s) => s.name);
+    expect(baseline).toEqual(allFalse);
+    expect(allFalse).toEqual([
+      'Attendance',
+      'Activity by campaign',
+      'Activity by SKU',
+      'Stock by SKU',
+      'Performance',
+      'Feedback rollup',
+    ]);
+  });
+
+  it('full_profile alone: adds a Promoters sheet with display ids only', () => {
+    const sheets = buildAllSheets(clientInput(visibility({ show_promoter_full_profile: true })));
+    const promoters = sheets.find((s) => s.name === 'Promoters');
+    expect(promoters).toBeDefined();
+    expect(promoters?.columns[0]).toBe('Promoter id');
+    expect(promoters?.columns).not.toContain('Promoter name');
+    // Each row's first cell is the display id (P + 6 hex) — not the real name.
+    for (const row of promoters?.rows ?? []) {
+      expect(row[0]).toMatch(/^P[0-9A-F]{6}$/);
+      expect(row[0]).not.toBe('Ahmed');
+      expect(row[0]).not.toBe('Sara');
+      expect(row[0]).not.toBe('Laila');
+    }
+  });
+
+  it('full_profile + names: Promoters sheet adds the Promoter name column with real names', () => {
+    const sheets = buildAllSheets(
+      clientInput(visibility({ show_promoter_full_profile: true, show_promoter_names: true })),
+    );
+    const promoters = sheets.find((s) => s.name === 'Promoters');
+    expect(promoters?.columns).toEqual([
+      'Promoter id',
+      'Promoter name',
+      'Shifts',
+      'On time',
+      'Late',
+      'Reports',
+      'Contacts',
+      'Engaged',
+      'Samples',
+      'Sales',
+    ]);
+    const names = (promoters?.rows ?? []).map((r) => r[1]);
+    expect(names).toEqual(expect.arrayContaining(['Ahmed', 'Sara', 'Laila']));
+  });
+
+  it('names alone (no full_profile): no Promoters sheet appears — full_profile gates the surface', () => {
+    const sheets = buildAllSheets(clientInput(visibility({ show_promoter_names: true })));
+    expect(sheets.find((s) => s.name === 'Promoters')).toBeUndefined();
+  });
+
+  it('buildClientPromoterSheet aggregates attendance + reports per promoter', () => {
+    const sheets = buildClientPromoterSheet(
+      attendance,
+      reports,
+      visibility({ show_promoter_full_profile: true, show_promoter_names: true }),
+      'en',
+    );
+    const ahmed = sheets[0]?.rows.find((r) => r[1] === 'Ahmed');
+    // Ahmed: 1 shift on_time, 1 approved report (r1: 80c/64e/53s/30sa)
+    expect(ahmed).toBeDefined();
+    expect(ahmed?.[2]).toBe(1); // shifts
+    expect(ahmed?.[3]).toBe(1); // on_time
+    expect(ahmed?.[5]).toBe(1); // reports
+    expect(ahmed?.[6]).toBe(80); // contacts
   });
 });
