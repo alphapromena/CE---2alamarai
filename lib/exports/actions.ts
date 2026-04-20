@@ -5,6 +5,7 @@ import { requireSessionProfile } from '@/lib/auth/guards';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { logAuditEvent } from '@/lib/auth/audit';
 import { checkRateLimit } from '@/lib/rate-limit/check';
+import { notifyExportReady } from '@/lib/email/export-notify';
 import { composeExport } from './compose';
 import { assembleExportInput } from './assemble';
 import type { ExportRole, ExportScope } from './types';
@@ -202,6 +203,9 @@ export async function queueExportAction(
       entity_id: job.id,
       after: { result_path: path, bytes: artifact.bytes.length },
     });
+
+    // D-034: fire-and-forget email + in-app notification (email env-gated).
+    await notifyExportReady(job.id, me.id);
 
     revalidatePath('/[locale]/admin/exports', 'page');
     revalidatePath('/[locale]/supervisor/exports', 'page');
