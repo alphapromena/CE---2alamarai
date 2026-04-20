@@ -11,6 +11,7 @@ const NAV = [
   { href: '/promoter/tasks', labelKey: 'Promoter.nav.tasks' },
   { href: '/promoter/stock', labelKey: 'Promoter.nav.stock' },
   { href: '/promoter/breaks', labelKey: 'Promoter.nav.breaks' },
+  { href: '/promoter/feedback', labelKey: 'Promoter.nav.feedback' },
 ];
 
 export default async function PromoterLayout({

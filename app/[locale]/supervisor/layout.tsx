@@ -13,6 +13,8 @@ const NAV = [
   { href: '/supervisor/stock', labelKey: 'Supervisor.nav.stock' },
   { href: '/supervisor/performance', labelKey: 'Supervisor.nav.performance' },
   { href: '/supervisor/live', labelKey: 'Supervisor.nav.live' },
+  { href: '/supervisor/feedback', labelKey: 'Supervisor.nav.feedback' },
+  { href: '/supervisor/exports', labelKey: 'Supervisor.nav.exports' },
 ];
 
 export default async function SupervisorLayout({

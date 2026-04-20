@@ -17,6 +17,7 @@ const NAV = [
   { href: '/admin/stock', labelKey: 'Admin.nav.stock' },
   { href: '/admin/performance', labelKey: 'Admin.nav.performance' },
   { href: '/admin/live', labelKey: 'Admin.nav.live' },
+  { href: '/admin/exports', labelKey: 'Admin.nav.exports' },
 ];
 
 export default async function AdminLayout({
