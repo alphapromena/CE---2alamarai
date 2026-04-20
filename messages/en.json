@@ -91,7 +91,8 @@
       "password_label": "Password",
       "confirm_password_label": "Confirm password",
       "submit": "Create password",
-      "submit_loading": "Creating…"
+      "submit_loading": "Creating…",
+      "must_change_notice": "You signed in with a temporary password. Choose a new password to continue."
     },
     "errors": {
       "invalid_credentials": "Invalid email or password.",
@@ -119,7 +120,8 @@
       "stock": "Stock",
       "performance": "Performance",
       "live": "Live",
-      "exports": "Exports"
+      "exports": "Exports",
+      "imports": "Imports"
     },
     "dashboard": {
       "title": "Admin dashboard",
@@ -539,6 +541,43 @@
     "reports": {
       "title": "All reports",
       "subtitle": "Every campaign across every location."
+    },
+    "imports": {
+      "title": "Bulk import",
+      "description": "Onboard products, promoters, or locations from a CSV file.",
+      "nav_label": "Imports",
+      "products_title": "Products",
+      "products_description": "Bulk-create SKUs under an existing campaign.",
+      "promoters_title": "Promoters",
+      "promoters_description": "Create promoter accounts with a temporary password.",
+      "locations_title": "Locations",
+      "locations_description": "Bulk-add stores or points-of-sale to existing cities.",
+      "open_cta": "Open",
+      "back_to_imports": "Back to imports",
+      "form_title_products": "Import products (SKUs)",
+      "form_title_promoters": "Import promoters",
+      "form_title_locations": "Import locations",
+      "form_description_products": "Each row creates a SKU under the given campaign. Failed rows are listed below; valid rows are committed.",
+      "form_description_promoters": "Each row creates a promoter with the temporary password \"Demo@1234\". They will be required to change it on first login.",
+      "form_description_locations": "Each row creates a location under the given city. Failed rows are listed below; valid rows are committed.",
+      "download_template": "Download template",
+      "file_label": "CSV file",
+      "file_help": "UTF-8 encoded CSV, max 2 MB.",
+      "submit": "Import rows",
+      "submit_loading": "Importing…",
+      "results_title": "Results",
+      "success_summary": "{count, plural, =0 {No rows imported} one {# row imported} other {# rows imported}}.",
+      "fail_summary": "{count, plural, =0 {No failures} one {# row failed} other {# rows failed}}.",
+      "row_column": "Row",
+      "error_column": "Error",
+      "errors": {
+        "no_file": "Choose a CSV file before submitting.",
+        "file_too_large": "File is larger than 2 MB.",
+        "invalid_type": "File must be a .csv file.",
+        "parse_failed": "CSV could not be parsed. Check the headers match the template.",
+        "no_rows": "The CSV did not contain any data rows.",
+        "unknown_target": "Unknown import target."
+      }
     }
   },
   "Supervisor": {

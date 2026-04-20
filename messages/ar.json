@@ -91,7 +91,8 @@
       "password_label": "كلمة المرور",
       "confirm_password_label": "تأكيد كلمة المرور",
       "submit": "إنشاء كلمة المرور",
-      "submit_loading": "جارٍ الإنشاء…"
+      "submit_loading": "جارٍ الإنشاء…",
+      "must_change_notice": "لقد سجّلت الدخول بكلمة مرور مؤقتة. اختر كلمة مرور جديدة للمتابعة."
     },
     "errors": {
       "invalid_credentials": "البريد الإلكتروني أو كلمة المرور غير صحيحة.",
@@ -119,7 +120,8 @@
       "stock": "المخزون",
       "performance": "الأداء",
       "live": "مباشر",
-      "exports": "التصدير"
+      "exports": "التصدير",
+      "imports": "الاستيراد"
     },
     "dashboard": {
       "title": "لوحة تحكم المدير",
@@ -539,6 +541,43 @@
     "reports": {
       "title": "كل التقارير",
       "subtitle": "كل الحملات على كل المواقع."
+    },
+    "imports": {
+      "title": "الاستيراد المجمّع",
+      "description": "أضف المنتجات أو المروّجين أو المواقع دفعة واحدة من ملف CSV.",
+      "nav_label": "الاستيراد",
+      "products_title": "المنتجات",
+      "products_description": "إنشاء أصناف SKU جماعيًا تحت حملة قائمة.",
+      "promoters_title": "المروّجون",
+      "promoters_description": "إنشاء حسابات مروّجين بكلمة مرور مؤقتة.",
+      "locations_title": "المواقع",
+      "locations_description": "إضافة المتاجر أو نقاط البيع جماعيًا تحت مدن قائمة.",
+      "open_cta": "فتح",
+      "back_to_imports": "العودة إلى الاستيراد",
+      "form_title_products": "استيراد المنتجات (SKU)",
+      "form_title_promoters": "استيراد المروّجين",
+      "form_title_locations": "استيراد المواقع",
+      "form_description_products": "كل صف ينشئ صنف SKU تحت الحملة المحددة. تُعرض الصفوف الفاشلة أدناه؛ والصفوف الصحيحة تُحفظ.",
+      "form_description_promoters": "كل صف ينشئ مروّجًا بكلمة المرور المؤقتة \"Demo@1234\". سيُطلب منه تغييرها عند أول تسجيل دخول.",
+      "form_description_locations": "كل صف ينشئ موقعًا تحت المدينة المحددة. تُعرض الصفوف الفاشلة أدناه؛ والصفوف الصحيحة تُحفظ.",
+      "download_template": "تنزيل القالب",
+      "file_label": "ملف CSV",
+      "file_help": "ملف CSV بترميز UTF-8، أقصى حجم 2 ميغابايت.",
+      "submit": "استيراد الصفوف",
+      "submit_loading": "جارٍ الاستيراد…",
+      "results_title": "النتائج",
+      "success_summary": "{count, plural, =0 {لم يتم استيراد أي صف} one {تم استيراد صف واحد} two {تم استيراد صفّين} few {تم استيراد # صفوف} many {تم استيراد # صفًا} other {تم استيراد # صف}}.",
+      "fail_summary": "{count, plural, =0 {لا توجد إخفاقات} one {فشل صف واحد} two {فشل صفّان} few {فشل # صفوف} many {فشل # صفًا} other {فشل # صف}}.",
+      "row_column": "الصف",
+      "error_column": "الخطأ",
+      "errors": {
+        "no_file": "اختر ملف CSV قبل الإرسال.",
+        "file_too_large": "حجم الملف يتجاوز 2 ميغابايت.",
+        "invalid_type": "يجب أن يكون الملف بصيغة .csv.",
+        "parse_failed": "تعذّر تحليل ملف CSV. تأكد من تطابق الترويسات مع القالب.",
+        "no_rows": "لا يحتوي الملف على أي صفوف بيانات.",
+        "unknown_target": "هدف الاستيراد غير معروف."
+      }
     }
   },
   "Supervisor": {
