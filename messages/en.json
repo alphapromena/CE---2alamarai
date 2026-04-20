@@ -898,7 +898,8 @@
       "tasks": "Tasks",
       "stock": "Stock",
       "breaks": "Breaks",
-      "feedback": "Feedback"
+      "feedback": "Feedback",
+      "visits": "Visits"
     },
     "dashboard": {
       "title": "Promoter dashboard",
