@@ -93,7 +93,11 @@ export function useRealtimeTables(
   onEvent: RealtimeHandler,
 ): void {
   const handlerRef = useRef<RealtimeHandler>(onEvent);
-  handlerRef.current = onEvent;
+  // Keep the ref pointing at the latest handler without mutating during
+  // render (react-hooks/refs: refs must not be updated in the render body).
+  useEffect(() => {
+    handlerRef.current = onEvent;
+  }, [onEvent]);
 
   // Serialise the subscription spec so we re-subscribe only when the shape
   // actually changes, not when an inline array is re-created each render.

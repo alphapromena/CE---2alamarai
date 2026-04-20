@@ -35,10 +35,16 @@ export function NewExportForm({
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
-  const today = new Date().toISOString().slice(0, 10);
-  const thirtyAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000)
-    .toISOString()
-    .slice(0, 10);
+  // Date.now() would trip react-hooks/purity if read during render; lazy
+  // state initializer defers the call to mount time.
+  const [dateDefaults] = useState(() => {
+    const now = new Date();
+    return {
+      today: now.toISOString().slice(0, 10),
+      thirtyAgo: new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10),
+    };
+  });
+  const { today, thirtyAgo } = dateDefaults;
 
   const [campaignIds, setCampaignIds] = useState<string[]>([]);
   const [locationIds, setLocationIds] = useState<string[]>([]);

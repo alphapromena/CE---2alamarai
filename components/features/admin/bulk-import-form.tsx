@@ -7,11 +7,8 @@ import { Alert } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table';
-import {
-  bulkImportAction,
-  initialBulkImportState,
-  type BulkImportState,
-} from '@/app/[locale]/admin/imports/actions';
+import { bulkImportAction } from '@/app/[locale]/admin/imports/actions';
+import { initialBulkImportState, type BulkImportState } from '@/app/[locale]/admin/imports/state';
 import type { ImportTarget } from '@/lib/imports/templates';
 
 const MAX_FILE_BYTES = 2 * 1024 * 1024;

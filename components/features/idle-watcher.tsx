@@ -37,12 +37,15 @@ const ACTIVITY_EVENTS: Array<keyof WindowEventMap> = [
 ];
 
 export function IdleWatcher() {
-  const lastActivity = useRef<number>(Date.now());
+  // Date.now() would trip react-hooks/purity if read during render; seed 0
+  // and stamp the real timestamp on mount.
+  const lastActivity = useRef<number>(0);
   const [warning, setWarning] = useState(false);
   const [loggedOut, setLoggedOut] = useState(false);
   const t = useTranslations('IdleWatcher');
 
   useEffect(() => {
+    lastActivity.current = Date.now();
     const bump = () => {
       lastActivity.current = Date.now();
       setWarning(false);
