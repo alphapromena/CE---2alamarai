@@ -22,8 +22,16 @@
 import { openDB, type DBSchema, type IDBPDatabase } from 'idb';
 
 const DB_NAME = 'ce-offline';
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const STORE = 'queue';
+
+// Retry policy: exponential backoff with jitter, capped. After
+// MAX_ATTEMPTS failures, the item is moved to dead-letter (stays visible
+// in the UI, no auto-retry). The promoter can manually retry a dead-letter
+// item from the offline-status panel.
+const BASE_BACKOFF_MS = 15_000; // first retry at ~15s
+const MAX_BACKOFF_MS = 15 * 60_000; // cap at 15 min
+const MAX_ATTEMPTS = 10;
 
 export type QueuedAction = {
   id?: number; // auto-incremented; undefined before insert
@@ -33,6 +41,10 @@ export type QueuedAction = {
   createdAt: number; // epoch ms
   attemptCount: number;
   lastError: string | null;
+  // Phase 9 hardening — present on v2+ rows; undefined on legacy v1 rows
+  // (treated as "retry now" + "not dead").
+  nextRetryAt?: number | null;
+  deadLetter?: boolean;
 };
 
 interface QueueSchema extends DBSchema {
@@ -41,6 +53,20 @@ interface QueueSchema extends DBSchema {
     value: QueuedAction;
     indexes: { 'by-createdAt': number };
   };
+}
+
+/**
+ * Exponential backoff with ±20% jitter, capped at MAX_BACKOFF_MS.
+ * attemptCount is the number of failed attempts BEFORE this call — so the
+ * first retry (after 1 failure) waits ~BASE_BACKOFF_MS.
+ */
+export function computeNextRetryAt(
+  attemptCount: number,
+  now: number = Date.now(),
+): number {
+  const exp = Math.min(MAX_BACKOFF_MS, BASE_BACKOFF_MS * 2 ** Math.max(0, attemptCount - 1));
+  const jitter = exp * (0.8 + Math.random() * 0.4); // 80% .. 120%
+  return now + Math.floor(jitter);
 }
 
 export type DispatchFn = (
@@ -53,13 +79,19 @@ let dbPromise: Promise<IDBPDatabase<QueueSchema>> | null = null;
 function getDb(): Promise<IDBPDatabase<QueueSchema>> {
   if (!dbPromise) {
     dbPromise = openDB<QueueSchema>(DB_NAME, DB_VERSION, {
-      upgrade(db) {
+      upgrade(db, oldVersion) {
         if (!db.objectStoreNames.contains(STORE)) {
           const store = db.createObjectStore(STORE, {
             keyPath: 'id',
             autoIncrement: true,
           });
           store.createIndex('by-createdAt', 'createdAt');
+        }
+        // v1 → v2: no structural change; new rows carry nextRetryAt +
+        // deadLetter fields, legacy rows are treated as "retry now / not
+        // dead" when the fields are absent.
+        if (oldVersion < 2) {
+          // No-op — TypeScript schema change only.
         }
       },
     });
@@ -79,7 +111,10 @@ export function __resetForTests(): void {
  * Add a mutation to the queue. Returns the assigned id.
  */
 export async function enqueue(
-  item: Omit<QueuedAction, 'id' | 'createdAt' | 'attemptCount' | 'lastError'>,
+  item: Omit<
+    QueuedAction,
+    'id' | 'createdAt' | 'attemptCount' | 'lastError' | 'nextRetryAt' | 'deadLetter'
+  >,
 ): Promise<number> {
   const db = await getDb();
   const id = await db.add(STORE, {
@@ -87,6 +122,8 @@ export async function enqueue(
     createdAt: Date.now(),
     attemptCount: 0,
     lastError: null,
+    nextRetryAt: null,
+    deadLetter: false,
   });
   return id as number;
 }
@@ -116,18 +153,54 @@ export async function remove(id: number): Promise<void> {
 }
 
 /**
- * Mark a failed attempt — increments attemptCount, stores the last error.
- * The item stays queued for a later retry.
+ * Mark a failed attempt — increments attemptCount, stores the last error,
+ * schedules the next retry via computeNextRetryAt, and flips the item to
+ * dead-letter if it has now failed MAX_ATTEMPTS times. Dead-letter items
+ * remain in the store so the UI can show them, but flush() skips them.
  */
 export async function markFailed(id: number, error: string): Promise<void> {
   const db = await getDb();
   const existing = await db.get(STORE, id);
   if (!existing) return;
+  const attemptCount = existing.attemptCount + 1;
+  const deadLetter = attemptCount >= MAX_ATTEMPTS;
   await db.put(STORE, {
     ...existing,
-    attemptCount: existing.attemptCount + 1,
+    attemptCount,
     lastError: error,
+    nextRetryAt: deadLetter ? null : computeNextRetryAt(attemptCount),
+    deadLetter,
   });
+}
+
+/**
+ * Manually clear the dead-letter flag and retry-timer so an item gets
+ * picked up by the next flush. Useful for a "Retry failed item" button.
+ */
+export async function retryNow(id: number): Promise<void> {
+  const db = await getDb();
+  const existing = await db.get(STORE, id);
+  if (!existing) return;
+  await db.put(STORE, {
+    ...existing,
+    nextRetryAt: null,
+    deadLetter: false,
+  });
+}
+
+/**
+ * Count items whose exponential backoff hasn't yet elapsed AND who are
+ * not dead-letter. Exposed for UI ("2 queued, 1 retrying").
+ */
+export async function countReady(now: number = Date.now()): Promise<number> {
+  const items = await list();
+  return items.filter((i) => isReady(i, now)).length;
+}
+
+function isReady(item: QueuedAction, now: number): boolean {
+  if (item.deadLetter) return false;
+  if (item.nextRetryAt != null && item.nextRetryAt > now) return false;
+  return true;
 }
 
 /**
@@ -139,13 +212,19 @@ export async function markFailed(id: number, error: string): Promise<void> {
  */
 export async function flush(
   dispatch: DispatchFn,
-): Promise<{ sent: number; failed: number; remaining: number }> {
+): Promise<{ sent: number; failed: number; remaining: number; skipped: number }> {
   let sent = 0;
   let failed = 0;
+  let skipped = 0;
 
+  const now = Date.now();
   const items = await list();
   for (const item of items) {
     if (typeof item.id !== 'number') continue;
+    if (!isReady(item, now)) {
+      skipped += 1;
+      continue;
+    }
     try {
       const result = await dispatch(item.actionName, item.payload);
       const err = 'error' in result ? result.error : null;
@@ -164,7 +243,7 @@ export async function flush(
   }
 
   const remaining = await count();
-  return { sent, failed, remaining };
+  return { sent, failed, remaining, skipped };
 }
 
 /**

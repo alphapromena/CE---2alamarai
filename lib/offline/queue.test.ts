@@ -3,12 +3,15 @@ import { IDBFactory } from 'fake-indexeddb';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   __resetForTests,
+  computeNextRetryAt,
   count,
+  countReady,
   enqueue,
   flush,
   list,
   markFailed,
   remove,
+  retryNow,
   type DispatchFn,
 } from './queue';
 
@@ -135,7 +138,9 @@ describe('offline queue — flush semantics', () => {
     };
     await flush(firstDispatch);
 
-    // Item is still queued; second flush drains it.
+    // Item is still queued; backoff is active, so force retry for the test.
+    await retryNow(id);
+
     const secondDispatch: DispatchFn = async (_name, payload) => {
       seen += 1;
       // Same payload, same idempotency key on replay (server uses it to dedupe).
@@ -185,5 +190,120 @@ describe('offline queue — flush semantics', () => {
     const items = await list();
     expect(items[0]?.attemptCount).toBe(2);
     expect(items[0]?.lastError).toBe('oops-again');
+  });
+});
+
+describe('offline queue — exponential backoff + dead-letter', () => {
+  it('computeNextRetryAt grows exponentially and stays within jitter bounds', () => {
+    const now = 1_000_000;
+    // attempt 1: base ~15s, jitter 0.8–1.2 → 12s–18s
+    const r1 = computeNextRetryAt(1, now) - now;
+    expect(r1).toBeGreaterThanOrEqual(12_000);
+    expect(r1).toBeLessThanOrEqual(18_000);
+    // attempt 4: base ~2 min, jitter 0.8–1.2 → ~96s–144s
+    const r4 = computeNextRetryAt(4, now) - now;
+    expect(r4).toBeGreaterThanOrEqual(96_000);
+    expect(r4).toBeLessThanOrEqual(144_000);
+    // attempt 20: capped at 15 min; with jitter it stays below ~18 min
+    const r20 = computeNextRetryAt(20, now) - now;
+    expect(r20).toBeLessThanOrEqual(15 * 60_000 * 1.2 + 1);
+  });
+
+  it('flush skips items whose nextRetryAt is in the future', async () => {
+    await enqueue({
+      actionName: 'a',
+      payload: {},
+      idempotencyKey: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaa1',
+    });
+    // first failure → nextRetryAt set 12–18s in the future
+    const failDispatch: DispatchFn = async () => ({ error: 'down' });
+    const first = await flush(failDispatch);
+    expect(first.failed).toBe(1);
+
+    const okDispatch: DispatchFn = vi.fn(async () => ({ error: null }));
+    // second flush shortly after should SKIP, not dispatch
+    const second = await flush(okDispatch);
+    expect(okDispatch).not.toHaveBeenCalled();
+    expect(second.sent).toBe(0);
+    expect(second.skipped).toBe(1);
+    expect(second.remaining).toBe(1);
+  });
+
+  it('retryNow clears backoff so the next flush dispatches', async () => {
+    const id = await enqueue({
+      actionName: 'a',
+      payload: {},
+      idempotencyKey: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaa2',
+    });
+    await markFailed(id, 'fail');
+    const okDispatch: DispatchFn = vi.fn(async () => ({ error: null }));
+
+    // Before retryNow: skipped
+    const before = await flush(okDispatch);
+    expect(before.skipped).toBe(1);
+    expect(okDispatch).not.toHaveBeenCalled();
+
+    await retryNow(id);
+
+    // After retryNow: dispatched
+    const after = await flush(okDispatch);
+    expect(okDispatch).toHaveBeenCalledTimes(1);
+    expect(after.sent).toBe(1);
+    expect(after.remaining).toBe(0);
+  });
+
+  it('flips to dead-letter after MAX_ATTEMPTS failures', async () => {
+    const id = await enqueue({
+      actionName: 'a',
+      payload: {},
+      idempotencyKey: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaa3',
+    });
+    for (let i = 0; i < 10; i++) {
+      await markFailed(id, `attempt ${i + 1}`);
+    }
+    const items = await list();
+    expect(items[0]?.attemptCount).toBe(10);
+    expect(items[0]?.deadLetter).toBe(true);
+    expect(items[0]?.nextRetryAt).toBeNull();
+  });
+
+  it('flush skips dead-letter items entirely', async () => {
+    const id = await enqueue({
+      actionName: 'a',
+      payload: {},
+      idempotencyKey: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaa4',
+    });
+    for (let i = 0; i < 10; i++) await markFailed(id, 'x');
+
+    const dispatch: DispatchFn = vi.fn(async () => ({ error: null }));
+    const result = await flush(dispatch);
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(result.skipped).toBe(1);
+    expect(result.sent).toBe(0);
+    expect(result.remaining).toBe(1); // stays for UI visibility
+  });
+
+  it('countReady excludes dead-letter and future-retry items', async () => {
+    await enqueue({
+      actionName: 'alive',
+      payload: {},
+      idempotencyKey: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaa5',
+    });
+    const backoffId = await enqueue({
+      actionName: 'backoff',
+      payload: {},
+      idempotencyKey: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaa6',
+    });
+    await markFailed(backoffId, 'x'); // nextRetryAt ~15s
+    const deadId = await enqueue({
+      actionName: 'dead',
+      payload: {},
+      idempotencyKey: 'aaaaaaaa-aaaa-4aaa-aaaa-aaaaaaaaaaa7',
+    });
+    for (let i = 0; i < 10; i++) await markFailed(deadId, 'x');
+
+    // 3 total; only the first is ready
+    expect(await count()).toBe(3);
+    expect(await countReady()).toBe(1);
   });
 });
