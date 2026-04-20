@@ -26,17 +26,17 @@ export async function listAdminUsers(roleFilter: UserRole | null): Promise<Admin
   if (profError) throw new Error(`profiles query failed: ${profError.message}`);
   if (!profiles) return [];
 
+  const ids = profiles.map((p) => p.id);
   const emails = new Map<string, string>();
-  let page = 1;
-  // Cap at 10k users for Phase 1 safety. Pagination UX lands later.
-  while (page <= 100) {
-    const { data, error } = await admin.auth.admin.listUsers({ page, perPage: 100 });
-    if (error) throw new Error(`listUsers failed: ${error.message}`);
-    for (const u of data.users) {
-      emails.set(u.id, u.email ?? '');
+
+  if (ids.length > 0) {
+    const { data: emailRows, error: emailError } = await admin.rpc('admin_get_user_emails', {
+      p_user_ids: ids,
+    });
+    if (emailError) throw new Error(`admin_get_user_emails failed: ${emailError.message}`);
+    for (const row of emailRows ?? []) {
+      emails.set(row.id, row.email ?? '');
     }
-    if (data.users.length < 100) break;
-    page++;
   }
 
   const rows: AdminUserRow[] = [];
@@ -67,10 +67,13 @@ export async function getAdminUser(userId: string): Promise<AdminUserRow | null>
   if (!profile || !isUserRole(profile.role)) return null;
   if (profile.preferred_language !== 'ar' && profile.preferred_language !== 'en') return null;
 
-  const { data: userData } = await admin.auth.admin.getUserById(userId);
+  const { data: emailRows } = await admin.rpc('admin_get_user_emails', {
+    p_user_ids: [userId],
+  });
+  const email = emailRows?.[0]?.email ?? '';
   return {
     id: profile.id,
-    email: userData.user?.email ?? '',
+    email,
     full_name: profile.full_name,
     role: profile.role,
     active: profile.active,
