@@ -3,6 +3,7 @@ import { setRequestLocale } from 'next-intl/server';
 import { requireRole } from '@/lib/auth/guards';
 import { AppShell } from '@/components/features/app/app-shell';
 import { NotificationBellServer } from '@/components/features/notifications/notification-bell-server';
+import { IdleWatcher } from '@/components/features/idle-watcher';
 
 const NAV = [
   { href: '/promoter/dashboard', labelKey: 'Promoter.nav.dashboard' },
@@ -32,6 +33,7 @@ export default async function PromoterLayout({
       bell={<NotificationBellServer />}
     >
       {children}
+      <IdleWatcher />
     </AppShell>
   );
 }

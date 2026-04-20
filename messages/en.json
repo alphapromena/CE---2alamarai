@@ -31,6 +31,11 @@
     "results_count": "{count, plural, =0 {No results} one {# result} other {# results}}",
     "error_generic": "Something went wrong. Please try again."
   },
+  "IdleWatcher": {
+    "title": "You'll be signed out soon",
+    "description": "For your security, you'll be signed out after 30 minutes of inactivity.",
+    "stay": "Stay signed in"
+  },
   "Errors": {
     "page_title": "Something went wrong",
     "page_description": "An unexpected error occurred while loading this page.",
