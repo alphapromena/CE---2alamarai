@@ -9,6 +9,10 @@ import {
   type PingPayload,
   type TrackerState,
 } from '@/lib/location-tracking/tracker';
+import {
+  publishTrackerState,
+  resetTrackerState,
+} from '@/lib/location-tracking/state-signal';
 import { recordLocationPingAction } from '@/app/[locale]/promoter/attendance/location-actions';
 
 const GEO_TIMEOUT_MS = 10_000;
@@ -119,6 +123,7 @@ export function useLocationTracker({
         stopRef.current();
         stopRef.current = null;
       }
+      resetTrackerState();
       return;
     }
     const handle = startTracker(attendanceId, {
@@ -129,6 +134,7 @@ export function useLocationTracker({
       genId: randomUuid,
       onStateChange: (s) => {
         setState(s);
+        publishTrackerState(s);
         if (s.lastPingAt != null && typeof window !== 'undefined') {
           try {
             window.localStorage.setItem(STORAGE_KEY, String(s.lastPingAt));
@@ -143,6 +149,7 @@ export function useLocationTracker({
     return () => {
       handle.stop();
       stopRef.current = null;
+      resetTrackerState();
     };
   }, [attendanceId, enabled, intervalMs]);
 

@@ -1499,5 +1499,28 @@
     "outcome_other": "Other",
     "notification_title": "Your supervisor visited you",
     "notification_body": "{supervisor} logged a field visit at your location."
+  },
+  "LocationTracking": {
+    "indicator_active": "Tracking active",
+    "indicator_tooltip_title": "Location tracking is on",
+    "indicator_tooltip_body": "Your location is shared every 15 minutes while you are checked in. It stops automatically at check-out.",
+    "last_ping_at": "Last ping {time}",
+    "privacy_page_link": "How this works",
+    "privacy_page_title": "Location tracking — what we collect and when",
+    "privacy_page_when": "We only track your device location while you are checked into a shift. Tracking starts at check-in and stops at check-out. We never track you outside of a work session.",
+    "privacy_page_what": "Every 15 minutes we capture your latitude and longitude, the GPS accuracy reported by your device, and optionally your battery level. That's it — no continuous route recording, no microphone, no other sensors.",
+    "privacy_page_ios": "On iPhone, location updates only while the app is open in the foreground. Backgrounded tabs are paused by iOS; this is a platform limitation we cannot work around in a web app.",
+    "privacy_page_retention": "Pings are kept for 30 days and then deleted automatically. They are used by your supervisor to verify on-site presence and by admins for operational audits.",
+    "privacy_page_who": "Your pings are visible only to you, your assigned supervisors, and platform admins. They are never shared with clients.",
+    "permission_denied_toast": "We need location permission to verify your on-site presence.",
+    "trail_title": "Today's trail",
+    "trail_empty": "No location data for this day.",
+    "trail_date_label": "Date",
+    "trail_ping_count": "{count, plural, =0 {No pings} =1 {# ping} other {# pings}} today",
+    "trail_checkin_marker": "Check-in",
+    "promoter_log_title": "My location log (today)",
+    "promoter_log_count": "{count, plural, =0 {No pings sent} =1 {# ping sent} other {# pings sent}}",
+    "promoter_log_last_ping": "Last ping at {time}",
+    "promoter_log_none": "No pings sent yet today."
   }
 }

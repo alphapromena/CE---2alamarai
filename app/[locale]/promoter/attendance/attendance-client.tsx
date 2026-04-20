@@ -19,6 +19,7 @@ import { StatusPill, type StatusPillVariant } from '@/components/ui/status-pill'
 import { Alert } from '@/components/ui/alert';
 import type { AttendanceRow } from '@/lib/queries/attendance';
 import type { PromoterShiftAssignment } from '@/lib/queries/attendance';
+import { useLocationTracker } from '@/lib/hooks/use-location-tracker';
 import { OverrideRequestForm } from './override-request-form';
 
 type Phase = 'idle' | 'locating' | 'photo_ready' | 'submitting' | 'done';
@@ -112,6 +113,17 @@ export function AttendanceClient({
     matchingRow && matchingRow.check_in_time && !matchingRow.check_out_time ? 'out' : 'in';
   const isDone =
     matchingRow?.check_in_time != null && matchingRow?.check_out_time != null;
+
+  // Feature 5 / D-042: while the promoter has an OPEN attendance row, fire a
+  // location ping every 15 minutes. Turns off automatically after check-out.
+  const openAttendanceId =
+    matchingRow && matchingRow.check_in_time && !matchingRow.check_out_time
+      ? matchingRow.id
+      : null;
+  useLocationTracker({
+    attendanceId: openAttendanceId,
+    enabled: openAttendanceId != null,
+  });
 
   const [phase, setPhase] = useState<Phase>('idle');
   const [coords, setCoords] = useState<Coords | null>(null);

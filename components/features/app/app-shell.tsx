@@ -2,6 +2,7 @@ import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { LogoutButton } from '@/components/features/auth/logout-button';
+import { TrackingIndicator } from '@/components/features/location-tracking/tracking-indicator';
 import type { UserRole } from '@/lib/auth/roles';
 
 export interface NavItem {
@@ -44,6 +45,7 @@ export function AppShell({
             ))}
           </nav>
           <div className="ms-auto flex items-center gap-3">
+            <TrackingIndicator />
             {bell}
             <div className="flex flex-col items-end leading-tight">
               <span className="text-sm font-medium">{fullName}</span>
