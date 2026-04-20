@@ -10,6 +10,8 @@ export type SessionProfile = {
   preferred_language: 'ar' | 'en';
   assigned_locations: string[];
   active: boolean;
+  /** Tenant for the client role (D-016). NULL for admin/supervisor/promoter. */
+  client_id: string | null;
 };
 
 export async function getSessionUser() {
@@ -29,7 +31,7 @@ export async function getSessionProfile(): Promise<SessionProfile | null> {
 
   const { data, error } = await supabase
     .from('profiles')
-    .select('id, role, full_name, phone, preferred_language, assigned_locations, active')
+    .select('id, role, full_name, phone, preferred_language, assigned_locations, active, client_id')
     .eq('id', user.id)
     .single();
 

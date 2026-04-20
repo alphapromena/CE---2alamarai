@@ -1,0 +1,13 @@
+-- Phase 8 scaffolding marker.
+--
+-- Phase 8 adds Modules 10 (Feedback) + 11 (Reporting/Export).
+-- Real migrations land in subsequent 20260425* files in this phase:
+--   20260425010000_phase8_consumer_feedback.sql
+--   20260425020000_phase8_export_jobs.sql
+--   20260425030000_phase8_scheduled_reports.sql
+--   20260425040000_phase8_exports_storage.sql
+--
+-- This file intentionally no-ops — it exists only so the Phase 8 branch
+-- opens with a coherent diff and the draft PR can be tracked from day one.
+-- Safe to apply or skip; nothing depends on it.
+SELECT 1;

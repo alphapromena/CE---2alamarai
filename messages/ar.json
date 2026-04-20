@@ -102,7 +102,8 @@
       "reports": "التقارير",
       "stock": "المخزون",
       "performance": "الأداء",
-      "live": "مباشر"
+      "live": "مباشر",
+      "exports": "التصدير"
     },
     "dashboard": {
       "title": "لوحة تحكم المدير",
@@ -534,7 +535,9 @@
       "stock": "المخزون",
       "performance": "الأداء",
       "live": "مباشر",
-      "breaks": "الاستراحات"
+      "breaks": "الاستراحات",
+      "feedback": "الملاحظات",
+      "exports": "التصدير"
     },
     "dashboard": {
       "title": "لوحة تحكم المشرف",
@@ -825,7 +828,8 @@
       "reports_today": "تقرير اليوم",
       "tasks": "المهام",
       "stock": "المخزون",
-      "breaks": "الاستراحات"
+      "breaks": "الاستراحات",
+      "feedback": "الملاحظات"
     },
     "dashboard": {
       "title": "لوحة تحكم المروِّج",
@@ -1014,7 +1018,8 @@
       "dashboard": "لوحة التحكم",
       "campaigns": "الحملات",
       "performance": "الأداء",
-      "live": "مباشر"
+      "live": "مباشر",
+      "exports": "التصدير"
     },
     "dashboard": {
       "title": "لوحة تحكم العميل",
@@ -1240,6 +1245,123 @@
       "no_data_description": "تظهر البيانات بعد أن يقدّم المنادون التقارير اليومية.",
       "no_other_campaigns_title": "لا توجد حملات أخرى",
       "no_other_campaigns_description": "لم يعمل هذا المنادي إلا على الحملة الحالية."
+    }
+  },
+  "Exports": {
+    "title": "عمليات التصدير",
+    "subtitle_admin": "توليد وتنزيل ملفات الحضور والنشاط والمخزون والأداء وإجراءات المشرفين والملاحظات.",
+    "subtitle_supervisor": "نزّل بيانات المواقع المكلَّف بها.",
+    "subtitle_client": "تصدير مجمّع لحملاتك، دون بيانات فردية عن المروِّجين.",
+    "new_cta": "تصدير جديد",
+    "download": "تنزيل",
+    "empty_title": "لا توجد عمليات تصدير بعد",
+    "empty_description": "ابدأ عملية تصدير لتنزيل البيانات بصيغة CSV أو XLSX.",
+    "cols": {
+      "created_at": "تاريخ الإنشاء",
+      "scope": "النطاق",
+      "format": "الصيغة",
+      "size": "الحجم",
+      "status": "الحالة"
+    },
+    "status": {
+      "queued": "في الانتظار",
+      "running": "قيد المعالجة",
+      "done": "جاهز",
+      "failed": "فشل"
+    },
+    "errors": {
+      "forbidden": "ليس لديك صلاحية للوصول إلى هذا الملف.",
+      "not_found": "الملف غير موجود.",
+      "not_ready": "لا يزال الملف قيد التوليد.",
+      "sign_failed": "تعذَّر إنشاء رابط التنزيل. أعد المحاولة.",
+      "download_failed": "فشل التنزيل. أعد المحاولة.",
+      "invalid_input": "الطلب غير صالح.",
+      "no_client_id": "حسابك غير مرتبط بعميل.",
+      "client_id_mismatch": "معرِّف العميل لا يطابق حسابك.",
+      "no_accessible_campaigns": "لا توجد حملات متاحة ضمن الاختيار.",
+      "no_accessible_locations": "لا توجد مواقع متاحة ضمن الاختيار.",
+      "insert_failed": "تعذَّر إنشاء طلب التصدير. أعد المحاولة.",
+      "generation_failed": "فشل توليد ملف التصدير."
+    },
+    "new": {
+      "title": "تصدير جديد",
+      "subtitle": "اختر الفترة الزمنية والأقسام المطلوبة والصيغة.",
+      "subtitle_client": "اختر الفترة والحملات. النتائج مجمّعة على مستوى الحملة والمنتج.",
+      "from_date": "من",
+      "to_date": "إلى",
+      "domains": "الأقسام",
+      "campaigns": "الحملات",
+      "locations": "المواقع",
+      "skus": "المنتجات",
+      "format": "الصيغة",
+      "csv_zip": "CSV (مضغوط)",
+      "all_hint": "اترك فارغاً لتضمين كل العناصر المتاحة.",
+      "submit": "توليد",
+      "domain": {
+        "attendance": "الحضور",
+        "activity": "النشاط",
+        "stock": "المخزون",
+        "performance": "الأداء",
+        "supervisor_actions": "إجراءات المشرفين",
+        "feedback": "الملاحظات"
+      },
+      "errors": {
+        "no_domain": "اختر قسماً واحداً على الأقل.",
+        "date_range": "يجب أن يكون تاريخ النهاية بعد البداية.",
+        "forbidden": "ليس لديك صلاحية لهذا النطاق.",
+        "invalid_input": "طلب التصدير غير صالح.",
+        "no_client_id": "حسابك غير مرتبط بعميل.",
+        "client_id_mismatch": "معرِّف العميل لا يطابق حسابك.",
+        "no_accessible_campaigns": "لا توجد حملات متاحة ضمن الاختيار.",
+        "no_accessible_locations": "لا توجد مواقع متاحة ضمن الاختيار.",
+        "insert_failed": "تعذَّر إنشاء طلب التصدير. أعد المحاولة.",
+        "generation_failed": "فشل توليد ملف التصدير."
+      }
+    }
+  },
+  "Feedback": {
+    "title_promoter": "ملاحظات المستهلكين",
+    "subtitle_promoter": "سجّل ردود فعل المستهلكين وذكر العلامات المنافسة خلال وردِيَّتك.",
+    "title_supervisor": "ملاحظات المستهلكين",
+    "subtitle_supervisor": "أحدث الملاحظات من المروِّجين في مواقعك.",
+    "new_cta": "ملاحظة جديدة",
+    "empty_title": "لا توجد ملاحظات بعد",
+    "empty_description": "أدخل ملاحظاتك لبناء صورة واضحة عن ردود فعل المستهلكين.",
+    "category": {
+      "service": "خدمة",
+      "product": "منتج",
+      "complaint": "شكوى",
+      "suggestion": "اقتراح",
+      "other": "أخرى"
+    },
+    "sentiment": {
+      "positive": "إيجابية",
+      "neutral": "محايدة",
+      "negative": "سلبية"
+    },
+    "form": {
+      "title": "ملاحظة جديدة",
+      "subtitle": "التصنيف ونص قصير. ذكر المنافسين اختياري.",
+      "assignment": "الحملة / الموقع",
+      "category": "التصنيف",
+      "sentiment": "الانطباع",
+      "sentiment_none": "غير محدد",
+      "body": "ماذا حدث",
+      "body_placeholder": "صِف ما قاله أو فعله المستهلك.",
+      "competitors": "ذكر المنافسين",
+      "competitors_hint": "اختياري. أضف سطراً لكل علامة تجارية ذكرها المستهلك.",
+      "add_competitor": "إضافة منافس",
+      "competitor_brand": "العلامة التجارية",
+      "competitor_context": "السياق (اختياري)",
+      "remove_competitor": "حذف",
+      "submit": "إرسال الملاحظة",
+      "no_assignments": "لا توجد مهام نشطة لك اليوم. سجّل حضورك أولاً ثم عُد.",
+      "errors": {
+        "no_assignment": "اختر الحملة والموقع أولاً.",
+        "empty_body": "اكتب شيئاً قبل الإرسال.",
+        "invalid_input": "المُدخَل غير صالح.",
+        "insert_failed": "تعذَّر حفظ الملاحظة. أعد المحاولة."
+      }
     }
   }
 }

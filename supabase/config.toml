@@ -106,6 +106,17 @@ verify_jwt = true
 [functions.detect-live-issues]
 verify_jwt = false
 
+# Phase 8 export worker. Cron-invoked by cron-scheduled-reports with a
+# { job_id } body; can also be swept standalone with an empty body.
+# CRON_SECRET enforced via x-cron-secret header in the function body.
+[functions.generate-report]
+verify_jwt = false
+
+# Phase 8 scheduled-reports sweep. Cron-invoked hourly; fires every due
+# scheduled_reports row and calls generate-report for each.
+[functions.cron-scheduled-reports]
+verify_jwt = false
+
 [analytics]
 enabled = false
 

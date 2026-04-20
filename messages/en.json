@@ -102,7 +102,8 @@
       "reports": "Reports",
       "stock": "Stock",
       "performance": "Performance",
-      "live": "Live"
+      "live": "Live",
+      "exports": "Exports"
     },
     "dashboard": {
       "title": "Admin dashboard",
@@ -534,7 +535,9 @@
       "stock": "Stock",
       "performance": "Performance",
       "live": "Live",
-      "breaks": "Breaks"
+      "breaks": "Breaks",
+      "feedback": "Feedback",
+      "exports": "Exports"
     },
     "dashboard": {
       "title": "Supervisor dashboard",
@@ -825,7 +828,8 @@
       "reports_today": "Today's report",
       "tasks": "Tasks",
       "stock": "Stock",
-      "breaks": "Breaks"
+      "breaks": "Breaks",
+      "feedback": "Feedback"
     },
     "dashboard": {
       "title": "Promoter dashboard",
@@ -1014,7 +1018,8 @@
       "dashboard": "Dashboard",
       "campaigns": "Campaigns",
       "performance": "Performance",
-      "live": "Live"
+      "live": "Live",
+      "exports": "Exports"
     },
     "dashboard": {
       "title": "Client dashboard",
@@ -1240,6 +1245,123 @@
       "no_data_description": "Snapshots appear once promoters submit daily reports.",
       "no_other_campaigns_title": "No other campaigns",
       "no_other_campaigns_description": "This promoter has only worked on the current campaign."
+    }
+  },
+  "Exports": {
+    "title": "Exports",
+    "subtitle_admin": "Generate and download activity, attendance, stock, performance, supervisor actions, and feedback bundles.",
+    "subtitle_supervisor": "Download data for the locations assigned to you.",
+    "subtitle_client": "Aggregate exports for your campaigns. No individual promoter data.",
+    "new_cta": "New export",
+    "download": "Download",
+    "empty_title": "No exports yet",
+    "empty_description": "Queue a new export to download CSV or XLSX for the selected scope.",
+    "cols": {
+      "created_at": "Created",
+      "scope": "Scope",
+      "format": "Format",
+      "size": "Size",
+      "status": "Status"
+    },
+    "status": {
+      "queued": "Queued",
+      "running": "Running",
+      "done": "Ready",
+      "failed": "Failed"
+    },
+    "errors": {
+      "forbidden": "You don't have access to this export.",
+      "not_found": "Export not found.",
+      "not_ready": "Export is still being generated.",
+      "sign_failed": "Couldn't create a download link. Try again.",
+      "download_failed": "Download failed. Try again.",
+      "invalid_input": "The request was invalid.",
+      "no_client_id": "Your account has no client tenant.",
+      "client_id_mismatch": "Client id doesn't match your account.",
+      "no_accessible_campaigns": "None of the selected campaigns are accessible.",
+      "no_accessible_locations": "None of the selected locations are accessible.",
+      "insert_failed": "Couldn't queue the export. Try again.",
+      "generation_failed": "Export generation failed. See details."
+    },
+    "new": {
+      "title": "New export",
+      "subtitle": "Pick a date range, the domains to include, and the format.",
+      "subtitle_client": "Pick a date range and campaigns. Results are aggregated at the campaign and SKU level.",
+      "from_date": "From",
+      "to_date": "To",
+      "domains": "Domains",
+      "campaigns": "Campaigns",
+      "locations": "Locations",
+      "skus": "SKUs",
+      "format": "Format",
+      "csv_zip": "CSV (zip)",
+      "all_hint": "Leave empty to include all accessible.",
+      "submit": "Generate",
+      "domain": {
+        "attendance": "Attendance",
+        "activity": "Activity",
+        "stock": "Stock",
+        "performance": "Performance",
+        "supervisor_actions": "Supervisor actions",
+        "feedback": "Feedback"
+      },
+      "errors": {
+        "no_domain": "Pick at least one domain.",
+        "date_range": "End date must be on or after start date.",
+        "forbidden": "You don't have permission to export this scope.",
+        "invalid_input": "The export request was invalid.",
+        "no_client_id": "Your account has no client tenant.",
+        "client_id_mismatch": "Client id doesn't match your account.",
+        "no_accessible_campaigns": "None of the selected campaigns are accessible.",
+        "no_accessible_locations": "None of the selected locations are accessible.",
+        "insert_failed": "Couldn't queue the export. Try again.",
+        "generation_failed": "Export generation failed."
+      }
+    }
+  },
+  "Feedback": {
+    "title_promoter": "Consumer feedback",
+    "subtitle_promoter": "Capture consumer reactions and competitor mentions from your shift.",
+    "title_supervisor": "Consumer feedback",
+    "subtitle_supervisor": "Recent feedback from promoters at your locations.",
+    "new_cta": "New feedback",
+    "empty_title": "No feedback yet",
+    "empty_description": "Submit feedback to start building a picture of consumer reactions.",
+    "category": {
+      "service": "Service",
+      "product": "Product",
+      "complaint": "Complaint",
+      "suggestion": "Suggestion",
+      "other": "Other"
+    },
+    "sentiment": {
+      "positive": "Positive",
+      "neutral": "Neutral",
+      "negative": "Negative"
+    },
+    "form": {
+      "title": "New feedback",
+      "subtitle": "Category + short note. Competitor mentions are optional.",
+      "assignment": "Campaign / location",
+      "category": "Category",
+      "sentiment": "Sentiment",
+      "sentiment_none": "Not rated",
+      "body": "What happened",
+      "body_placeholder": "Describe what the consumer said or did.",
+      "competitors": "Competitor mentions",
+      "competitors_hint": "Optional. Add a row per brand the consumer mentioned.",
+      "add_competitor": "Add competitor",
+      "competitor_brand": "Brand",
+      "competitor_context": "Context (optional)",
+      "remove_competitor": "Remove",
+      "submit": "Submit feedback",
+      "no_assignments": "You don't have any active assignments today. Check in first, then come back.",
+      "errors": {
+        "no_assignment": "Pick the campaign + location first.",
+        "empty_body": "Write something before submitting.",
+        "invalid_input": "The submission was invalid.",
+        "insert_failed": "Couldn't save your feedback. Try again."
+      }
     }
   }
 }
