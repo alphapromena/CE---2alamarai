@@ -176,23 +176,32 @@ export function AttendanceClient({
         setErrorKey('photo_too_large');
         return;
       }
-      // Client-side resize + re-encode before upload (Phase 9). Falls
-      // back to the original on any error, and server still re-validates.
-      const { compressJpeg } = await import('@/lib/images/compress');
-      const compressed = await compressJpeg(file);
-      const finalBlob: Blob = compressed.blob;
-      if (photoUrl) URL.revokeObjectURL(photoUrl);
-      setPhotoBlob(finalBlob);
-      setPhotoUrl(URL.createObjectURL(finalBlob));
-      setErrorKey(null);
-      setPhase('photo_ready');
+      // Feature 4 / D-041: photo is OPTIONAL; a compression failure must NOT
+      // block submission. Fall back to the original blob when compressJpeg
+      // throws; if attaching still fails, clear and surface a soft error but
+      // keep the form submittable.
+      try {
+        const { compressJpeg } = await import('@/lib/images/compress');
+        const compressed = await compressJpeg(file);
+        const finalBlob: Blob = compressed.blob;
+        if (photoUrl) URL.revokeObjectURL(photoUrl);
+        setPhotoBlob(finalBlob);
+        setPhotoUrl(URL.createObjectURL(finalBlob));
+        setErrorKey(null);
+        setPhase('photo_ready');
+      } catch {
+        if (photoUrl) URL.revokeObjectURL(photoUrl);
+        setPhotoBlob(null);
+        setPhotoUrl(null);
+        setErrorKey('photo_attach_failed');
+      }
     },
     [photoUrl],
   );
 
   const submit = useCallback(async () => {
-    if (!coords || !photoBlob) {
-      setErrorKey(!photoBlob ? 'photo_required' : 'error_generic');
+    if (!coords) {
+      setErrorKey('location_required');
       return;
     }
     setPhase('submitting');
@@ -206,10 +215,14 @@ export function AttendanceClient({
     const capturedAt = new Date().toISOString();
 
     const form = new FormData();
-    form.append(
-      'image',
-      new File([photoBlob], 'photo.jpg', { type: 'image/jpeg' }),
-    );
+    // Feature 4 / D-041: photo is OPTIONAL; only append if the promoter
+    // chose to attach one. Edge function accepts a missing image field.
+    if (photoBlob) {
+      form.append(
+        'image',
+        new File([photoBlob], 'photo.jpg', { type: 'image/jpeg' }),
+      );
+    }
 
     if (leg === 'in') {
       form.append(
@@ -281,7 +294,8 @@ export function AttendanceClient({
     }
   }, [coords, photoBlob, leg, selected, matchingRow, resetCapture]);
 
-  const canSubmit = coords != null && photoBlob != null && phase !== 'submitting';
+  // Feature 4 / D-041: photo is optional, only coords are required to submit.
+  const canSubmit = coords != null && phase !== 'submitting';
 
   const statusPill = statusToPill(matchingRow?.status ?? 'checked_in');
   const showStatusPill = matchingRow != null;
@@ -521,7 +535,7 @@ function CaptureBlock({
 
       <div>
         <div className="mb-1.5 text-xs font-medium uppercase tracking-wide text-fg-secondary">
-          {leg === 'in' ? t('check_in_cta') : t('check_out_cta')}
+          {t('photo_optional_label')}
         </div>
         {photoUrl ? (
           <div className="space-y-2">
@@ -531,16 +545,29 @@ function CaptureBlock({
               alt={t('photo_preview_alt')}
               className="mx-auto max-h-64 rounded-md border border-border"
             />
-            <Button variant="secondary" type="button" onClick={onRetake}>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={onRetake}
+              aria-label={t('retake_photo')}
+            >
               <RefreshCcw className="h-4 w-4" strokeWidth={1.75} aria-hidden />
               {t('retake_photo')}
             </Button>
           </div>
         ) : (
-          <Button variant="secondary" type="button" onClick={onPhotoClick}>
-            <Camera className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-            {t('take_photo')}
-          </Button>
+          <>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={onPhotoClick}
+              aria-label={t('attach_photo_optional')}
+            >
+              <Camera className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+              {t('attach_photo_optional')}
+            </Button>
+            <p className="mt-1.5 text-xs text-fg-muted">{t('photo_optional_hint')}</p>
+          </>
         )}
       </div>
     </div>
