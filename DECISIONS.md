@@ -1005,3 +1005,32 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - A tenant asks to hold pings for more than 30 days. Update `gc_location_pings()`'s interval constant; confirm DB size impact first.
   - A legal or labour regulation requires richer consent UX. The privacy page has a stable URL; add a click-through acknowledgement + a `location_tracking_ack_at` column on `profiles` if needed.
 
+## D-043 — Demo seed data: auth users via dashboard, data via SQL Editor, idempotent, 30-day rolling window
+- **Date:** 2026-04-20
+- **Context:** The platform was feature-complete (D-001 through D-042) but had no reproducible demo dataset. Opening the app on a freshly-migrated database meant empty dashboards, which made sales demos and reviewer walkthroughs impossible without ad-hoc one-off scripts. Feature 6 needed a dataset that renders every role's dashboard populated and stays recent over time.
+- **Decision:**
+  - Demo data ships as a hand-runnable SQL file at `supabase/seeds/demo_seed.sql`. It is **not** part of the migration replay — migrations remain the authoritative schema record; seeds sit on top.
+  - Auth users are created manually through the Supabase Dashboard (Authentication → Users) with a shared `Demo@1234` password. The seed resolves them by email against `auth.users` and raises a clear error if any are missing. This keeps the seed out of the auth-admin API and avoids shipping hashed passwords or the service-role key anywhere.
+  - The seed wraps in a single transaction and begins with a tag-driven cleanup block (Almarai client, campaigns prefixed `Almarai `, cities in {Amman, Zarqa, Irbid}, demo emails) so re-runs always converge on the same state. Running the seed twice is the canonical reset path.
+  - All timestamps are derived from `now() - interval 'N days'`, never literal dates. The demo window always ends "today", so dashboards keep displaying recent activity without touching the seed file.
+  - Admin (`admin@almarai.com`) and any non-demo data are never deleted, updated, or re-tagged.
+  - The `stock_movements` append-only deny-trigger is temporarily disabled inside Stage 1 only for the cleanup's `delete`, then re-enabled. The `profiles_self_update_guard_trg` is temporarily disabled inside Stage 2.7 only so the seed can set role/client_id on the demo profiles (in the SQL Editor `auth.uid()` is NULL and `is_admin()` returns false).
+- **Alternatives rejected:**
+  - **Creating auth users through the Admin API inside the SQL file.** Rejected. Would require smuggling service-role credentials into SQL and bypasses dashboard policy. Manual creation is trivially one-time per environment and self-documenting.
+  - **Storing demo data as a migration.** Rejected. Migrations should be idempotent schema, not data that decays over time (30-day window). Mixing data into migrations also means `supabase db reset` would re-seed — we want explicit, opt-in demo data.
+  - **A Node/TypeScript seed runner using the service-role client.** Rejected. Adds a new build target, a new dependency set, and a new credentials surface. Pure SQL keeps the seed readable, diffable, runnable by anyone with SQL Editor access, and zero-dependency.
+  - **Faker-style random data with stable seeds.** Rejected for simplicity. `random()` per-row is fine for demo purposes; we want fresh variance on each run, not byte-exact reproducibility.
+  - **Leaving `stock_movements` append-only during cleanup and inserting compensating correction rows.** Rejected. Correction rows are for real incidents, not demo resets. Temporarily disabling the deny trigger is explicit, audited in the seed file, and touches nothing outside the cleanup block.
+  - **Populating Storage with real selfie + activity photos.** Rejected. Requires service-role uploads, adds binary assets to the repo, and breaks the "pure SQL, paste to run" promise. Placeholder paths (`demo/checkin_<uuid>.jpg`) are enough for UI layout demos; the selfie viewer will 404, which is acceptable for a demo.
+  - **Adding a `price` column to `skus`.** Rejected (out of scope). Prices are documented in the seed file header only.
+  - **Creating a separate reset SQL file.** Rejected. Duplication. The cleanup block inside the seed is already self-contained and can be copied into SQL Editor on its own.
+- **Implementation:**
+  - Seed file: `supabase/seeds/demo_seed.sql` — single transaction, header with Part A auth user list + JOD prices + demo tags, Stage 0 (resolve users), Stage 1 (cleanup), Stages 2.1–2.13 (client, geography, locations, campaigns, SKUs, shifts, profiles, assignments, attendance, pings, daily_reports, sales_entries, breaks, stock ledger, supervisor visits).
+  - Docs: `DEMO.md` at repo root — prerequisites, auth user matrix, step-by-step run, reset, role-login map, troubleshooting.
+  - Decision record: this entry.
+- **Revisit when:**
+  - The auth-admin API becomes scriptable without leaking service-role credentials into repo (e.g., Supabase CLI gains a first-class `create-user` step with a passwordless JIT token). Then the Part A manual step can be collapsed into the seed.
+  - A customer or reviewer asks for real selfies / activity photos. Add a follow-up that uploads tiny placeholder JPEGs to `attendance-photos` + `activity-photos` buckets via the service-role client. Requires a separate non-SQL runner.
+  - The demo story outgrows a single-tenant dataset. Add a `demo_tag` config flag or a second seed file for a multi-client scenario. The tag-based cleanup generalises trivially (swap `like 'Almarai %'` for a table-driven filter).
+  - Random-variance per-run becomes a problem (e.g., demo script expects specific KPI numbers). Switch `random()` to a deterministic hash of `(user_id, date)` + a constant seed exposed at the top of the file.
+
