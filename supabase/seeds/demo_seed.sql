@@ -743,6 +743,366 @@ where a.check_in_time is not null
   and a.check_out_time is not null
   and a.campaign_id in (select id from demo_campaigns);
 
+-- ----------------------------------------------------------------------------
+-- 2.10 Daily reports + sales_entries
+--
+-- One daily_report per (promoter, checked-out attendance day). Funnel:
+--   * contacts          50-120
+--   * engaged           ~35-60% of contacts
+--   * samples_total     4-16 (total samples across the campaign's 2 SKUs)
+--   * sales_total       1-6  (conversions)
+-- Status:
+--   * 80% approved (reviewed_by = supervisor_1, reviewed_at ~ +1h after
+--     check_out_time)
+--   * 20% submitted (awaiting review)
+-- sales_entries: 2 rows per daily_report (one per SKU of the campaign), with
+-- samples + sales split randomly in an 40/60..60/40 ratio.
+-- ----------------------------------------------------------------------------
+-- One input row per (promoter, location, day) — daily_reports is unique on
+-- that triple, so for multi-cover promoters we pick the attendance row with
+-- the smallest campaign uuid for that day and that location.
+create temporary table demo_daily_inputs on commit drop as
+select distinct on (a.user_id, a.location_id, a.attendance_date)
+  a.id                          as attendance_id,
+  a.user_id                     as promoter_user_id,
+  a.campaign_id,
+  a.location_id,
+  a.attendance_date,
+  a.check_in_time,
+  a.check_out_time,
+  (50  + floor(random() * 71))::int   as contacts,
+  -- engage_rate 0.35..0.60
+  (0.35 + random() * 0.25)            as engage_rate,
+  (4   + floor(random() * 13))::int   as samples_total,
+  (1   + floor(random() *  6))::int   as sales_total,
+  -- SKU split ratio: 0.40..0.60 goes to sku #1, remainder to sku #2
+  (0.40 + random() * 0.20)            as sku_split,
+  -- approved vs submitted
+  (random() < 0.80)                   as is_approved,
+  gen_random_uuid()                   as report_id_seed
+from public.attendance a
+where a.status in ('checked_out', 'early_leave')
+  and a.campaign_id in (select id from demo_campaigns)
+order by a.user_id, a.location_id, a.attendance_date, a.campaign_id;
+
+insert into public.daily_reports (
+  id, campaign_id, location_id, promoter_user_id, report_date,
+  contacts, engaged, samples_total, sales_total,
+  notes, status,
+  submitted_at, reviewed_at, reviewed_by, review_reason,
+  idempotency_key,
+  created_at, updated_at
+)
+select
+  di.report_id_seed,
+  di.campaign_id,
+  di.location_id,
+  di.promoter_user_id,
+  di.attendance_date,
+  di.contacts,
+  least(di.contacts, floor(di.contacts * di.engage_rate)::int),
+  di.samples_total,
+  di.sales_total,
+  'Demo generated daily report.',
+  case when di.is_approved then 'approved'::public.daily_report_status
+       else 'submitted'::public.daily_report_status
+  end,
+  di.check_out_time + interval '5 minutes',
+  case when di.is_approved then di.check_out_time + interval '1 hour' end,
+  case when di.is_approved then (select user_id from demo_users where slot = 'supervisor_1') end,
+  null,
+  gen_random_uuid(),
+  di.check_out_time + interval '5 minutes',
+  di.check_out_time + interval '5 minutes'
+from demo_daily_inputs di;
+
+-- One sales_entries row per (daily_report, sku) for the campaign's two SKUs.
+-- samples and sales are split by sku_split and 1 - sku_split.
+insert into public.sales_entries (daily_report_id, sku_id, samples, sales, created_at, updated_at)
+select
+  di.report_id_seed,
+  sk.id,
+  case when sk.rn = 1
+       then floor(di.samples_total * di.sku_split)::int
+       else di.samples_total - floor(di.samples_total * di.sku_split)::int
+  end,
+  case when sk.rn = 1
+       then floor(di.sales_total   * di.sku_split)::int
+       else di.sales_total   - floor(di.sales_total   * di.sku_split)::int
+  end,
+  di.check_out_time + interval '5 minutes',
+  di.check_out_time + interval '5 minutes'
+from demo_daily_inputs di
+cross join lateral (
+  select s.id,
+         row_number() over (order by s.id) as rn
+  from public.skus s
+  where s.campaign_id = di.campaign_id
+    and s.active = true
+) sk;
+
+-- ----------------------------------------------------------------------------
+-- 2.11 break_requests — 1 break per daily report, approved, with actuals.
+-- For variety, ~20% of daily reports get a second (shorter) break.
+-- ----------------------------------------------------------------------------
+with base as (
+  select a.id as attendance_id,
+         a.user_id as promoter_id,
+         a.campaign_id,
+         a.location_id,
+         a.shift_id,
+         a.check_in_time,
+         a.check_out_time,
+         random() as r_second_break
+  from public.attendance a
+  where a.status in ('checked_out', 'early_leave')
+    and a.campaign_id in (select id from demo_campaigns)
+),
+breaks as (
+  -- Primary break: every daily report
+  select b.*,
+         1 as break_no,
+         b.check_in_time + interval '3 hours' as requested_start,
+         (20 + floor(random() * 11))::int  as duration_minutes
+  from base b
+  union all
+  -- Secondary break for ~20% of reports
+  select b.*,
+         2 as break_no,
+         b.check_in_time + interval '5 hours 30 minutes' as requested_start,
+         (10 + floor(random() * 6))::int   as duration_minutes
+  from base b
+  where b.r_second_break < 0.20
+)
+insert into public.break_requests (
+  promoter_id, campaign_id, location_id, shift_id, attendance_id,
+  requested_start, duration_minutes, reason,
+  status, reviewer_id, reviewed_at,
+  approved_start, approved_duration_minutes,
+  actual_start, actual_end,
+  idempotency_key, created_at, updated_at
+)
+select
+  br.promoter_id,
+  br.campaign_id,
+  br.location_id,
+  br.shift_id,
+  br.attendance_id,
+  br.requested_start,
+  br.duration_minutes,
+  'Demo break.',
+  'approved'::public.break_request_status,
+  (select user_id from demo_users where slot = 'supervisor_1'),
+  br.requested_start - interval '15 minutes',
+  br.requested_start,
+  br.duration_minutes,
+  br.requested_start + interval '1 minute',
+  br.requested_start + interval '1 minute' + (br.duration_minutes * interval '1 minute'),
+  gen_random_uuid(),
+  br.requested_start - interval '2 hours',
+  br.requested_start + (br.duration_minutes * interval '1 minute')
+from breaks br;
+
+-- ----------------------------------------------------------------------------
+-- 2.12 stock_movements (warehouse -> supervisor_1 -> promoters -> consumer)
+--
+-- The stock_movements_validate_invariants BEFORE INSERT trigger uses an
+-- advisory lock + per-(campaign, sku, from_entity) balance check. It reads
+-- from stock_movements within the current transaction, so the only thing
+-- that matters is the order of INSERT statements, not timestamps. We insert
+-- in strict order: allocations first, then distributions, then returns
+-- (small fixed amounts), then usage (many rows from daily_reports).
+--
+-- Flow:
+--   1. warehouse  -> supervisor_1      10000 per (active SKU)  at day -30
+--   2. supervisor_1 -> promoter_X         500 per (promoter, SKU)  at day -28
+--   3. ~10% of promoters return           20 of one SKU          at day  -5
+--   4. promoter  -> consumer              per daily_report samples
+--
+-- Cheese campaign (completed) has no promoter assignments and no daily
+-- reports, so its stock ledger is intentionally empty.
+-- ----------------------------------------------------------------------------
+
+-- 2.12.1 Allocations: warehouse -> supervisor_1 for every active-campaign SKU.
+insert into public.stock_movements (
+  campaign_id, sku_id,
+  from_entity_type, from_entity_id,
+  to_entity_type,   to_entity_id,
+  quantity, movement_kind,
+  user_id, location_id, reason,
+  idempotency_key, created_at
+)
+select
+  sk.campaign_id,
+  sk.id,
+  'warehouse', null,
+  'supervisor', (select user_id from demo_users where slot = 'supervisor_1'),
+  10000,
+  'allocation'::public.stock_movement_kind,
+  (select user_id from demo_users where slot = 'supervisor_1'),
+  null,
+  'Demo opening allocation.',
+  gen_random_uuid(),
+  (now() - interval '30 days')
+from public.skus sk
+join demo_campaigns dc on dc.id = sk.campaign_id
+join demo_campaign_input dci on dci.slot = dc.slot
+where dci.status = 'active';
+
+-- 2.12.2 Distributions: supervisor_1 -> each assigned promoter for each SKU
+-- of their campaign.
+insert into public.stock_movements (
+  campaign_id, sku_id,
+  from_entity_type, from_entity_id,
+  to_entity_type,   to_entity_id,
+  quantity, movement_kind,
+  user_id, location_id, reason,
+  idempotency_key, created_at
+)
+select
+  sk.campaign_id,
+  sk.id,
+  'supervisor', (select user_id from demo_users where slot = 'supervisor_1'),
+  'promoter',   ua.user_id,
+  500,
+  'distribution'::public.stock_movement_kind,
+  (select user_id from demo_users where slot = 'supervisor_1'),
+  ua.location_id,
+  'Demo distribution to promoter.',
+  gen_random_uuid(),
+  (now() - interval '28 days')
+from public.user_assignments ua
+join public.shifts s      on s.id = ua.shift_id
+join public.skus   sk     on sk.campaign_id = s.campaign_id and sk.active = true
+join demo_campaigns dc    on dc.id = sk.campaign_id
+join demo_campaign_input dci on dci.slot = dc.slot
+where ua.role_scope = 'promoter'
+  and ua.active = true
+  and dci.status = 'active';
+
+-- 2.12.3 Returns: ~10% of (promoter, sku) pairs return 20 units at day -5.
+insert into public.stock_movements (
+  campaign_id, sku_id,
+  from_entity_type, from_entity_id,
+  to_entity_type,   to_entity_id,
+  quantity, movement_kind,
+  user_id, location_id, reason,
+  idempotency_key, created_at
+)
+select
+  sk.campaign_id,
+  sk.id,
+  'promoter',    ua.user_id,
+  'supervisor',  (select user_id from demo_users where slot = 'supervisor_1'),
+  20,
+  'return'::public.stock_movement_kind,
+  ua.user_id,
+  ua.location_id,
+  'Demo promoter return of unused stock.',
+  gen_random_uuid(),
+  (now() - interval '5 days')
+from public.user_assignments ua
+join public.shifts s      on s.id = ua.shift_id
+join public.skus   sk     on sk.campaign_id = s.campaign_id and sk.active = true
+join demo_campaigns dc    on dc.id = sk.campaign_id
+join demo_campaign_input dci on dci.slot = dc.slot
+where ua.role_scope = 'promoter'
+  and ua.active = true
+  and dci.status = 'active'
+  and (hashtextextended(ua.user_id::text || sk.id::text, 0) % 10) = 0;
+
+-- 2.12.4 Usage: promoter -> consumer, one row per (daily_report, sku) where
+-- samples > 0. This runs last so from-balance (promoter) has distribution -
+-- returns already reflected.
+insert into public.stock_movements (
+  campaign_id, sku_id,
+  from_entity_type, from_entity_id,
+  to_entity_type,   to_entity_id,
+  quantity, movement_kind,
+  user_id, location_id, reason,
+  idempotency_key, created_at
+)
+select
+  dr.campaign_id,
+  se.sku_id,
+  'promoter', dr.promoter_user_id,
+  'consumer', null,
+  se.samples,
+  'usage'::public.stock_movement_kind,
+  dr.promoter_user_id,
+  dr.location_id,
+  'Demo sampling usage.',
+  gen_random_uuid(),
+  -- schedule each usage on its report day around mid-shift
+  ((dr.report_date::timestamp + time '13:00') at time zone 'Asia/Amman')
+from public.sales_entries se
+join public.daily_reports dr on dr.id = se.daily_report_id
+join demo_campaigns dc       on dc.id = dr.campaign_id
+where se.samples > 0
+order by dr.report_date, dr.promoter_user_id, se.sku_id;
+
+-- ----------------------------------------------------------------------------
+-- 2.13 supervisor_visits — 2-3 per week per active campaign = ~15-20 total.
+-- Random supervisor from the pool assigned to that location; ~85% outcome=ok,
+-- ~10% issue_found, ~5% coaching.
+-- ----------------------------------------------------------------------------
+with week_offsets as (
+  select gs.n as week_no from generate_series(0, 3) as gs(n)
+),
+visits_per_week as (
+  select dcl.campaign_slot,
+         dcl.location_slot,
+         wo.week_no,
+         random() as r_pick,
+         random() as r_outcome,
+         random() as r_day
+  from demo_campaign_locations dcl
+  join demo_campaign_input dci on dci.slot = dcl.campaign_slot
+  cross join week_offsets wo
+  where dci.status = 'active'
+),
+picked as (
+  -- ~25% of (campaign-location, week) tuples get a visit
+  select * from visits_per_week where r_pick < 0.25
+)
+insert into public.supervisor_visits (
+  supervisor_id, campaign_id, location_id, visited_at,
+  lat, lng, distance_m, is_within_geofence,
+  photo_path, outcome, notes,
+  idempotency_key, created_at, updated_at
+)
+select
+  -- pick whichever demo supervisor has this location assigned; fallback sup 1
+  coalesce(
+    (select du.user_id
+       from demo_supervisor_assignment_input sai
+       join demo_users du on du.slot = sai.supervisor_slot
+      where sai.location_slot = p.location_slot
+      order by md5(du.user_id::text || p.location_slot || p.week_no::text)
+      limit 1),
+    (select user_id from demo_users where slot = 'supervisor_1')
+  ),
+  dc.id,
+  dl.id,
+  (now() - (p.week_no * interval '7 days') - (floor(p.r_day * 5) * interval '1 day') - interval '4 hours'),
+  dl.lat + (random() * 2 - 1) * 0.00050,
+  dl.lng + (random() * 2 - 1) * 0.00050,
+  (15 + floor(random() * 80))::int,
+  true,
+  'demo/visit_' || gen_random_uuid()::text || '.jpg',
+  (case
+     when p.r_outcome < 0.10 then 'issue_found'
+     when p.r_outcome < 0.15 then 'coaching'
+     else                         'ok'
+   end)::public.supervisor_visit_outcome,
+  'Demo supervisor site visit.',
+  gen_random_uuid(),
+  now() - (p.week_no * interval '7 days'),
+  now() - (p.week_no * interval '7 days')
+from picked p
+join demo_campaigns dc on dc.slot = p.campaign_slot
+join demo_locations dl on dl.slot = p.location_slot;
+
 commit;
 
 -- ============================================================================
