@@ -11,6 +11,10 @@ const isDev = process.env.NODE_ENV !== 'production';
 // layouts via requireRole(); middleware only gates unauthenticated access.
 const PROTECTED_PREFIX = /^\/(?:ar|en)\/(?:admin|supervisor|promoter|client)(?:\/|$)/;
 
+// Phase 10: paths a temp-password user is allowed to visit before rotating.
+// /set-password is the destination; logout + auth callback must keep working.
+const TEMP_PASSWORD_ALLOWED = /^\/(?:ar|en)\/(?:set-password|logout|auth\/)/;
+
 // Phase 9 CSP + security header hardening.
 //
 // 'unsafe-inline' on script-src is retained because Next.js 15's streaming
@@ -95,7 +99,7 @@ export default async function middleware(request: NextRequest) {
   // 2. Refresh / attach the Supabase session on that response so cookies roll
   //    forward even on redirects. @supabase/ssr mutates both request.cookies
   //    (so downstream reads see the refreshed session) and response.cookies.
-  const { user } = await attachSupabaseSession(request, intlResponse);
+  const { user, mustChangePassword } = await attachSupabaseSession(request, intlResponse);
 
   // 3. Gate protected subtrees: unauthenticated -> /login
   const { pathname, search } = request.nextUrl;
@@ -106,6 +110,14 @@ export default async function middleware(request: NextRequest) {
     // a later phase. For Phase 1 we just drop the user on the role landing.
     loginUrl.searchParams.set('from', pathname + (search ?? ''));
     return applySecurityHeaders(NextResponse.redirect(loginUrl));
+  }
+
+  // 4. Phase 10: force temp-password users onto /set-password until they rotate.
+  if (user && mustChangePassword && !TEMP_PASSWORD_ALLOWED.test(pathname)) {
+    const locale = localeFromPath(pathname);
+    return applySecurityHeaders(
+      NextResponse.redirect(new URL(`/${locale}/set-password`, request.url)),
+    );
   }
 
   return applySecurityHeaders(intlResponse);

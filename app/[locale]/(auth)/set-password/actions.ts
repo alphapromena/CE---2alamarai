@@ -37,6 +37,15 @@ export async function setPasswordAction(
     return { error: 'unknown' };
   }
 
+  // Phase 10: clear the temp-password flag for bulk-imported promoters so
+  // the middleware redirect releases. Self-update is allowed by the
+  // profiles_update_self RLS policy; the self-update guard permits this
+  // column because it isn't on the protected list.
+  await supabase
+    .from('profiles')
+    .update({ must_change_password: false })
+    .eq('id', user.id);
+
   await logAuditEvent({
     actor_id: user.id,
     action: 'auth.password_set',

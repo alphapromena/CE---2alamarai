@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { Alert } from '@/components/ui/alert';
 import { setPasswordAction, type SetPasswordState } from './actions';
 
-export function SetPasswordForm() {
+export function SetPasswordForm({ mustChange = false }: { mustChange?: boolean }) {
   const t = useTranslations('Auth.set_password');
   const tError = useTranslations('Auth.errors');
   const [state, formAction, isPending] = useActionState<SetPasswordState, FormData>(
@@ -25,6 +25,7 @@ export function SetPasswordForm() {
       <p className="mt-1 text-sm text-fg-secondary">{t('description')}</p>
 
       <form action={formAction} className="mt-6 space-y-4" noValidate>
+        {mustChange ? <Alert variant="warning">{t('must_change_notice')}</Alert> : null}
         {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
 
         <div>
