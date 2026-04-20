@@ -6,9 +6,11 @@ import { requireRole } from '@/lib/auth/guards';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { listAttendanceForUser } from '@/lib/queries/attendance';
 import { listSupervisorVisits } from '@/lib/queries/supervisor-visits';
+import { listPingsForPromoterOnDate } from '@/lib/queries/location-pings';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusPill } from '@/components/ui/status-pill';
+import { PingTrailSection } from '@/components/features/location-tracking/ping-trail-section';
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
@@ -33,12 +35,27 @@ function formatTs(iso: string, locale: string): string {
   }
 }
 
+const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+
+function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}
+
+function isoDaysAgo(days: number): string {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() - days);
+  return d.toISOString().slice(0, 10);
+}
+
 export default async function SupervisorPromoterDetailPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ locale: string; id: string }>;
+  searchParams: Promise<{ trail_date?: string }>;
 }) {
   const { locale, id } = await params;
+  const sp = await searchParams;
   setRequestLocale(locale);
   await requireRole('supervisor', 'admin');
 
@@ -46,6 +63,12 @@ export default async function SupervisorPromoterDetailPage({
 
   const t = await getTranslations('FieldVisits');
   const tAttendance = await getTranslations('Supervisor.attendance');
+
+  const today = todayIso();
+  const minDate = isoDaysAgo(30);
+  const rawDate = sp.trail_date;
+  const trailDate =
+    rawDate && DATE_RE.test(rawDate) && rawDate >= minDate && rawDate <= today ? rawDate : today;
 
   // Fetch promoter meta via service role; the page is role-guarded so admin-
   // grade read is safe. RLS on attendance + supervisor_visits still filters
@@ -60,9 +83,10 @@ export default async function SupervisorPromoterDetailPage({
 
   if (!promoter) notFound();
 
-  const [attendance, visits] = await Promise.all([
+  const [attendance, visits, trail] = await Promise.all([
     listAttendanceForUser(id, 30),
     listSupervisorVisits({ promoterId: id, limit: 30 }),
+    listPingsForPromoterOnDate(id, trailDate),
   ]);
 
   // Pick a sensible default location for the "Log visit" deep link: the first
@@ -90,6 +114,16 @@ export default async function SupervisorPromoterDetailPage({
           </Link>
         </Button>
       </header>
+
+      <div className="pt-8">
+        <PingTrailSection
+          pings={trail.pings}
+          checkInPoint={trail.checkInPoint}
+          dateYYYYMMDD={trailDate}
+          minDate={minDate}
+          maxDate={today}
+        />
+      </div>
 
       <section className="pt-8">
         <h2 className="mb-3 text-lg font-semibold">{t('attendance_history_heading')}</h2>
