@@ -94,6 +94,47 @@ describe('scrubPromoterFields — all-true', () => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// Feature 4 / D-041 — photo scrub must still nullify photo URLs from newly-
+// attached attendance selfies when show_promoter_photos=false. Locks in the
+// Feature 3 invariant against Feature 4 introducing photo_path references.
+// ---------------------------------------------------------------------------
+describe('scrubPromoterFields — Feature 4 photo-path regression', () => {
+  it('nulls Feature-4 selfie URL when show_promoter_photos=false', () => {
+    const input: PromoterFields = {
+      promoter_id: PROMO_A,
+      promoter_name: 'Ahmed',
+      promoter_photo_url: 'https://storage/attendance/uid/2026-04-20/check_in.jpg',
+      alerts: undefined,
+    };
+    const out = scrubPromoterFields(input, visibility());
+    expect(out.promoter_photo_url).toBeNull();
+  });
+
+  it('keeps Feature-4 selfie URL intact when show_promoter_photos=true', () => {
+    const input: PromoterFields = {
+      promoter_id: PROMO_A,
+      promoter_name: 'Ahmed',
+      promoter_photo_url: 'https://storage/attendance/uid/2026-04-20/check_in.jpg',
+      alerts: undefined,
+    };
+    const out = scrubPromoterFields(input, visibility({ show_promoter_photos: true }));
+    expect(out.promoter_photo_url).toBe(
+      'https://storage/attendance/uid/2026-04-20/check_in.jpg',
+    );
+  });
+
+  it('handles rows that omit promoter_photo_url entirely (photo not taken)', () => {
+    const input: PromoterFields = {
+      promoter_id: PROMO_A,
+      promoter_name: 'Ahmed',
+      alerts: undefined,
+    };
+    const out = scrubPromoterFields(input, visibility({ show_promoter_photos: true }));
+    expect(out.promoter_photo_url).toBeUndefined();
+  });
+});
+
 describe('ZERO_VISIBILITY', () => {
   it('is frozen and all-false', () => {
     expect(ZERO_VISIBILITY).toEqual({

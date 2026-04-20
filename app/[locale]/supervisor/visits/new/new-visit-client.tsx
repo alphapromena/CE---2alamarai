@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -14,7 +14,10 @@ import { createBrowserSupabase } from '@/lib/supabase/browser';
 import { Button } from '@/components/ui/button';
 import { Alert } from '@/components/ui/alert';
 import { Textarea } from '@/components/ui/textarea';
-import type { SupervisorCampaignLocation } from '@/lib/queries/supervisor-scope';
+import type {
+  LocationPromoter,
+  SupervisorCampaignLocation,
+} from '@/lib/queries/supervisor-scope';
 
 type Coords = { lat: number; lng: number; accuracy: number };
 type GeoError = 'permission' | 'unavailable' | 'timeout';
@@ -35,16 +38,46 @@ function targetKey(t: SupervisorCampaignLocation): string {
 export function NewVisitClient({
   locale,
   targets,
+  promoters,
+  initialPromoterId,
+  initialLocationId,
 }: {
   locale: string;
   targets: SupervisorCampaignLocation[];
+  promoters: LocationPromoter[];
+  initialPromoterId: string | null;
+  initialLocationId: string | null;
 }) {
   const t = useTranslations('Supervisor.visits');
+  const tf = useTranslations('FieldVisits');
   const router = useRouter();
 
-  const [selectedKey, setSelectedKey] = useState<string>(targetKey(targets[0]!));
+  // If the page was opened with ?location_id=..., pre-select the first target
+  // matching that location; otherwise use the first target.
+  const defaultTarget =
+    (initialLocationId
+      ? targets.find((x) => x.location_id === initialLocationId)
+      : null) ?? targets[0]!;
+  const [selectedKey, setSelectedKey] = useState<string>(targetKey(defaultTarget));
   const selected =
     targets.find((x) => targetKey(x) === selectedKey) ?? targets[0]!;
+
+  // Promoter dropdown: filtered to the selected location; pre-filled from
+  // query-string if present. Lock the field when coming from the promoter
+  // detail page ("Log visit for Sara").
+  const promotersForLocation = useMemo(
+    () => promoters.filter((p) => p.location_id === selected.location_id),
+    [promoters, selected.location_id],
+  );
+  const [promoterId, setPromoterId] = useState<string>(
+    initialPromoterId &&
+      promoters.some(
+        (p) => p.id === initialPromoterId && p.location_id === selected.location_id,
+      )
+      ? initialPromoterId
+      : '',
+  );
+  const lockedPromoter = Boolean(initialPromoterId);
 
   const [outcome, setOutcome] = useState<Outcome>('ok');
   const [notes, setNotes] = useState('');
@@ -119,6 +152,7 @@ export function NewVisitClient({
         idempotency_key: idempotencyKey,
         campaign_id: selected.campaign_id,
         location_id: selected.location_id,
+        promoter_id: promoterId || null,
         lat: coords.lat,
         lng: coords.lng,
         captured_at: new Date().toISOString(),
@@ -141,7 +175,7 @@ export function NewVisitClient({
       const msg = typeof err === 'object' && err && 'message' in err ? (err as { message?: string }).message : '';
       if (msg) console.warn('visit create failed', msg);
     }
-  }, [coords, photoBlob, selected, outcome, notes, router, locale]);
+  }, [coords, photoBlob, selected, outcome, notes, promoterId, router, locale]);
 
   const canSubmit = coords != null && photoBlob != null && !submitting;
 
@@ -164,8 +198,16 @@ export function NewVisitClient({
         <select
           id="visit-target"
           value={selectedKey}
-          onChange={(e) => setSelectedKey(e.target.value)}
+          onChange={(e) => {
+            setSelectedKey(e.target.value);
+            // When the supervisor changes target, drop any promoter that no
+            // longer belongs to the new location — unless the promoter was
+            // locked in via ?promoter_id= (in which case just keep the value;
+            // the server will reject mismatches anyway).
+            if (!lockedPromoter) setPromoterId('');
+          }}
           className="h-8 w-full rounded-md border border-border bg-white px-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/20"
+          disabled={lockedPromoter}
         >
           {targets.map((x) => (
             <option key={targetKey(x)} value={targetKey(x)}>
@@ -174,6 +216,35 @@ export function NewVisitClient({
           ))}
         </select>
         <p className="mt-1 text-xs text-fg-muted">{t('campaign_location_hint')}</p>
+      </div>
+
+      {/* Promoter (Feature 4 / D-041) */}
+      <div>
+        <label
+          htmlFor="visit-promoter"
+          className="mb-1.5 block text-xs font-medium uppercase tracking-wide text-fg-secondary"
+        >
+          {tf('promoter_label')}
+        </label>
+        <select
+          id="visit-promoter"
+          value={promoterId}
+          onChange={(e) => setPromoterId(e.target.value)}
+          disabled={lockedPromoter}
+          className="h-8 w-full rounded-md border border-border bg-white px-3 text-sm focus:border-accent focus:ring-2 focus:ring-accent/20 disabled:bg-muted"
+        >
+          <option value="">{tf('promoter_placeholder')}</option>
+          {promotersForLocation.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.full_name}
+            </option>
+          ))}
+        </select>
+        {lockedPromoter ? (
+          <p className="mt-1 text-xs text-fg-muted">{tf('promoter_locked_hint')}</p>
+        ) : (
+          <p className="mt-1 text-xs text-fg-muted">{tf('promoter_hint')}</p>
+        )}
       </div>
 
       {/* Outcome */}

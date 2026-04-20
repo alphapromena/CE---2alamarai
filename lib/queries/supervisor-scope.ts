@@ -53,6 +53,45 @@ export type SupervisorCampaignLocation = {
   geofence_radius_m: number;
 };
 
+export type LocationPromoter = {
+  id: string;
+  full_name: string;
+  location_id: string;
+};
+
+/**
+ * Active promoters assigned to a set of locations. Used by the
+ * supervisor-visit-new form so the promoter dropdown shows only promoters
+ * who actually work at the selected (campaign, location) pair.
+ *
+ * RLS-aware via the server supabase client; the supervisor only sees
+ * promoters at their assigned locations (assigned_locations overlap).
+ */
+export async function listPromotersAtLocations(
+  locationIds: string[],
+): Promise<LocationPromoter[]> {
+  if (locationIds.length === 0) return [];
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from('profiles')
+    .select('id, full_name, assigned_locations')
+    .eq('role', 'promoter')
+    .eq('active', true)
+    .overlaps('assigned_locations', locationIds);
+  if (error) return [];
+  type Row = { id: string; full_name: string; assigned_locations: string[] | null };
+  const out: LocationPromoter[] = [];
+  for (const r of (data ?? []) as Row[]) {
+    const assigned = r.assigned_locations ?? [];
+    for (const loc of locationIds) {
+      if (assigned.includes(loc)) {
+        out.push({ id: r.id, full_name: r.full_name, location_id: loc });
+      }
+    }
+  }
+  return out;
+}
+
 /**
  * (campaign, location) pairs the supervisor may visit — those at their
  * assigned locations with linked active campaigns. Used by the new-visit

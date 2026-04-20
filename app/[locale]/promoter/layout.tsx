@@ -13,6 +13,7 @@ const NAV = [
   { href: '/promoter/stock', labelKey: 'Promoter.nav.stock' },
   { href: '/promoter/breaks', labelKey: 'Promoter.nav.breaks' },
   { href: '/promoter/feedback', labelKey: 'Promoter.nav.feedback' },
+  { href: '/promoter/visits', labelKey: 'Promoter.nav.visits' },
 ];
 
 export default async function PromoterLayout({
