@@ -25,6 +25,10 @@ export const createClientSchema = z
     contact_email: optionalEmail,
     contact_phone: optionalPhone,
     active: z.boolean().default(true),
+    show_promoter_names: z.boolean().default(false),
+    show_promoter_photos: z.boolean().default(false),
+    show_promoter_alerts: z.boolean().default(false),
+    show_promoter_full_profile: z.boolean().default(false),
   })
   .strict();
 

@@ -316,7 +316,19 @@
         "name_help": "Used in admin lists. Not shown to client users.",
         "contact_email_label": "Contact email",
         "contact_phone_label": "Contact phone",
-        "active_label": "Active"
+        "active_label": "Active",
+        "visibility": {
+          "title": "Visibility settings",
+          "warning": "Enabling any option exposes personal data to this client — review the privacy agreement before turning it on.",
+          "names_label": "Show promoter names",
+          "names_help": "Client sees each promoter's real name instead of an anonymous display id.",
+          "photos_label": "Show promoter photos",
+          "photos_help": "Client sees promoter selfie and activity photos; default scrubs all photo URLs.",
+          "alerts_label": "Show promoter alerts",
+          "alerts_help": "Client sees lateness, absence and low-performance alerts tied to individual promoters.",
+          "profile_label": "Show full promoter profile",
+          "profile_help": "Client sees per-promoter rows instead of the default aggregated roll-ups."
+        }
       },
       "new_title": "New client",
       "new_description": "Create a tenant. Client users you invite later will be locked to this tenant.",
