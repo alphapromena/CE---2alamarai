@@ -15,8 +15,13 @@ function isUniqueViolation(message: string | null | undefined): boolean {
   return /duplicate key|unique constraint|already exists/i.test(message);
 }
 
+function readBool(formData: FormData, key: string, defaultWhenNull: boolean): boolean {
+  const raw = formData.get(key);
+  if (raw === null) return defaultWhenNull;
+  return raw === 'on' || raw === 'true';
+}
+
 function readForm(formData: FormData) {
-  const active = formData.get('active');
   return {
     name: formData.get('name'),
     name_i18n: {
@@ -25,7 +30,11 @@ function readForm(formData: FormData) {
     },
     contact_email: formData.get('contact_email') || undefined,
     contact_phone: formData.get('contact_phone') || undefined,
-    active: active === 'on' || active === 'true' || active === null,
+    active: readBool(formData, 'active', true),
+    show_promoter_names: readBool(formData, 'show_promoter_names', false),
+    show_promoter_photos: readBool(formData, 'show_promoter_photos', false),
+    show_promoter_alerts: readBool(formData, 'show_promoter_alerts', false),
+    show_promoter_full_profile: readBool(formData, 'show_promoter_full_profile', false),
   };
 }
 
@@ -48,6 +57,10 @@ export async function createClientAction(
       contact_email: parsed.data.contact_email ?? null,
       contact_phone: parsed.data.contact_phone ?? null,
       active: parsed.data.active,
+      show_promoter_names: parsed.data.show_promoter_names,
+      show_promoter_photos: parsed.data.show_promoter_photos,
+      show_promoter_alerts: parsed.data.show_promoter_alerts,
+      show_promoter_full_profile: parsed.data.show_promoter_full_profile,
       created_by: actor.id,
     })
     .select('id')
@@ -85,7 +98,9 @@ export async function updateClientAction(
   const admin = createAdminSupabase();
   const { data: before } = await admin
     .from('clients')
-    .select('name, name_i18n, contact_email, contact_phone, active')
+    .select(
+      'name, name_i18n, contact_email, contact_phone, active, show_promoter_names, show_promoter_photos, show_promoter_alerts, show_promoter_full_profile',
+    )
     .eq('id', parsed.data.id)
     .maybeSingle();
 
@@ -97,6 +112,10 @@ export async function updateClientAction(
       contact_email: parsed.data.contact_email ?? null,
       contact_phone: parsed.data.contact_phone ?? null,
       active: parsed.data.active,
+      show_promoter_names: parsed.data.show_promoter_names,
+      show_promoter_photos: parsed.data.show_promoter_photos,
+      show_promoter_alerts: parsed.data.show_promoter_alerts,
+      show_promoter_full_profile: parsed.data.show_promoter_full_profile,
     })
     .eq('id', parsed.data.id);
 

@@ -17,9 +17,11 @@
  * resolved or promoter full_name) so the builder does no DB work.
  */
 
+import { promoterDisplayId } from '@/lib/auth/client-visibility';
 import type {
   AttendanceRaw,
   DailyReportRaw,
+  ExportClientVisibility,
   ExportInput,
   ExportRole,
   FeedbackRaw,
@@ -30,6 +32,13 @@ import type {
   StockMovementRaw,
   SupervisorVisitRaw,
 } from './types';
+
+const ALL_FALSE_VISIBILITY: ExportClientVisibility = Object.freeze({
+  show_promoter_names: false,
+  show_promoter_photos: false,
+  show_promoter_alerts: false,
+  show_promoter_full_profile: false,
+}) as ExportClientVisibility;
 
 // ---------------------------------------------------------------------------
 // Display helpers
@@ -542,6 +551,102 @@ export function buildFeedbackSheets(
 }
 
 // ---------------------------------------------------------------------------
+// Client promoter sheet (D-040 override)
+// ---------------------------------------------------------------------------
+/**
+ * Per-promoter rollup sheet emitted for a client tenant whose admin has
+ * flipped `show_promoter_full_profile=true`. Aggregates attendance + daily
+ * reports per promoter. Promoter identity column is the display id unless
+ * `show_promoter_names=true`, in which case the real name is emitted
+ * alongside.
+ *
+ * Callers that omit `visibility` or pass `show_promoter_full_profile=false`
+ * get an empty result — the default aggregate-only output is untouched.
+ */
+export function buildClientPromoterSheet(
+  attendance: readonly AttendanceRaw[],
+  reports: readonly DailyReportRaw[],
+  visibility: ExportClientVisibility,
+  locale: 'ar' | 'en',
+): Sheet[] {
+  if (!visibility.show_promoter_full_profile) return [];
+  if (attendance.length === 0 && reports.length === 0) return [];
+
+  type B = {
+    promoter_id: string;
+    promoter_name: string | null;
+    shifts: number;
+    on_time: number;
+    late: number;
+    reports: number;
+    contacts: number;
+    engaged: number;
+    samples: number;
+    sales: number;
+  };
+  const by = new Map<string, B>();
+  const bucket = (id: string, name: string | null): B => {
+    let b = by.get(id);
+    if (!b) {
+      b = {
+        promoter_id: id,
+        promoter_name: name,
+        shifts: 0,
+        on_time: 0,
+        late: 0,
+        reports: 0,
+        contacts: 0,
+        engaged: 0,
+        samples: 0,
+        sales: 0,
+      };
+      by.set(id, b);
+    } else if (b.promoter_name === null && name !== null) {
+      b.promoter_name = name;
+    }
+    return b;
+  };
+
+  for (const a of attendance) {
+    const b = bucket(a.promoter_user_id, a.promoter_name);
+    b.shifts += 1;
+    if (a.status === 'on_time') b.on_time += 1;
+    else if (a.status === 'late') b.late += 1;
+  }
+  for (const r of reports) {
+    const b = bucket(r.promoter_user_id, r.promoter_name);
+    b.reports += 1;
+    b.contacts += r.contacts;
+    b.engaged += r.engaged;
+    b.samples += r.samples_total;
+    b.sales += r.sales_total;
+  }
+
+  const sorted = Array.from(by.values()).sort((a, b) =>
+    a.promoter_id.localeCompare(b.promoter_id),
+  );
+  const columns = visibility.show_promoter_names
+    ? ['Promoter id', 'Promoter name', 'Shifts', 'On time', 'Late', 'Reports', 'Contacts', 'Engaged', 'Samples', 'Sales']
+    : ['Promoter id', 'Shifts', 'On time', 'Late', 'Reports', 'Contacts', 'Engaged', 'Samples', 'Sales'];
+  // Reference the locale to keep the signature honest for future ar/en
+  // specific formatting (e.g. numerals).
+  void locale;
+  return [
+    {
+      name: 'Promoters',
+      columns,
+      rows: sorted.map((b) => {
+        const display = promoterDisplayId(b.promoter_id);
+        const base = [b.shifts, b.on_time, b.late, b.reports, b.contacts, b.engaged, b.samples, b.sales];
+        return visibility.show_promoter_names
+          ? [display, b.promoter_name ?? '', ...base]
+          : [display, ...base];
+      }),
+    },
+  ];
+}
+
+// ---------------------------------------------------------------------------
 // Orchestrator
 // ---------------------------------------------------------------------------
 
@@ -580,6 +685,22 @@ export function buildAllSheets(input: ExportInput): Sheet[] {
       case 'feedback':
         push(buildFeedbackSheets(input.feedback ?? [], input.role, input.locale));
         break;
+    }
+  }
+  // D-040: per-tenant opt-in override. Only applies when the exporting user
+  // is a client AND their admin has explicitly flipped a toggle. Defaults
+  // preserve D-033 (aggregates-only) byte-for-byte.
+  if (input.role === 'client') {
+    const vis = input.clientVisibility ?? ALL_FALSE_VISIBILITY;
+    if (vis.show_promoter_full_profile) {
+      push(
+        buildClientPromoterSheet(
+          input.attendance ?? [],
+          input.daily_reports ?? [],
+          vis,
+          input.locale,
+        ),
+      );
     }
   }
   return out;

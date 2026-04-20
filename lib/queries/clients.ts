@@ -8,10 +8,15 @@ export type ClientRow = {
   contact_email: string | null;
   contact_phone: string | null;
   active: boolean;
+  show_promoter_names: boolean;
+  show_promoter_photos: boolean;
+  show_promoter_alerts: boolean;
+  show_promoter_full_profile: boolean;
   created_at: string;
 };
 
-const SELECT_COLUMNS = 'id, name, name_i18n, contact_email, contact_phone, active, created_at';
+const SELECT_COLUMNS =
+  'id, name, name_i18n, contact_email, contact_phone, active, show_promoter_names, show_promoter_photos, show_promoter_alerts, show_promoter_full_profile, created_at';
 
 export async function listClients(): Promise<ClientRow[]> {
   const admin = createAdminSupabase();

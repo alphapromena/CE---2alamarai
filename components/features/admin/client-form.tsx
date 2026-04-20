@@ -39,6 +39,12 @@ export function ClientForm({ mode, initial }: ClientFormProps) {
   const [contactEmail, setContactEmail] = useState(initial?.contact_email ?? '');
   const [contactPhone, setContactPhone] = useState(initial?.contact_phone ?? '');
   const [active, setActive] = useState(initial?.active ?? true);
+  const [showNames, setShowNames] = useState(initial?.show_promoter_names ?? false);
+  const [showPhotos, setShowPhotos] = useState(initial?.show_promoter_photos ?? false);
+  const [showAlerts, setShowAlerts] = useState(initial?.show_promoter_alerts ?? false);
+  const [showFullProfile, setShowFullProfile] = useState(
+    initial?.show_promoter_full_profile ?? false,
+  );
 
   const errorKey = state.error;
   const errorMessage = errorKey
@@ -116,6 +122,39 @@ export function ClientForm({ mode, initial }: ClientFormProps) {
         />
         <span>{t('form.active_label')}</span>
       </label>
+
+      <section className="space-y-4 rounded-lg border border-border bg-bg-subtle/30 p-5">
+        <header className="space-y-1">
+          <h2 className="text-base font-semibold">{t('form.visibility.title')}</h2>
+          <Alert variant="danger">{t('form.visibility.warning')}</Alert>
+        </header>
+        <div className="space-y-4">
+          {(
+            [
+              ['show_promoter_names', showNames, setShowNames, 'names'],
+              ['show_promoter_photos', showPhotos, setShowPhotos, 'photos'],
+              ['show_promoter_alerts', showAlerts, setShowAlerts, 'alerts'],
+              ['show_promoter_full_profile', showFullProfile, setShowFullProfile, 'profile'],
+            ] as const
+          ).map(([fieldName, checked, setter, key]) => (
+            <label key={fieldName} className="flex items-start gap-3 text-sm">
+              <input
+                type="checkbox"
+                name={fieldName}
+                checked={checked}
+                onChange={(e) => setter(e.target.checked)}
+                className="focus:ring-accent/20 mt-0.5 h-4 w-4 rounded border-border text-accent focus:ring-2"
+              />
+              <span className="flex flex-col gap-1">
+                <span className="font-medium">{t(`form.visibility.${key}_label`)}</span>
+                <span className="text-xs text-fg-muted">
+                  {t(`form.visibility.${key}_help`)}
+                </span>
+              </span>
+            </label>
+          ))}
+        </div>
+      </section>
 
       <div className="flex items-center justify-end gap-2 border-t border-border pt-6">
         <Button asChild variant="ghost" type="button" disabled={isPending}>
