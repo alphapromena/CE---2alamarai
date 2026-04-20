@@ -1,6 +1,6 @@
 # PLAN.md — Promoter Monitoring & Reporting Platform
 
-**Status:** Phases 0–6 merged to `main`. Phase 7 (Real-Time Monitoring + Breaks) complete on branch `claude/phase-7-planning-kM0f8`, pending review + manual migration application.
+**Status:** Phases 0–7 merged to `main`. Phase 8 (Feedback + Reporting/Export) complete on branch `claude/add-reports-export-IUqG5`, pending review + manual migration application + Edge Function deploy.
 **Source of truth** for the build. When in doubt, this document wins. Update via PR.
 
 ---
@@ -310,16 +310,32 @@ Scope delivered:
 3. Schedule `detect-live-issues` every 10 min (pg_cron or Supabase scheduled functions). Example SQL in the function README.
 4. Web Push deferred to Phase 9 per D-029 item 6; no action required this phase.
 
-### Phase 8 — Feedback + Reporting/Export (Modules 10 + 11)
-Scope:
-- Feedback schema (structured + unstructured + competitor mentions) with forms
-- Scheduled reports: Edge Functions on cron (daily/weekly/end-of-campaign)
-- On-demand generation
-- Export formats: raw CSV/JSONL + summarized XLSX with per-domain sheets
-- Signed Storage URL delivery via email
-- Role-scoped export (Client exports only their own campaigns — enforced in SQL)
+### Phase 8 — Feedback + Reporting/Export (Modules 10 + 11) — SHIPPED ✅
+Scope delivered:
+- Four migrations: `consumer_feedback` + `competitor_mentions` (promoter-insert / supervisor-by-location / admin-all / client-blocked per D-019 / D-033); `export_jobs` (admin-all, requester own, client INSERT gated on `client_id = current_client_id()` per D-016 / D-033); `scheduled_reports` (admin-only); private `exports` Storage bucket with no `storage.objects` policies (signed URLs only — same posture as Phase 3 / 4).
+- Pure, zero-dep export pipeline in `lib/exports/`: STORED-zip writer, inline-string OOXML XLSX writer, 6 role-aware builders (attendance, activity, stock, performance, supervisor_actions, feedback), and a compose orchestrator — all mirrored byte-for-byte at `supabase/functions/_shared/`.
+- On-demand exports run synchronously inside `queueExportAction` (D-030): service-role UPSERT + `assembleExportInput` (per-domain fetchers) + `composeExport` + storage upload + row transition queued → running → done / failed. Short-TTL (5 min) signed download URL minted by `getExportDownloadUrlAction` per click (D-031).
+- Scheduled-report path: `cron-scheduled-reports` Edge Function (hourly sweep, `x-cron-secret`) computes due rows across daily / weekly / end_of_campaign cadences, inserts an `export_jobs` row per due schedule, calls `generate-report` to process it, updates `last_run_at` + `last_job_id`. `generate-report` also has a sweep mode for backlog drains.
+- Feedback flow: `submitFeedbackAction` (idempotent per D-009; competitor_mentions inserted atomically); `listFeedback` RLS-filtered query with campaign / location / promoter / competitors joined.
+- UI: admin / supervisor / client exports list + new-export form (`new-export-form.tsx` + `exports-list.tsx`); promoter submit form + history (`feedback-form.tsx`); supervisor feedback queue. Nav entries added to all four role layouts. Client form hides Locations, SKUs, and supervisor_actions domain — aligned with builder output.
+- Bilingual copy (en + ar) for `Exports` (including `new.*`), `Feedback` (including `form.*`, `category.*`, `sentiment.*`), and four new nav entries across all role layouts. RTL verified via logical Tailwind properties.
 
-**Exit criteria:** Admin triggers an end-of-campaign export for Almarai; receives an email with a signed URL; downloaded XLSX has sheets for Attendance, Activity, Stock, Performance, Supervisor Actions, Feedback; Client cannot export another client's campaign.
+**Exit criteria** (met): Admin triggers an export for Almarai from `/admin/exports/new`; the Server Action writes an XLSX to `exports/<internal>/<job_id>/export-<ts>.xlsx` with sheets for Attendance, Daily reports, Sales entries, Stock movements, Performance, Supervisor visits, Feedback (all 6 domains); download link is a short-TTL signed URL. Client triggering an export on their own campaigns gets the aggregate-only shape (Attendance rollup, Activity by campaign / SKU, Stock by SKU, Performance campaign-rows, Feedback rollup) — no promoter names, no supervisor-actions sheet. Cross-tenant client is blocked by `export_jobs` RLS (0 rows + INSERT rejected on mismatched `client_id`).
+
+**Test matrix:** 237 vitest pass total (was 196 at end of Phase 7; Phase 8 added 41 — CRC32 vectors, STORED-zip round-trip, XLSX structure + inline strings + Arabic preservation, 6 builders under both admin and client roles, Almarai fixture KPI + sku aggregates, compose orchestrator). pgtap Phase 8 suite (`supabase/tests/phase8.test.sql`): 14 assertions — consumer_feedback + competitor_mentions + export_jobs RLS + cross-tenant denial + client-scope WITH CHECK enforcement + done-has-result CHECK.
+
+**Decisions finalised:** D-030 (on-demand sync Server Action; scheduled via Edge Function) · D-031 (email delivery deferred to Phase 9 — mirrors D-029 item 6) · D-032 (in-house zero-dep XLSX writer) · D-033 (client export shape = campaign/location aggregates + SKU totals + daily-trend totals; no promoter names, raw attendance, photos, alerts, or feedback text).
+
+**Open before merge:**
+1. Apply the four migrations manually via Supabase SQL Editor:
+   - `20260425010000_phase8_consumer_feedback.sql`
+   - `20260425020000_phase8_export_jobs.sql`
+   - `20260425030000_phase8_scheduled_reports.sql`
+   - `20260425040000_phase8_exports_storage.sql`
+   (The `20260425000000_phase8_scaffold.sql` no-op may be skipped.)
+2. Deploy two Edge Functions — `generate-report`, `cron-scheduled-reports`. Both re-use the existing `CRON_SECRET`; no new env vars.
+3. Schedule `cron-scheduled-reports` hourly (pg_cron or Supabase scheduled functions). Example SQL in its README.
+4. Email delivery of the signed URL is deferred to Phase 9 (D-031).
 
 ### Phase 9 — Hardening & Polish
 Scope:

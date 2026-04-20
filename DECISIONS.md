@@ -577,3 +577,102 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - Web Push is greenlit → `notifications.payload` already carries what a push envelope needs; add a `push_subscriptions` table and a `send-web-push` Edge Function.
   - Sweep cadence becomes measurably too coarse (alert latency complaints from ops) → halve it and monitor.
 
+---
+
+## D-030 — Phase 8 export pipeline: synchronous on-demand in a Server Action; cron-scheduled path through a dedicated Edge Function
+
+- **Date:** 2026-04-20
+- **Phase:** Phase 8 (Reporting/Export)
+- **Question:** Where does the CSV/XLSX generation happen — Server Action, Edge Function, background worker, or a queue?
+- **Decision:**
+  - **On-demand (interactive) exports** run synchronously inside the requesting Server Action (`queueExportAction`): the same `assembleExportInput` + `composeExport` + `storage.upload` pipeline, called with the service-role admin client. The `export_jobs` row transitions queued → running → done (or failed) in one invocation; the caller blocks until it's done, then the UI navigates to the list with the fresh row already visible. A client-generated UUID provides idempotency (D-009).
+  - **Cron-scheduled exports** flow through two Edge Functions: `cron-scheduled-reports` (hourly sweep; inserts an `export_jobs` row per due `scheduled_reports` row + invokes generate-report) and `generate-report` (targeted + sweep modes; shares the exact same byte-for-byte pipeline via `supabase/functions/_shared/`). Gated by `x-cron-secret`, same trust model as `detect-live-issues` / `detect-attendance-issues`.
+- **Rationale:**
+  - Realistic scope sizes at MVP (hundreds of rows per domain per campaign) run in well under Vercel's 10 s Server Action budget. Adding an async queue for the interactive path would double the surface (queue + worker + status polling) without buying measurable latency.
+  - Scheduled reports need a place to run outside a user request, and cron has to dispatch somewhere — giving it a dedicated Edge Function keeps the two trust models cleanly separated (user JWT for on-demand; shared secret for cron).
+  - One pipeline, two entry points: the TS logic under `lib/exports/` is mirrored byte-for-byte at `supabase/functions/_shared/` (matches the D-020 / D-028 pattern for `compute-kpis`), so both paths produce identical artifacts.
+- **Alternatives considered:**
+  - **Always go through an Edge Function.** Rejected for v1: forces the UI into a polling model even for interactive exports, and doubles latency for the common path (hundreds of rows).
+  - **Queue + worker (pg_queue, BullMQ, etc.).** Rejected: operational weight not justified at current data volumes.
+  - **Emit a webhook on `export_jobs` INSERT → Edge Function.** Rejected: trigger-based HTTP calls from Postgres require `pg_net`, add failure modes (silent drops), and are less observable than an explicit call in the Server Action.
+- **Implementation:**
+  - `lib/exports/actions.ts` — `queueExportAction` (sync) + `getExportDownloadUrlAction` (signed URL).
+  - `lib/exports/assemble.ts` + `lib/exports/compose.ts` — runtime-neutral; imported by both runtimes.
+  - `supabase/functions/generate-report/` — targeted (`{ job_id }`) + sweep (empty body) modes; writes to the private `exports` bucket.
+  - `supabase/functions/cron-scheduled-reports/` — hourly sweep; inserts `export_jobs` row, calls `generate-report`, updates `last_run_at` + `last_job_id`.
+- **Revisit when:** p95 interactive export generation crosses ~6 s on real data (then move to Edge Function + polling UI), or the scheduled backlog grows to the point where one-at-a-time sweep is too slow (then parallel invocation).
+
+---
+
+## D-031 — Email delivery of export signed URLs deferred to Phase 9
+
+- **Date:** 2026-04-20
+- **Phase:** Phase 8 (Reporting/Export)
+- **Question:** The PLAN Phase 8 bullet says "Signed Storage URL delivery via email." Do we wire that now or defer?
+- **Decision:** **Defer.** Phase 8 surfaces the signed URL in-app on the Exports page — the user clicks "Download" and `getExportDownloadUrlAction` mints a 5-minute signed URL. No email is sent.
+- **Rationale:**
+  - Email infrastructure (SES / Resend / transactional provider), template system, bounce handling, and deliverability testing are a feature-sized unit on their own. Bundling them into Phase 8 puts the whole phase at risk.
+  - The in-app path is the most common usage anyway (admin pulls the file immediately after queueing); email is "nice-to-have" for end-of-day deliveries.
+  - `export_jobs.result_path` + `scheduled_reports.last_job_id` are already in place; Phase 9 only needs to add `notifications.payload.download_url` and a send-email Edge Function.
+  - Mirrors D-029 item 6 (Web Push deferred same phase boundary).
+- **Alternatives considered:**
+  - Ship an email-on-done path now. Rejected: out-of-scope for the phase budget; forces a provider decision prematurely.
+  - Store a persistent signed URL on `export_jobs.result_url`. Rejected: long-lived signed URLs bypass the re-auth check at download time; we want TTL to be short and to re-verify access on every click.
+- **Revisit when:** Phase 9 polish opens the email-delivery workstream. Work: provider choice, DNS (SPF/DKIM), template system, `send-export-email` Edge Function, `notifications` kind extension.
+
+---
+
+## D-032 — XLSX writer: in-house minimal OOXML + STORED zip; no new npm dep
+
+- **Date:** 2026-04-20
+- **Phase:** Phase 8 (Reporting/Export)
+- **Question:** XLSX emission — add `exceljs` / `xlsx` / `fflate`-based lib, or write a minimal one?
+- **Decision:** Ship `lib/exports/xlsx.ts` (inline-string OOXML) on top of `lib/exports/zip.ts` (STORED-only, CRC32, no compression). Zero new npm dependencies. Byte-for-byte deterministic output; Arabic text preserved without a BOM inside the XML parts.
+- **Rationale:**
+  - The OOXML spec parts we need are small: `[Content_Types].xml`, `_rels/.rels`, `xl/workbook.xml`, `xl/_rels/workbook.xml.rels`, one `xl/worksheets/sheetN.xml` per sheet. ~140 lines of TypeScript.
+  - STORED (uncompressed) zip is the simplest ZIP layout; both `unzip`, Excel, LibreOffice, and Numbers accept it. Size cost at Phase 8 scale is negligible (~a few hundred KB uncompressed per campaign-month).
+  - Existing repo has zero-dep CSV serialisation (`lib/utils/csv.ts`). Matching that posture keeps the bundle lean and the attack surface small.
+  - `exceljs` is ~300 KB min+gz plus transitive deps; `xlsx` (community fork) has licensing churn; `fflate` adds DEFLATE we don't need. None would save meaningful implementation time against the in-house writer's ~200 lines.
+- **Alternatives considered:**
+  - **`exceljs`.** Rejected: bundle size + a richer API than we need; locks us into its abstractions for simple tables.
+  - **`xlsx` (community).** Rejected: packaging / licensing ambiguity; sunsetted community build on npm.
+  - **DEFLATE-zipped XLSX via `fflate`.** Rejected: one extra dep for a size win we don't need yet.
+- **Implementation:**
+  - `lib/exports/zip.ts` — CRC32 table, little-endian writers, local + central + EOCD records. Deterministic (DOS epoch 1980-01-01 frozen). Fully tested: CRC vectors, structural invariants, UTF-8 filenames, determinism.
+  - `lib/exports/xlsx.ts` — `xmlEscape` (strips illegal XML 1.0 control chars), `colLetters`, `sanitizeSheetName` (Excel's `:\/?*[]` forbidden chars + 31-char limit + dedupe), `buildXlsx`. Inline strings (`t="inlineStr"`) so no `sharedStrings.xml` is needed.
+  - Mirrored at `supabase/functions/_shared/zip.ts` + `xlsx.ts` for the Edge Function path (import paths tweaked for Deno explicit `.ts`).
+- **Revisit when:**
+  - Payload size becomes a real constraint (e.g., exports regularly exceeding tens of MB). At that point, switch to DEFLATE: add fflate and flip the zip writer's method byte.
+  - Rich formatting (frozen panes, column widths, styles) is required. Then swap for `exceljs`.
+
+---
+
+## D-033 — Client export scope: aggregates only; no promoter rows, no raw attendance, no feedback text
+
+- **Date:** 2026-04-20
+- **Phase:** Phase 8 (Reporting/Export)
+- **Question:** PLAN says "Client exports only their own campaigns." What shape?
+- **Decision:** For `role = 'client'` inside the export builders + RLS combined, the artifact contains:
+  1. **Attendance** — per-(campaign, location, date) counts: total, on_time, late, absent, missing_checkout, geofence_violations. No promoter names.
+  2. **Activity** — per-campaign totals (reports / traffic / contacts / engaged / samples / sales) + recomputed interaction / engagement / conversion ratios. Per-SKU totals (samples + sales). No per-promoter rows.
+  3. **Stock** — per-(campaign, SKU) rollup: allocated / distributed / used. No ledger rows, no supervisor or promoter entity ids.
+  4. **Performance** — campaign-scope rows only. Promoter- and location-scope rows are filtered out at the builder. Matches the Phase 6 `/client/performance` page (D-028 item 6).
+  5. **Supervisor actions** — sheet omitted entirely. Supervisor activity is operational; not client-facing.
+  6. **Feedback** — per-(campaign, category, sentiment) counts. No body text, no competitor_brands column, no per-promoter rows. Parent consumer_feedback RLS already blocks client reads, so the builder never receives raw rows anyway; this keeps the output shape honest even if the caller supplies rows.
+  Plus: `export_jobs.client_id` **must** equal `profiles.client_id` on INSERT (RLS WITH CHECK), and the Server Action intersects `scope.campaign_ids` with the client's campaigns before handing off to the builder.
+- **Rationale:**
+  - Reaffirms D-019 item 3 (client sees aggregates only, not PII / photos / raw attendance) and D-028 item 6 (client performance is campaign-scope only). Phase 8 is where the client first gets any export at all, and the shape has to match the posture that's already been in force for three phases.
+  - Shipping raw attendance or feedback rows to a client silently crosses a line we've explicitly not crossed in Phase 3, 6, or 7. One leak channel is enough to blow the whole posture.
+  - The aggregates are the ones the brand persona actually cares about (conversion at campaign level, engagement rollups, SKU performance, feedback category mix). Per-promoter data is operational, not client-facing.
+- **Enforcement layers:**
+  1. **RLS** — `consumer_feedback` + `supervisor_visits` + `attendance` + `daily_reports` + `kpi_snapshots` all block direct client access. `performance_snapshots` limits client to `scope_kind = 'campaign'`.
+  2. **Server Action (`queueExportAction`)** — intersects `scope.campaign_ids` with the client's campaigns; rejects if `client_id` doesn't match the caller's `profiles.client_id`; the `export_jobs` row is INSERTed with `client_id = caller.client_id`, which the RLS WITH CHECK enforces as defence in depth.
+  3. **Builders** — for `role = 'client'`, emit aggregate-only sheets; for `supervisor_actions`, emit zero sheets. Hard-coded in the pure-logic layer so a bug in the wiring still yields safe output.
+- **Alternatives considered:**
+  - **Ship raw rows with a "client redaction" post-pass.** Rejected: two places to get right (query + redact), and a leak means the raw rows already left the database.
+  - **Per-client configurable shape.** Rejected: v1 — get the default right first.
+  - **Omit exports for client role entirely.** Rejected: clients asked for this. The aggregate shape is genuinely useful without crossing the PII line.
+- **Revisit when:**
+  - A client signs an operational agreement that covers per-promoter visibility (then widen the builder for that tenant).
+  - Phase 9 polish adds location-level rollups to the client surface (matching the D-028 item 6 revisit clause).
+
