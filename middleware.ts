@@ -11,9 +11,15 @@ const isDev = process.env.NODE_ENV !== 'production';
 // layouts via requireRole(); middleware only gates unauthenticated access.
 const PROTECTED_PREFIX = /^\/(?:ar|en)\/(?:admin|supervisor|promoter|client)(?:\/|$)/;
 
-// Phase 1 tightening: allow Supabase origins in connect-src + img-src so the
-// auth flow and (later) Realtime + Storage work. Production CSP is still
-// unsafe-inline for script+style -- that will get tightened in Phase 9.
+// Phase 9 CSP + security header hardening.
+//
+// 'unsafe-inline' on script-src is retained because Next.js 15's streaming
+// and hydration pipeline injects inline scripts; removing it requires a
+// per-request nonce wired through every RSC payload. Tracked as a future
+// tightening — not in scope for the final phase, since a mis-configured CSP
+// is strictly worse than unsafe-inline (white-screened app). 'unsafe-inline'
+// is retained on style-src for the same reason (Next.js inlines critical CSS
+// for preload). Everything else is tight.
 const csp = [
   `default-src 'self'`,
   `script-src 'self' 'unsafe-inline'${isDev ? " 'unsafe-eval'" : ''}`,
@@ -21,18 +27,52 @@ const csp = [
   `img-src 'self' data: blob: https://*.supabase.co`,
   `font-src 'self' data:`,
   `connect-src 'self' https://*.supabase.co wss://*.supabase.co${isDev ? ' ws: http://localhost:* http://127.0.0.1:*' : ''}`,
+  `media-src 'self' blob:`,
+  `worker-src 'self' blob:`,
+  `manifest-src 'self'`,
+  `frame-src 'none'`,
   `frame-ancestors 'none'`,
   `base-uri 'self'`,
   `form-action 'self'`,
   `object-src 'none'`,
+  ...(isDev ? [] : [`upgrade-insecure-requests`]),
 ].join('; ');
+
+const PERMISSIONS_POLICY = [
+  'accelerometer=()',
+  'ambient-light-sensor=()',
+  'autoplay=()',
+  'battery=()',
+  'bluetooth=()',
+  'camera=(self)',
+  'display-capture=()',
+  'encrypted-media=()',
+  'fullscreen=(self)',
+  'geolocation=(self)',
+  'gyroscope=()',
+  'keyboard-map=()',
+  'magnetometer=()',
+  'microphone=()',
+  'midi=()',
+  'payment=()',
+  'picture-in-picture=()',
+  'publickey-credentials-get=()',
+  'screen-wake-lock=()',
+  'sync-xhr=()',
+  'usb=()',
+  'web-share=()',
+  'xr-spatial-tracking=()',
+].join(', ');
 
 const SECURITY_HEADERS: Record<string, string> = {
   'Content-Security-Policy': csp,
   'X-Content-Type-Options': 'nosniff',
   'X-Frame-Options': 'DENY',
   'Referrer-Policy': 'strict-origin-when-cross-origin',
-  'Permissions-Policy': 'camera=(self), geolocation=(self), microphone=()',
+  'Permissions-Policy': PERMISSIONS_POLICY,
+  'Cross-Origin-Opener-Policy': 'same-origin',
+  'Cross-Origin-Resource-Policy': 'same-origin',
+  'X-DNS-Prefetch-Control': 'off',
   ...(isDev ? {} : { 'Strict-Transport-Security': 'max-age=63072000; includeSubDomains; preload' }),
 };
 
