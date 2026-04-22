@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, IBM_Plex_Sans_Arabic } from 'next/font/google';
+import localFont from 'next/font/local';
 import { NextIntlClientProvider, hasLocale } from 'next-intl';
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
@@ -8,18 +8,29 @@ import { routing } from '@/i18n/routing';
 import { ServiceWorkerRegister } from '@/components/sw-register';
 import '../globals.css';
 
-const inter = Inter({
-  subsets: ['latin'],
-  weight: ['400', '500', '600', '700'],
+// Self-hosted Inter variable font — Latin subset only. Previous builds failed
+// intermittently fetching from Google Fonts CDN; shipping the file with the
+// build removes that dependency entirely.
+const inter = localFont({
+  src: '../fonts/inter-variable.woff2',
   variable: '--font-sans',
+  weight: '100 900',
   display: 'swap',
+  adjustFontFallback: 'Arial',
 });
 
-const ibmPlexArabic = IBM_Plex_Sans_Arabic({
-  subsets: ['arabic', 'latin'],
-  weight: ['400', '500', '600', '700'],
+// Self-hosted IBM Plex Sans Arabic — 4 weights, Arabic subset only (Latin
+// fallback runs through Inter via the font-family chain in globals.css).
+const ibmPlexArabic = localFont({
+  src: [
+    { path: '../fonts/ibm-plex-sans-arabic-400.woff2', weight: '400', style: 'normal' },
+    { path: '../fonts/ibm-plex-sans-arabic-500.woff2', weight: '500', style: 'normal' },
+    { path: '../fonts/ibm-plex-sans-arabic-600.woff2', weight: '600', style: 'normal' },
+    { path: '../fonts/ibm-plex-sans-arabic-700.woff2', weight: '700', style: 'normal' },
+  ],
   variable: '--font-sans-ar',
   display: 'swap',
+  adjustFontFallback: 'Arial',
 });
 
 export const metadata: Metadata = {
