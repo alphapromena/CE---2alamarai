@@ -29,7 +29,7 @@ export function exportReadyTemplate(input: ExportReadyInput): {
         body: 'ملف التصدير الذي طلبته جاهز للتنزيل. اضغط الرابط أدناه لفتح صفحة التصدير والحصول على رابط تنزيل آمن قصير الأجل.',
         cta: 'فتح صفحة التصدير',
         note: 'رابط التنزيل صالح لمدة خمس دقائق من وقت الضغط عليه. إذا انتهت صلاحيته، اضغط "تنزيل" مجدداً للحصول على رابط جديد.',
-        signature: '— منصة ترويج المبيعات',
+        signature: '— Perception',
       }
     : {
         subject: 'Your export is ready',
@@ -37,7 +37,7 @@ export function exportReadyTemplate(input: ExportReadyInput): {
         body: 'The export you requested is ready. Click the link below to open the exports page and get a short-lived secure download link.',
         cta: 'Open Exports page',
         note: 'The download link is valid for five minutes from when you click it. If it expires, click "Download" again to mint a fresh one.',
-        signature: '— Promoter Monitoring Platform',
+        signature: '— Perception',
       };
 
   const dir = isAr ? 'rtl' : 'ltr';
@@ -50,13 +50,13 @@ export function exportReadyTemplate(input: ExportReadyInput): {
       <p style="margin:0 0 16px 0;font-size:14px;">${strings.body}</p>
       <p style="margin:24px 0;">
         <a href="${link}"
-           style="display:inline-block;padding:10px 16px;background:#4f46e5;color:#ffffff;text-decoration:none;border-radius:6px;font-size:14px;font-weight:500;">
+           style="display:inline-block;padding:10px 16px;background:#0abcd4;color:#ffffff;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">
           ${strings.cta}
         </a>
       </p>
       <p style="margin:0 0 16px 0;font-size:12px;color:#525252;">${strings.note}</p>
       <p style="margin:24px 0 0 0;font-size:12px;color:#737373;" dir="ltr">
-        <a href="${link}" style="color:#4f46e5;">${link}</a>
+        <a href="${link}" style="color:#0abcd4;">${link}</a>
       </p>
       <p style="margin:24px 0 0 0;font-size:12px;color:#737373;">${strings.signature}</p>
     </div>

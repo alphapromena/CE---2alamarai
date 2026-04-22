@@ -29,7 +29,8 @@
     "previous": "Previous",
     "page_of": "Page {current} of {total}",
     "results_count": "{count, plural, =0 {No results} one {# result} other {# results}}",
-    "error_generic": "Something went wrong. Please try again."
+    "error_generic": "Something went wrong. Please try again.",
+    "more": "More"
   },
   "IdleWatcher": {
     "title": "You'll be signed out soon",
@@ -48,7 +49,13 @@
     "offline_description": "Check your connection and try again."
   },
   "Auth": {
-    "brand": "Promoter Monitoring",
+    "brand": "Perception",
+    "hero": {
+      "eyebrow": "PERCEPTION PLATFORM",
+      "headline": "Field operations, perfected.",
+      "subhead": "Real-time promoter monitoring, GPS-validated attendance, and SKU-level sales tracking — in one bilingual platform.",
+      "trust_line": "TRUSTED BY TEAMS ACROSS THE REGION"
+    },
     "login": {
       "title": "Sign in",
       "description": "Enter your email and password to continue.",
@@ -126,7 +133,12 @@
     },
     "dashboard": {
       "title": "Admin dashboard",
-      "description": "Overview of platform activity will live here."
+      "description": "Overview of platform activity will live here.",
+      "eyebrow": "OVERVIEW",
+      "hero_headline": "Command your field operations.",
+      "hero_context": "Monitor campaigns, attendance, and performance across every region — in one place.",
+      "placeholder_title": "Platform activity overview coming soon",
+      "placeholder_description": "KPIs, live attendance, and performance trends will surface here as data flows in. For now, jump into Campaigns, Users, or Live to start."
     },
     "stock": {
       "title": "Stock",
@@ -609,7 +621,12 @@
     },
     "dashboard": {
       "title": "Supervisor dashboard",
-      "description": "Your daily operations overview will live here."
+      "description": "Your daily operations overview will live here.",
+      "eyebrow": "TODAY",
+      "hero_headline": "Your team, at a glance.",
+      "hero_context": "Check-ins, late arrivals, stock movements, and the alerts that need your attention — together on one surface.",
+      "placeholder_title": "Today's operations will land here",
+      "placeholder_description": "Attendance snapshots, live status, and priority alerts appear as the day unfolds. Use the nav to jump to Attendance, Stock, or Visits."
     },
     "stock": {
       "title": "Stock",
@@ -903,7 +920,12 @@
     },
     "dashboard": {
       "title": "Promoter dashboard",
-      "description": "Your shifts, check-in, and tasks will live here."
+      "description": "Your shifts, check-in, and tasks will live here.",
+      "eyebrow": "YOUR DAY",
+      "hero_headline": "Ready for your shift?",
+      "hero_context": "Your schedule, check-in, and today's tasks are all within a tap. Head to Attendance to check in when you arrive at the location.",
+      "placeholder_title": "Your day at a glance",
+      "placeholder_description": "Once you start checking in, today's activity and tasks show up here."
     },
     "stock": {
       "title": "My stock",
@@ -1097,8 +1119,36 @@
       "exports": "Exports"
     },
     "dashboard": {
-      "title": "Client dashboard",
-      "description": "Your campaigns and reports will live here."
+      "title": "Live operations",
+      "description": "Real-time view of your campaigns and promoters.",
+      "overview": "OVERVIEW",
+      "newCampaign": "New campaign",
+      "filters": "Filters",
+      "campaign": "Campaign",
+      "location": "Location",
+      "allLocations": "All locations",
+      "live": "Live",
+      "export": "Export",
+      "recentActivity": "Recent activity",
+      "viewAll": "View all",
+      "kpi": {
+        "activePromoters": "Active promoters",
+        "checkInRate": "Check-in rate",
+        "pendingAlerts": "Pending alerts",
+        "unitsSoldToday": "Units sold today",
+        "vsLastWeek": "vs last week",
+        "improvement": "improvement",
+        "needsAttention": "Needs attention",
+        "vsTarget": "vs target"
+      },
+      "table": {
+        "promoter": "Promoter",
+        "location": "Location",
+        "campaign": "Campaign",
+        "checkIn": "Check-in",
+        "status": "Status",
+        "sales": "Sales"
+      }
     },
     "campaigns": {
       "title": "Campaigns",

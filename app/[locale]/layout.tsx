@@ -23,17 +23,18 @@ const ibmPlexArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: 'Promoter Monitoring Platform',
+  title: 'Perception',
   description:
-    'Bilingual SaaS for field marketing: campaigns, attendance, sales, stock, and reporting.',
+    'Bilingual SaaS for field marketing — campaigns, attendance, sales, stock, and reporting in one platform.',
   manifest: '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Promoter' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Perception' },
 };
 
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#4f46e5',
+  // Perception Cyan Wave — sets the browser chrome color on mobile
+  themeColor: '#0abcd4',
 };
 
 export function generateStaticParams() {
@@ -56,8 +57,16 @@ export default async function LocaleLayout({
   const direction = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <html lang={locale} dir={direction} className={`${inter.variable} ${ibmPlexArabic.variable}`}>
+    <html
+      lang={locale}
+      dir={direction}
+      className={`${inter.variable} ${ibmPlexArabic.variable}`}
+    >
       <body>
+        {/* Perception brand accent strip — 4px gradient line at the very top.
+            Appears across the whole app as a subtle brand signature. */}
+        <div aria-hidden className="h-1 w-full bg-gradient-strip" />
+
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
         <ServiceWorkerRegister />
       </body>

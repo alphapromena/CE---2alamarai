@@ -1034,3 +1034,65 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - The demo story outgrows a single-tenant dataset. Add a `demo_tag` config flag or a second seed file for a multi-client scenario. The tag-based cleanup generalises trivially (swap `like 'Almarai %'` for a table-driven filter).
   - Random-variance per-run becomes a problem (e.g., demo script expects specific KPI numbers). Switch `random()` to a deterministic hash of `(user_id, date)` + a constant seed exposed at the top of the file.
 
+# Append this entry to the end of DECISIONS.md
+# (Before the final `---` or at the very bottom, depending on your file's convention.)
+
+---
+
+## D-014 — Design System Rebrand to Perception Visual Identity
+
+- **Date:** 2026-04-22
+- **Phase:** Phase 0 (foundation revision)
+- **Question:** The Stripe/Notion aesthetic established in D-012 did not match the brand direction the platform needs. Should we fully rebrand the design system to match the Perception (Creative & Marketing Solutions) brand identity?
+- **Decision:** **Yes — full rebrand.** Replaced the single-indigo grayscale design system with the Perception brand palette and guidance. Key changes:
+
+  **Colors:**
+  - Primary accent changed from Indigo `#4f46e5` → **Cyan Wave `#0ABCD4`**.
+  - New secondary accent: **Teal Flow `#2DD9B4`** (used for success states, positive highlights).
+  - Inverse surfaces allowed: sidebar and featured KPI cards now use **Ink `#0F1B2E`** as background — gives the platform a Linear-like premium feel.
+  - Neutral grayscale shifted from warm neutrals to **blue-tinted grays** that harmonize with the Navy anchor.
+  - Full palette: Navy Deep `#1B2A4A`, Cyan Wave `#0ABCD4`, Teal Flow `#2DD9B4`, Mint `#8AE8C0`, Lime `#E8F26A`, Sun `#F5D033`, Ink `#0F1B2E`, Slate `#8A96AA`.
+  - Theme color (mobile browser chrome) changed from `#4f46e5` → `#0abcd4`.
+
+  **Gradients:** Previously forbidden. Now **allowed in exactly three controlled places** per page:
+  1. 4px accent strip at the top of the app shell (`--gradient-strip`).
+  2. Logo mark container (`--gradient-accent`).
+  3. One hero CTA per page on marketing/auth surfaces (`--gradient-accent`).
+  Still forbidden: gradient cards, gradient KPI tiles (except decorative orb on inverse card), gradient inputs, gradient page backgrounds.
+
+  **Shadows:** Previously "borders not shadows". Now cards may use a subtle navy-tinted `shadow-card` for modern depth. Floating elements (modals, dropdowns) still use `shadow-md`/`shadow-lg`.
+
+  **Border radius:** Increased defaults — `--radius-md` 6→8px, `--radius-lg` 8→12px, `--radius-xl` 12→16px. Cards now use `rounded-xl` (16px) for the modern look.
+
+  **Typography:** Inter + IBM Plex Sans Arabic retained (already working well). `font-bold` (700) now permitted for KPI numbers and marketing headlines; `font-semibold` (600) remains the default for emphasis everywhere else.
+
+  **Status pills:** Shape changed from `rounded` (4px) → `rounded-full` (pill) to match modern SaaS conventions.
+
+- **Rationale:**
+  - The platform is built by Perception (Creative & Marketing Solutions) for their agency operations. Using their own brand identity creates consistency between the platform, the marketing materials, and the company's external presence.
+  - Stripe/Notion aesthetic is excellent but generic — it doesn't tell anyone this is "our" product.
+  - The Perception palette is vibrant enough to feel modern, but anchored by Navy Deep to remain professional for long work sessions.
+  - Dark sidebar + light content is a proven pattern (Linear, Vercel) that gives premium feel without fatiguing users.
+  - Typography discipline is retained — the rebrand adds personality through color and surface choices, not through adding more fonts or complexity.
+
+- **Scope of change:**
+  - `app/globals.css` — replaced all CSS variables.
+  - `tailwind.config.ts` — updated color tokens, added `accent-2`, `brand.*` shortcuts, and gradient background utilities.
+  - `.claude/skills/design-system/SKILL.md` — rewritten to reflect new rules.
+  - `.claude/skills/design-system/PATTERNS.md` — component examples updated.
+  - `app/[locale]/layout.tsx` — added 4px gradient accent strip at top; updated `themeColor`.
+  - `app/[locale]/client/dashboard/page.tsx` — rebuilt as proof of concept.
+  - `messages/{en,ar}.json` — added translation keys for the new dashboard content.
+
+- **Supersedes:** D-012 (Light Mode Only, Stripe/Notion Aesthetic) — the light-mode-primary principle survives; the monochrome-plus-indigo aesthetic is replaced.
+
+- **Does NOT supersede:**
+  - Light-mode primary (still true — no theme toggle).
+  - Typography-first hierarchy.
+  - Accessibility requirements (focus rings, contrast ratios, RTL support).
+  - The "data-dense is fine, cluttered is not" principle.
+
+- **Migration status:** Foundation (`globals.css`, `tailwind.config.ts`, skill docs) + proof-of-concept page done. Subsequent pages (auth screens, admin lists, campaign detail) must be visited one by one; most will not require template changes because they already reference semantic tokens.
+
+- **Revisit when:** Perception's own brand identity changes, or a new parent brand is adopted.
+

@@ -88,3 +88,7 @@ playwright/.cache/
 # Misc
 *.pem
 .pnpm-store/
+
+# Rebrand reference materials (local only)
+.rebrand-materials/
+.claude/settings.local.json
