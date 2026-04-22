@@ -13,13 +13,20 @@ export interface TableProps extends React.HTMLAttributes<HTMLTableElement> {
 }
 
 export function Table({ className, stagger = true, ...props }: TableProps) {
+  // Two-wrapper layout: outer div keeps the rounded-xl + border + shadow for
+  // the card look; inner div scrolls horizontally when a wide table (6+
+  // columns, typical of admin/supervisor views) doesn't fit the viewport.
+  // Without this, tables overflow the viewport on phones and break the
+  // whole page layout.
   return (
     <div className="overflow-hidden rounded-xl border border-border bg-white shadow-card">
-      <table
-        data-stagger={stagger ? 'true' : 'false'}
-        className={cn('w-full border-collapse text-sm', className)}
-        {...props}
-      />
+      <div className="overflow-x-auto">
+        <table
+          data-stagger={stagger ? 'true' : 'false'}
+          className={cn('w-full border-collapse text-sm', className)}
+          {...props}
+        />
+      </div>
     </div>
   );
 }

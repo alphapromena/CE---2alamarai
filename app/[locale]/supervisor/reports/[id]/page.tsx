@@ -155,6 +155,7 @@ export default async function SupervisorReportDetailPage({
         {entries.length === 0 ? (
           <div className="p-4 text-sm text-fg-muted">{t('no_sku_entries')}</div>
         ) : (
+          <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead className="text-xs text-fg-secondary">
               <tr>
@@ -179,6 +180,7 @@ export default async function SupervisorReportDetailPage({
               })}
             </tbody>
           </table>
+          </div>
         )}
       </section>
 

@@ -130,7 +130,7 @@ export default async function SupervisorPromoterDetailPage({
         {attendance.length === 0 ? (
           <EmptyState title={t('attendance_history_empty')} />
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border bg-white">
+          <div className="overflow-x-auto rounded-lg border border-border bg-white">
             <table className="w-full">
               <thead className="bg-bg-subtle text-xs font-medium uppercase tracking-wide text-fg-secondary">
                 <tr>
@@ -185,7 +185,7 @@ export default async function SupervisorPromoterDetailPage({
         {visits.length === 0 ? (
           <EmptyState title={t('visit_history_empty')} />
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border bg-white">
+          <div className="overflow-x-auto rounded-lg border border-border bg-white">
             <table className="w-full">
               <thead className="bg-bg-subtle text-xs font-medium uppercase tracking-wide text-fg-secondary">
                 <tr>

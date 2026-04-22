@@ -189,7 +189,7 @@ export function SupervisorAttendanceClient({
           description={t('empty_description')}
         />
       ) : (
-        <div className="overflow-hidden rounded-lg border border-border bg-white">
+        <div className="overflow-x-auto rounded-lg border border-border bg-white">
           <table className="w-full text-start">
             <thead className="bg-bg-subtle text-xs font-medium uppercase tracking-wide text-fg-secondary">
               <tr>
