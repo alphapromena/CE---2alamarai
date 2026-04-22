@@ -141,12 +141,20 @@
       system-ui,
       -apple-system,
       sans-serif;
-    font-feature-settings: 'cv11', 'ss01', 'ss03';
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     color: var(--color-text);
     background: var(--color-bg);
     font-size: 14px;
     line-height: 1.5;
+  }
+
+  /* Inter-specific character variants (alternate "1", stylistic sets) —
+     scoped away from the Arabic tree since IBM Plex Sans Arabic doesn't
+     implement them. Keeps the Arabic tree's computed style clean. */
+  html:not([lang='ar']) {
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
   }
 
   html[lang='ar'] {
