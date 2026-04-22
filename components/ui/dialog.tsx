@@ -90,15 +90,17 @@ export function Dialog({
       className={cn(
         // Reset the browser default centring + spacing
         'fixed inset-0 m-auto bg-transparent p-0',
-        // Backdrop
-        'backdrop:bg-black/40 backdrop:backdrop-blur-sm',
+        // Backdrop — ink-tinted for brand cohesion, soft blur, fade in
+        'backdrop:bg-ink/60 backdrop:backdrop-blur-sm',
+        'motion-safe:backdrop:animate-fade-in',
         // Disable default outline; focus trap handles inner focus
         'focus:outline-none',
       )}
     >
       <div
         className={cn(
-          'w-[calc(100vw-2rem)] rounded-xl border border-border bg-white p-6 shadow-lg',
+          'w-[calc(100vw-2rem)] rounded-2xl border border-border bg-white p-6 shadow-lg',
+          'motion-safe:animate-scale-in',
           SIZE_CLASS[size],
           className,
         )}

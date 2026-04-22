@@ -70,13 +70,15 @@ export function NotificationBell({
       <button
         type="button"
         aria-label={t('title')}
-        className="relative inline-flex h-9 w-9 items-center justify-center rounded-md border border-border bg-white hover:bg-bg-hover"
+        aria-haspopup="menu"
+        aria-expanded={open}
+        className="relative inline-flex h-9 w-9 items-center justify-center rounded-lg border border-border bg-white transition-colors duration-150 hover:bg-bg-hover"
         onClick={() => setOpen((o) => !o)}
       >
         <Bell className="h-4 w-4" strokeWidth={1.75} />
         {initialUnread > 0 ? (
           <span
-            className="absolute -end-1 -top-1 inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-medium text-white"
+            className="absolute -end-1 -top-1 inline-flex min-h-[1.25rem] min-w-[1.25rem] items-center justify-center rounded-full bg-danger px-1 text-[10px] font-semibold text-white shadow-sm"
             dir="ltr"
           >
             {initialUnread > 99 ? '99+' : initialUnread}
@@ -86,7 +88,7 @@ export function NotificationBell({
 
       {open ? (
         <div
-          className="absolute end-0 mt-2 w-80 rounded border border-border bg-white p-2 shadow-sm"
+          className="absolute end-0 mt-2 w-80 origin-top rounded-xl border border-border bg-white p-2 shadow-md motion-safe:animate-scale-in"
           role="menu"
         >
           <div className="flex items-center justify-between px-2 py-1">
@@ -108,7 +110,9 @@ export function NotificationBell({
               initialItems.map((n) => (
                 <li
                   key={n.id}
-                  className={`rounded px-3 py-2 ${n.read_at ? '' : 'bg-bg-muted'}`}
+                  className={`rounded-lg px-3 py-2 transition-colors duration-150 ${
+                    n.read_at ? 'hover:bg-bg-subtle' : 'bg-accent-subtle'
+                  }`}
                 >
                   <div className="flex items-start justify-between gap-2">
                     <StatusPill
