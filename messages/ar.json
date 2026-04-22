@@ -1097,8 +1097,36 @@
       "exports": "التصدير"
     },
     "dashboard": {
-      "title": "لوحة تحكم العميل",
-      "description": "ستظهر هنا حملاتك وتقاريرك."
+      "title": "العمليات المباشرة",
+      "description": "نظرة حيّة على حملاتك ومروِّجيك.",
+      "overview": "نظرة عامة",
+      "newCampaign": "حملة جديدة",
+      "filters": "فلاتر",
+      "campaign": "الحملة",
+      "location": "الموقع",
+      "allLocations": "كل المواقع",
+      "live": "مباشر",
+      "export": "تصدير",
+      "recentActivity": "النشاط الأخير",
+      "viewAll": "عرض الكل",
+      "kpi": {
+        "activePromoters": "المروِّجون النشطون",
+        "checkInRate": "نسبة الحضور",
+        "pendingAlerts": "تنبيهات معلّقة",
+        "unitsSoldToday": "الوحدات المباعة اليوم",
+        "vsLastWeek": "مقارنة بالأسبوع الماضي",
+        "improvement": "تحسُّن",
+        "needsAttention": "يحتاج انتباهًا",
+        "vsTarget": "مقارنة بالهدف"
+      },
+      "table": {
+        "promoter": "المروِّج",
+        "location": "الموقع",
+        "campaign": "الحملة",
+        "checkIn": "الحضور",
+        "status": "الحالة",
+        "sales": "المبيعات"
+      }
     },
     "campaigns": {
       "title": "الحملات",

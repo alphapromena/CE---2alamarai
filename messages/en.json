@@ -1097,8 +1097,36 @@
       "exports": "Exports"
     },
     "dashboard": {
-      "title": "Client dashboard",
-      "description": "Your campaigns and reports will live here."
+      "title": "Live operations",
+      "description": "Real-time view of your campaigns and promoters.",
+      "overview": "OVERVIEW",
+      "newCampaign": "New campaign",
+      "filters": "Filters",
+      "campaign": "Campaign",
+      "location": "Location",
+      "allLocations": "All locations",
+      "live": "Live",
+      "export": "Export",
+      "recentActivity": "Recent activity",
+      "viewAll": "View all",
+      "kpi": {
+        "activePromoters": "Active promoters",
+        "checkInRate": "Check-in rate",
+        "pendingAlerts": "Pending alerts",
+        "unitsSoldToday": "Units sold today",
+        "vsLastWeek": "vs last week",
+        "improvement": "improvement",
+        "needsAttention": "Needs attention",
+        "vsTarget": "vs target"
+      },
+      "table": {
+        "promoter": "Promoter",
+        "location": "Location",
+        "campaign": "Campaign",
+        "checkIn": "Check-in",
+        "status": "Status",
+        "sales": "Sales"
+      }
     },
     "campaigns": {
       "title": "Campaigns",
