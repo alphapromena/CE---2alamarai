@@ -39,6 +39,13 @@ const SUPABASE_URL = Deno.env.get('SUPABASE_URL')!;
 const SUPABASE_ANON_KEY = Deno.env.get('SUPABASE_ANON_KEY')!;
 const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
+  'Access-Control-Max-Age': '86400',
+};
+
 type CheckInMetadata = {
   idempotency_key: string;
   campaign_id: string;
@@ -52,7 +59,11 @@ type CheckInMetadata = {
 function json(body: unknown, init: ResponseInit = {}): Response {
   return new Response(JSON.stringify(body), {
     ...init,
-    headers: { 'content-type': 'application/json', ...(init.headers ?? {}) },
+    headers: {
+      'content-type': 'application/json',
+      'Access-Control-Allow-Origin': '*',
+      ...(init.headers ?? {}),
+    },
   });
 }
 
@@ -76,6 +87,10 @@ function parseMetadata(raw: unknown): CheckInMetadata | null {
 }
 
 Deno.serve(async (req) => {
+  if (req.method === 'OPTIONS') {
+    return new Response(null, { status: 204, headers: corsHeaders });
+  }
+
   if (req.method !== 'POST') {
     return json({ error: 'method_not_allowed' }, { status: 405 });
   }
