@@ -14,7 +14,10 @@ export function FieldError({
   return (
     <p
       id={id}
-      className={cn('mt-1 flex items-center gap-1 text-xs text-danger', className)}
+      className={cn(
+        'mt-1 flex items-center gap-1 text-xs text-danger motion-safe:animate-fade-up',
+        className,
+      )}
       role="alert"
     >
       <AlertCircle className="h-3 w-3" strokeWidth={1.75} aria-hidden />
