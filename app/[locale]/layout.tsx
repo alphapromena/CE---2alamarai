@@ -33,7 +33,8 @@ export const metadata: Metadata = {
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
-  themeColor: '#4f46e5',
+  // Perception Cyan Wave — sets the browser chrome color on mobile
+  themeColor: '#0abcd4',
 };
 
 export function generateStaticParams() {
@@ -56,8 +57,16 @@ export default async function LocaleLayout({
   const direction = locale === 'ar' ? 'rtl' : 'ltr';
 
   return (
-    <html lang={locale} dir={direction} className={`${inter.variable} ${ibmPlexArabic.variable}`}>
+    <html
+      lang={locale}
+      dir={direction}
+      className={`${inter.variable} ${ibmPlexArabic.variable}`}
+    >
       <body>
+        {/* Perception brand accent strip — 4px gradient line at the very top.
+            Appears across the whole app as a subtle brand signature. */}
+        <div aria-hidden className="h-1 w-full bg-gradient-strip" />
+
         <NextIntlClientProvider>{children}</NextIntlClientProvider>
         <ServiceWorkerRegister />
       </body>

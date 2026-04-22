@@ -4,69 +4,133 @@
 
 @layer base {
   :root {
-    /* Neutral palette — the only grays you may use */
-    --color-white: #ffffff;
-    --color-gray-50: #fafafa;
-    --color-gray-100: #f5f5f5;
-    --color-gray-200: #e5e5e5;
-    --color-gray-300: #d4d4d4;
-    --color-gray-400: #a3a3a3;
-    --color-gray-500: #737373;
-    --color-gray-600: #525252;
-    --color-gray-700: #404040;
-    --color-gray-800: #262626;
-    --color-gray-900: #171717;
-    --color-black: #0a0a0a;
+    /* ============================================================
+       PERCEPTION BRAND COLORS — source of truth
+       Do NOT reference these directly in components.
+       Always use the semantic tokens below.
+       ============================================================ */
+    --color-navy-deep: #1b2a4a; /* Primary dark, anchor elements */
+    --color-cyan-wave: #0abcd4; /* Primary CTAs, links, interactive */
+    --color-teal-flow: #2dd9b4; /* Highlights, success, positive */
+    --color-mint: #8ae8c0; /* Subtle hover, dividers */
+    --color-lime: #e8f26a; /* Accent — sparingly only */
+    --color-sun: #f5d033; /* Warm accent, warnings */
+    --color-ink: #0f1b2e; /* Darkest — text, dark surfaces */
+    --color-slate: #8a96aa; /* Subtext, secondary UI */
 
-    /* Semantic tokens — reference these in components, not raw grays */
+    /* Neutral palette — blue-tinted grays that harmonize with Navy */
+    --color-white: #ffffff;
+    --color-gray-50: #f7f9fc;
+    --color-gray-100: #eef1f6;
+    --color-gray-200: #e0e6f0;
+    --color-gray-300: #c8d1df;
+    --color-gray-400: #a8b3c4;
+    --color-gray-500: #8a96aa;
+    --color-gray-600: #647186;
+    --color-gray-700: #45516b;
+    --color-gray-800: #2a3654;
+    --color-gray-900: #1b2a4a;
+    --color-black: #0a1020;
+
+    /* ============================================================
+       SEMANTIC TOKENS — use these in components
+       ============================================================ */
+
+    /* Backgrounds */
     --color-bg: var(--color-white);
     --color-bg-subtle: var(--color-gray-50);
     --color-bg-muted: var(--color-gray-100);
     --color-bg-hover: var(--color-gray-100);
+    --color-bg-inverse: var(--color-ink); /* Sidebar, dark surfaces */
+    --color-bg-inverse-hover: #1a2940;
+
+    /* Borders */
     --color-border: var(--color-gray-200);
     --color-border-strong: var(--color-gray-300);
-    --color-text: var(--color-gray-900);
-    --color-text-secondary: var(--color-gray-600);
+    --color-border-inverse: rgba(255, 255, 255, 0.1);
+
+    /* Text */
+    --color-text: var(--color-ink);
+    --color-text-secondary: var(--color-slate);
     --color-text-muted: var(--color-gray-500);
     --color-text-disabled: var(--color-gray-400);
     --color-text-inverse: var(--color-white);
+    --color-text-inverse-secondary: #a8b8cf;
 
-    /* Accent — the ONLY color in the app besides grayscale
-       Indigo-600. Used for primary actions, active states, links, focus rings, and nothing else. */
-    --color-accent: #4f46e5;
-    --color-accent-hover: #4338ca;
-    --color-accent-subtle: #eef2ff;
+    /* Primary accent — Cyan Wave (the ONE interactive color) */
+    --color-accent: var(--color-cyan-wave);
+    --color-accent-hover: #089aae;
+    --color-accent-active: #077e8e;
+    --color-accent-subtle: #e6f9fc;
+    --color-accent-border: #7dd4e0;
     --color-accent-text: #ffffff;
+    --color-accent-strong: #077e8e; /* text on subtle backgrounds */
 
-    /* Status colors — used ONLY in status pills, toasts, and alerts.
-       Never as primary button colors or page backgrounds.
-       Desaturated, not candy-colored. */
-    --color-success: #15803d;
-    --color-success-subtle: #f0fdf4;
-    --color-success-border: #bbf7d0;
-    --color-warning: #a16207;
-    --color-warning-subtle: #fefce8;
-    --color-warning-border: #fde68a;
-    --color-danger: #b91c1c;
+    /* Secondary accent — Teal Flow (used for success, highlights) */
+    --color-accent-2: var(--color-teal-flow);
+    --color-accent-2-subtle: #e4faf3;
+    --color-accent-2-border: var(--color-mint);
+    --color-accent-2-strong: #0ea46e;
+
+    /* Status colors — aligned with brand palette */
+    --color-success: #0ea46e; /* darker teal for AA contrast */
+    --color-success-subtle: #e4faf3;
+    --color-success-border: var(--color-mint);
+
+    --color-warning: #b8950e; /* darker sun for AA contrast */
+    --color-warning-subtle: #fefae4;
+    --color-warning-border: var(--color-sun);
+
+    --color-danger: #dc2626;
     --color-danger-subtle: #fef2f2;
-    --color-danger-border: #fecaca;
-    --color-info: #1d4ed8;
-    --color-info-subtle: #eff6ff;
-    --color-info-border: #bfdbfe;
+    --color-danger-border: #fca5a5;
 
-    /* Radius */
-    --radius-sm: 4px;
-    --radius-md: 6px;
-    --radius-lg: 8px;
-    --radius-xl: 12px;
+    --color-info: var(--color-cyan-wave);
+    --color-info-subtle: #e6f9fc;
+    --color-info-border: #7dd4e0;
 
-    /* Shadow — used sparingly, only on floating elements */
-    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.04);
-    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.06), 0 2px 4px -2px rgb(0 0 0 / 0.04);
-    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.08), 0 4px 6px -4px rgb(0 0 0 / 0.04);
+    /* ============================================================
+       BRAND GRADIENTS — use SPARINGLY
+       Allowed on: logo containers, hero sections, top accent strips,
+       primary CTAs on marketing/auth pages. NEVER on data cards,
+       table rows, or body backgrounds.
+       ============================================================ */
+    --gradient-brand:
+      linear-gradient(135deg, #1b2a4a 0%, #0abcd4 50%, #2dd9b4 100%);
+    --gradient-accent: linear-gradient(135deg, #0abcd4 0%, #2dd9b4 100%);
+    --gradient-strip:
+      linear-gradient(
+        90deg,
+        #1b2a4a 0%,
+        #0abcd4 35%,
+        #2dd9b4 65%,
+        #e8f26a 100%
+      );
 
-    /* Focus ring — ALWAYS visible on interactive elements */
-    --ring: 0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-accent);
+    /* Radius — slightly larger than before for a modern feel */
+    --radius-sm: 6px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-2xl: 20px;
+    --radius-full: 9999px;
+
+    /* Shadows — tinted with Navy for brand cohesion */
+    --shadow-sm: 0 1px 2px 0 rgb(27 42 74 / 0.04);
+    --shadow-card:
+      0 1px 3px 0 rgb(27 42 74 / 0.04), 0 1px 2px 0 rgb(27 42 74 / 0.02);
+    --shadow-md:
+      0 4px 12px -2px rgb(27 42 74 / 0.08),
+      0 2px 4px -2px rgb(27 42 74 / 0.04);
+    --shadow-lg:
+      0 16px 32px -8px rgb(27 42 74 / 0.1),
+      0 4px 8px -4px rgb(27 42 74 / 0.06);
+
+    /* Focus ring */
+    --ring:
+      0 0 0 2px var(--color-bg), 0 0 0 4px var(--color-cyan-wave);
+    --ring-inverse:
+      0 0 0 2px var(--color-ink), 0 0 0 4px var(--color-cyan-wave);
   }
 
   html {
@@ -77,23 +141,24 @@
       system-ui,
       -apple-system,
       sans-serif;
-    font-feature-settings: 'cv11', 'ss01', 'ss03'; /* Inter's refined variants */
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
     -webkit-font-smoothing: antialiased;
     color: var(--color-text);
     background: var(--color-bg);
-    font-size: 14px; /* SaaS default — not 16px. Denser is better here. */
+    font-size: 14px;
     line-height: 1.5;
   }
 
   html[lang='ar'] {
     font-family:
-      var(--font-sans-ar), 'IBM Plex Sans Arabic', var(--font-sans), 'Inter', system-ui, sans-serif;
+      var(--font-sans-ar), 'IBM Plex Sans Arabic', var(--font-sans), 'Inter',
+      system-ui, sans-serif;
   }
 
   /* Selection color matches accent */
   ::selection {
     background: var(--color-accent-subtle);
-    color: var(--color-accent);
+    color: var(--color-accent-strong);
   }
 
   /* Focus ring on everything interactive — accessibility non-negotiable */
@@ -102,31 +167,10 @@
     box-shadow: var(--ring);
     border-radius: var(--radius-sm);
   }
-}
 
-/* ---------------------------------------------------------------------------
-   Skeleton loader — used in loading.tsx route-segment fallbacks.
-   Soft pulse on a subtle background; respects prefers-reduced-motion.
-   --------------------------------------------------------------------------- */
-@layer utilities {
-  .skeleton {
-    background-color: var(--color-bg-muted);
-    border-radius: var(--radius-md);
-    animation: skeleton-pulse 1.6s ease-in-out infinite;
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .skeleton {
-      animation: none;
-    }
-  }
-}
-
-@keyframes skeleton-pulse {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.55;
+  /* Dark surfaces get a different focus ring */
+  .bg-inverse *:focus-visible,
+  [data-surface='inverse'] *:focus-visible {
+    box-shadow: var(--ring-inverse);
   }
 }
