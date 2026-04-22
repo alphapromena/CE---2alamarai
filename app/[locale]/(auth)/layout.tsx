@@ -5,7 +5,6 @@ import { PerceptionLogo } from '@/components/brand/perception-logo';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   const t = useTranslations('Auth.hero');
-
   return (
     <div className="min-h-screen bg-white md:grid md:grid-cols-5">
       {/* Mobile strip — compact brand bar shown above the form on narrow screens. */}
@@ -17,7 +16,8 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* Left brand panel — dark hero (desktop only) */}
       <aside
-        className="relative hidden overflow-hidden bg-inverse p-10 text-fg-inverse md:col-span-3 md:flex md:flex-col md:justify-between lg:p-14"
+        className="relative hidden overflow-hidden p-10 text-white md:col-span-3 md:flex md:flex-col md:justify-between lg:p-14"
+        style={{ backgroundColor: '#0F1B2E' }}
         data-surface="inverse"
       >
         {/* Decorative radial glow — brand gradient, sits behind content. */}
@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         />
 
         {/* Top: brand logo */}
-        <div className="relative motion-safe:animate-fade-in-slow">
+        <div className="relative">
           <Link href="/" className="inline-flex items-center" aria-label="Perception">
             <PerceptionLogo variant="horizontal" surface="dark" className="scale-110 origin-start" />
           </Link>
@@ -43,19 +43,20 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="relative max-w-xl">
           <div
             aria-hidden
-            className="h-0.5 w-12 bg-accent motion-safe:animate-fade-in-slow"
+            className="h-0.5 w-12"
+            style={{ backgroundColor: '#0ABCD4' }}
           />
-          <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight text-white motion-safe:animate-fade-up-delay-100 lg:text-5xl">
+          <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight text-white lg:text-5xl">
             {t('headline')}
           </h1>
-          <p className="mt-4 max-w-md text-base leading-relaxed text-fg-inverse-secondary motion-safe:animate-fade-up-delay-200">
+          <p className="mt-4 max-w-md text-base leading-relaxed" style={{ color: '#A8B8CF' }}>
             {t('subhead')}
           </p>
         </div>
 
         {/* Bottom: trust line */}
         <div className="relative">
-          <p className="text-xs font-semibold uppercase tracking-wider text-fg-inverse-secondary motion-safe:animate-fade-in-slow-delay-300">
+          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#A8B8CF' }}>
             {t('trust_line')}
           </p>
         </div>
@@ -63,7 +64,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* Right form panel */}
       <main className="flex items-center justify-center bg-white px-6 py-12 md:col-span-2 md:py-8">
-        <div className="w-full max-w-sm motion-safe:animate-fade-up">{children}</div>
+        <div className="w-full max-w-sm">{children}</div>
       </main>
     </div>
   );
