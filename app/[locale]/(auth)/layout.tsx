@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
-import Image from 'next/image';
 import { Link } from '@/i18n/navigation';
+import { PerceptionLogo } from '@/components/brand/perception-logo';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
@@ -8,14 +8,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       <header className="border-b border-border bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center px-6">
           <Link href="/" className="inline-flex items-center" aria-label="Perception">
-            <Image
-              src="/brand/perception-logo.png"
-              alt="Perception"
-              width={32}
-              height={32}
-              priority
-              className="h-8 w-auto"
-            />
+            <PerceptionLogo variant="horizontal" surface="light" />
           </Link>
         </div>
       </header>

@@ -23,11 +23,11 @@ const ibmPlexArabic = IBM_Plex_Sans_Arabic({
 });
 
 export const metadata: Metadata = {
-  title: 'Promoter Monitoring Platform',
+  title: 'Perception',
   description:
-    'Bilingual SaaS for field marketing: campaigns, attendance, sales, stock, and reporting.',
+    'Bilingual SaaS for field marketing — campaigns, attendance, sales, stock, and reporting in one platform.',
   manifest: '/manifest.json',
-  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Promoter' },
+  appleWebApp: { capable: true, statusBarStyle: 'default', title: 'Perception' },
 };
 
 export const viewport: Viewport = {

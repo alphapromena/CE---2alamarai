@@ -3,7 +3,7 @@ name: design-system
 description: Use this skill whenever creating, modifying, or reviewing any UI component, page, layout, form, table, dashboard, chart, or visual element in this project. This is the Perception brand design system — modern SaaS with Perception's vibrant palette (Navy + Cyan + Teal), light-mode primary with dark navy inverse surfaces (sidebar, nav), strong typography hierarchy, tasteful use of brand gradients only on hero/brand moments, and a refined modern aesthetic. Trigger on ANY frontend work: new components, styling tweaks, new pages, shadcn/ui additions, Tailwind classes, Arabic RTL layouts, mobile views, loading states, empty states, error states, toasts, modals, tables, forms.
 ---
 
-# Design System — Promoter Monitoring Platform (Perception Brand)
+# Design System — Perception
 
 **The aesthetic**: Modern SaaS with Perception's visual identity. Clean, confident, vibrant where it matters and calm where it counts. Light-mode primary surfaces with dark navy `#0F1B2E` inverse surfaces for sidebar and key nav. Typography + color + tasteful gradients create hierarchy. Brand gradients are reserved for "hero moments" only — never decorative.
 

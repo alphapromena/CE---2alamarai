@@ -1,10 +1,10 @@
 import type { ReactNode } from 'react';
-import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { LogoutButton } from '@/components/features/auth/logout-button';
 import { TrackingIndicator } from '@/components/features/location-tracking/tracking-indicator';
 import { AppNav } from '@/components/features/app/app-nav';
+import { PerceptionLogo } from '@/components/brand/perception-logo';
 import type { UserRole } from '@/lib/auth/roles';
 
 export interface NavItem {
@@ -33,14 +33,7 @@ export function AppShell({
       <header className="border-b border-border bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-6">
           <Link href="/" className="inline-flex shrink-0 items-center" aria-label="Perception">
-            <Image
-              src="/brand/perception-logo.png"
-              alt="Perception"
-              width={32}
-              height={32}
-              priority
-              className="h-8 w-auto"
-            />
+            <PerceptionLogo variant="horizontal" surface="light" />
           </Link>
           <AppNav items={nav} />
           <div className="flex shrink-0 items-center gap-3">
