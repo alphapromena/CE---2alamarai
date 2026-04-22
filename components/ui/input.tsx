@@ -15,7 +15,9 @@ export const Input = React.forwardRef<HTMLInputElement, InputProps>(function Inp
       type={type}
       data-invalid={invalid || undefined}
       className={cn(
-        'h-8 w-full rounded-md border border-border bg-white px-3 text-sm',
+        // h-11 (44px) on mobile meets the iOS/Material touch-target minimum;
+        // h-8 at md+ preserves the compact SaaS rhythm on desktop.
+        'h-11 md:h-8 w-full rounded-md border border-border bg-white px-3 text-sm',
         'placeholder:text-fg-muted',
         'transition-colors duration-150',
         'focus:ring-accent/20 focus:border-accent focus:outline-none focus:ring-2',

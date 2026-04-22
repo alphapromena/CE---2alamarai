@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+// Note: `useEffect` is used only for the Esc/scroll-lock side effects, not
+// for closing the drawer — see the openedAt derived-state pattern below.
 import { useTranslations } from 'next-intl';
 import { Menu, X } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
@@ -30,20 +32,23 @@ export function AppNavMobile({ items, fullName, roleLabel, className }: AppNavMo
   const t = useTranslations();
   const tCommon = useTranslations('Common');
   const pathname = usePathname();
-  const [open, setOpen] = useState(false);
-
-  // Close the drawer on route change so promoters don't see it still open
-  // after tapping a link.
-  useEffect(() => {
-    setOpen(false);
-  }, [pathname]);
+  // Derived open state keyed to the pathname the drawer was opened for.
+  // When the user taps a link and the route changes, openedAt no longer
+  // matches and the drawer is effectively closed — no useEffect/setState
+  // pattern needed (which React 19 / next-lint now flags).
+  const [openedAt, setOpenedAt] = useState<string | null>(null);
+  const open = openedAt === pathname;
+  const setOpen = (next: boolean) => setOpenedAt(next ? pathname : null);
 
   // Esc to close; lock body scroll while open so the page behind doesn't
   // rubber-band on iOS Safari when the promoter drags inside the drawer.
+  // Calls setOpenedAt(null) directly rather than the setOpen helper so the
+  // effect's dep array only lists primitives (satisfies react-hooks/
+  // exhaustive-deps without wrapping setOpen in useCallback).
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setOpen(false);
+      if (e.key === 'Escape') setOpenedAt(null);
     };
     document.addEventListener('keydown', onKey);
     const previous = document.body.style.overflow;
