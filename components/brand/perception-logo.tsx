@@ -18,13 +18,17 @@ export function PerceptionLogo({
   priority,
 }: PerceptionLogoProps) {
   if (variant === 'full') {
+    // variant="full" is always rendered above the fold on the auth hero, so
+    // default priority=true. The sizes hint matches the css (h-24 on mobile,
+    // unconstrained but capped by layout on desktop).
     return (
       <Image
         src="/brand/perception-logo.png"
         alt="Perception"
         width={400}
         height={400}
-        priority={priority}
+        priority={priority ?? true}
+        sizes="(max-width: 768px) 96px, 192px"
         className={className ?? 'h-24 w-auto'}
       />
     );
