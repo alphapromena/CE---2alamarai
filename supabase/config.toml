@@ -67,8 +67,7 @@ enable_signup = false
 enable_confirmations = false
 template = "Your code is {{ .Code }}"
 
-[auth.external.email]
-enabled = true
+
 
 [edge_runtime]
 enabled = true
