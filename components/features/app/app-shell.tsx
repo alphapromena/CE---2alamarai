@@ -4,6 +4,7 @@ import { Link } from '@/i18n/navigation';
 import { LogoutButton } from '@/components/features/auth/logout-button';
 import { TrackingIndicator } from '@/components/features/location-tracking/tracking-indicator';
 import { AppNav } from '@/components/features/app/app-nav';
+import { AppShellHeader } from '@/components/features/app/app-shell-header';
 import { PerceptionLogo } from '@/components/brand/perception-logo';
 import type { UserRole } from '@/lib/auth/roles';
 
@@ -30,9 +31,13 @@ export function AppShell({
 
   return (
     <div className="min-h-screen bg-bg">
-      <header className="border-b border-border bg-white">
+      <AppShellHeader>
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-6">
-          <Link href="/" className="inline-flex shrink-0 items-center" aria-label="Perception">
+          <Link
+            href="/"
+            className="inline-flex shrink-0 items-center rounded-md transition-opacity duration-150 hover:opacity-90 motion-safe:hover:scale-[1.02] active:scale-[0.99]"
+            aria-label="Perception"
+          >
             <PerceptionLogo variant="horizontal" surface="light" />
           </Link>
           <AppNav items={nav} />
@@ -46,7 +51,7 @@ export function AppShell({
             <LogoutButton />
           </div>
         </div>
-      </header>
+      </AppShellHeader>
       <main>{children}</main>
     </div>
   );
