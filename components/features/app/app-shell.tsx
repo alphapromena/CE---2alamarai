@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import Image from 'next/image';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { LogoutButton } from '@/components/features/auth/logout-button';
@@ -24,7 +25,6 @@ export function AppShell({
   bell?: ReactNode;
   children: ReactNode;
 }) {
-  const tBrand = useTranslations('Auth');
   const tRoles = useTranslations('Roles');
   const tNav = useTranslations();
 
@@ -32,7 +32,16 @@ export function AppShell({
     <div className="min-h-screen bg-bg">
       <header className="border-b border-border bg-white">
         <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-6">
-          <p className="text-base font-semibold">{tBrand('brand')}</p>
+          <Link href="/" className="inline-flex shrink-0 items-center" aria-label="Perception">
+            <Image
+              src="/brand/perception-logo.png"
+              alt="Perception"
+              width={32}
+              height={32}
+              priority
+              className="h-8 w-auto"
+            />
+          </Link>
           <nav className="flex items-center gap-1">
             {nav.map((item) => (
               <Link
