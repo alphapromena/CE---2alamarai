@@ -4,6 +4,7 @@ import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { LogoutButton } from '@/components/features/auth/logout-button';
 import { TrackingIndicator } from '@/components/features/location-tracking/tracking-indicator';
+import { AppNav } from '@/components/features/app/app-nav';
 import type { UserRole } from '@/lib/auth/roles';
 
 export interface NavItem {
@@ -26,12 +27,11 @@ export function AppShell({
   children: ReactNode;
 }) {
   const tRoles = useTranslations('Roles');
-  const tNav = useTranslations();
 
   return (
     <div className="min-h-screen bg-bg">
       <header className="border-b border-border bg-white">
-        <div className="mx-auto flex h-14 max-w-7xl items-center gap-6 px-6">
+        <div className="mx-auto flex h-14 max-w-7xl items-center gap-4 px-6">
           <Link href="/" className="inline-flex shrink-0 items-center" aria-label="Perception">
             <Image
               src="/brand/perception-logo.png"
@@ -42,22 +42,12 @@ export function AppShell({
               className="h-8 w-auto"
             />
           </Link>
-          <nav className="flex items-center gap-1">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="rounded-md px-3 py-1.5 text-sm text-fg-secondary hover:bg-bg-hover hover:text-fg"
-              >
-                {tNav(item.labelKey)}
-              </Link>
-            ))}
-          </nav>
-          <div className="ms-auto flex items-center gap-3">
+          <AppNav items={nav} />
+          <div className="flex shrink-0 items-center gap-3">
             <TrackingIndicator />
             {bell}
             <div className="flex flex-col items-end leading-tight">
-              <span className="text-sm font-medium">{fullName}</span>
+              <span className="max-w-[10rem] truncate text-sm font-medium">{fullName}</span>
               <span className="text-xs text-fg-muted">{tRoles(role)}</span>
             </div>
             <LogoutButton />
