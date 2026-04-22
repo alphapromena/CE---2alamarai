@@ -113,6 +113,35 @@ const config: Config = {
         md: 'var(--shadow-md)',
         lg: 'var(--shadow-lg)',
       },
+      keyframes: {
+        'fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'fade-up': {
+          from: { opacity: '0', transform: 'translateY(8px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
+        },
+        'scale-in': {
+          from: { opacity: '0', transform: 'scale(0.96)' },
+          to: { opacity: '1', transform: 'scale(1)' },
+        },
+      },
+      animation: {
+        'fade-in': 'fade-in 200ms ease-out both',
+        'fade-in-slow': 'fade-in 300ms ease-out both',
+        'fade-in-slow-delay-300':
+          'fade-in 300ms ease-out 300ms both',
+        'fade-up': 'fade-up 200ms ease-out both',
+        'fade-up-slow': 'fade-up 300ms ease-out both',
+        'fade-up-delay-60': 'fade-up 240ms ease-out 60ms both',
+        'fade-up-delay-100': 'fade-up 300ms ease-out 100ms both',
+        'fade-up-delay-200': 'fade-up 300ms ease-out 200ms both',
+        'scale-in': 'scale-in 150ms ease-out both',
+      },
+      transitionTimingFunction: {
+        bounce: 'cubic-bezier(0.22, 1, 0.36, 1)',
+      },
     },
   },
   plugins: [logical],

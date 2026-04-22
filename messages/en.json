@@ -50,6 +50,12 @@
   },
   "Auth": {
     "brand": "Perception",
+    "hero": {
+      "eyebrow": "PERCEPTION PLATFORM",
+      "headline": "Field operations, perfected.",
+      "subhead": "Real-time promoter monitoring, GPS-validated attendance, and SKU-level sales tracking — in one bilingual platform.",
+      "trust_line": "TRUSTED BY TEAMS ACROSS THE REGION"
+    },
     "login": {
       "title": "Sign in",
       "description": "Enter your email and password to continue.",
