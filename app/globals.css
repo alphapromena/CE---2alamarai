@@ -173,4 +173,23 @@
   [data-surface='inverse'] *:focus-visible {
     box-shadow: var(--ring-inverse);
   }
+
+  /* Scrollable panels should not rubber-band the whole page. */
+  [data-scroll='contain'] {
+    overscroll-behavior: contain;
+  }
+
+  /* Honor the user's motion preferences globally — belt-and-suspenders with
+     motion-safe: Tailwind variants used throughout the app. Any transition
+     or keyframe animation collapses to an instant transition. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
 }
