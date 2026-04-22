@@ -6,6 +6,7 @@ import { listSupervisorVisits } from '@/lib/queries/supervisor-visits';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusPill } from '@/components/ui/status-pill';
+import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table';
 import { VisitPhotoButton } from './visit-photo-button';
 
 function pickName(
@@ -60,85 +61,79 @@ export default async function SupervisorVisitsPage({
         {visits.length === 0 ? (
           <EmptyState title={t('empty_title')} description={t('empty_description')} />
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border bg-white">
-            <table className="w-full">
-              <thead className="bg-bg-subtle text-xs font-medium uppercase tracking-wide text-fg-secondary">
-                <tr>
-                  <th className="px-4 py-2.5 text-start">{t('columns.visited_at')}</th>
-                  <th className="px-4 py-2.5 text-start">{t('columns.campaign')}</th>
-                  <th className="px-4 py-2.5 text-start">{t('columns.location')}</th>
-                  <th className="px-4 py-2.5 text-start">{t('columns.promoter')}</th>
-                  <th className="px-4 py-2.5 text-end">{t('columns.distance')}</th>
-                  <th className="px-4 py-2.5 text-start">{t('columns.outcome')}</th>
-                  <th className="px-4 py-2.5 text-start">{t('columns.notes')}</th>
-                  <th className="px-4 py-2.5 text-end">{t('columns.actions')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visits.map((v) => (
-                  <tr key={v.id} className="border-t border-border hover:bg-bg-subtle/50">
-                    <td className="px-4 py-3 text-sm">
+          <Table>
+            <THead>
+              <tr>
+                <TH>{t('columns.visited_at')}</TH>
+                <TH>{t('columns.campaign')}</TH>
+                <TH>{t('columns.location')}</TH>
+                <TH>{t('columns.promoter')}</TH>
+                <TH numeric>{t('columns.distance')}</TH>
+                <TH>{t('columns.outcome')}</TH>
+                <TH>{t('columns.notes')}</TH>
+                <TH numeric>{t('columns.actions')}</TH>
+              </tr>
+            </THead>
+            <TBody>
+              {visits.map((v) => (
+                <TR key={v.id}>
+                  <TD>
+                    <span dir="ltr" className="tabular-nums">
+                      {formatTs(v.visited_at, locale)}
+                    </span>
+                  </TD>
+                  <TD>{pickName(v.campaign_name_i18n, locale)}</TD>
+                  <TD>{pickName(v.location_name_i18n, locale)}</TD>
+                  <TD>
+                    {v.promoter_id ? (
+                      <Link
+                        href={`/${locale}/supervisor/promoters/${v.promoter_id}`}
+                        className="text-accent transition-colors duration-150 hover:text-accent-hover hover:underline"
+                      >
+                        {v.promoter_name ?? v.promoter_id.slice(0, 8)}
+                      </Link>
+                    ) : (
+                      <span className="text-fg-muted">—</span>
+                    )}
+                  </TD>
+                  <TD numeric>
+                    <div className="flex items-center justify-end gap-1.5">
                       <span dir="ltr" className="tabular-nums">
-                        {formatTs(v.visited_at, locale)}
+                        {v.distance_m} m
                       </span>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {pickName(v.campaign_name_i18n, locale)}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {pickName(v.location_name_i18n, locale)}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      {v.promoter_id ? (
-                        <Link
-                          href={`/${locale}/supervisor/promoters/${v.promoter_id}`}
-                          className="text-accent hover:underline"
-                        >
-                          {v.promoter_name ?? v.promoter_id.slice(0, 8)}
-                        </Link>
-                      ) : (
-                        <span className="text-fg-muted">—</span>
-                      )}
-                    </td>
-                    <td className="px-4 py-3 text-end text-sm">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <span dir="ltr" className="tabular-nums">
-                          {v.distance_m} m
-                        </span>
-                        <StatusPill
-                          variant={v.is_within_geofence ? 'success' : 'warning'}
-                          label={v.is_within_geofence ? t('within_geofence') : t('outside_geofence')}
-                        />
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm">
                       <StatusPill
-                        variant={
-                          v.outcome === 'ok'
-                            ? 'success'
-                            : v.outcome === 'issue_found'
-                              ? 'warning'
-                              : 'neutral'
-                        }
-                        label={t(`outcome_${v.outcome}` as Parameters<typeof t>[0])}
+                        variant={v.is_within_geofence ? 'success' : 'warning'}
+                        label={v.is_within_geofence ? t('within_geofence') : t('outside_geofence')}
                       />
-                    </td>
-                    <td className="px-4 py-3 text-sm text-fg-secondary">
-                      {v.notes ? <span className="line-clamp-2 block max-w-md">{v.notes}</span> : '—'}
-                    </td>
-                    <td className="px-4 py-3 text-end">
-                      <VisitPhotoButton
-                        path={v.photo_path}
-                        label={t('view_photo')}
-                        dialogTitle={t('photo_open')}
-                        closeLabel={tCommon('cancel')}
-                      />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </div>
+                  </TD>
+                  <TD>
+                    <StatusPill
+                      variant={
+                        v.outcome === 'ok'
+                          ? 'success'
+                          : v.outcome === 'issue_found'
+                            ? 'warning'
+                            : 'neutral'
+                      }
+                      label={t(`outcome_${v.outcome}` as Parameters<typeof t>[0])}
+                    />
+                  </TD>
+                  <TD className="text-fg-secondary">
+                    {v.notes ? <span className="line-clamp-2 block max-w-md">{v.notes}</span> : '—'}
+                  </TD>
+                  <TD numeric>
+                    <VisitPhotoButton
+                      path={v.photo_path}
+                      label={t('view_photo')}
+                      dialogTitle={t('photo_open')}
+                      closeLabel={tCommon('cancel')}
+                    />
+                  </TD>
+                </TR>
+              ))}
+            </TBody>
+          </Table>
         )}
       </div>
     </div>
