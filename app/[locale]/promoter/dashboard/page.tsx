@@ -34,24 +34,43 @@ export default async function PromoterDashboardPage({
   const lastPingTime = formatTime(lastPingAt, locale);
 
   return (
-    <div className="mx-auto max-w-7xl px-6 py-8">
-      <div className="border-b border-border pb-6">
-        <h1 className="text-2xl font-semibold">{t('title')}</h1>
-        <p className="mt-1 text-sm text-fg-secondary">{t('description')}</p>
-      </div>
+    <div className="mx-auto max-w-7xl px-6 py-10">
+      <section className="motion-safe:animate-fade-up-slow">
+        <p className="text-xs font-semibold uppercase tracking-wider text-fg-muted">
+          {t('eyebrow')}
+        </p>
+        <h1 className="mt-2 text-3xl font-bold leading-tight tracking-tight text-fg">
+          {t('hero_headline')}
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm text-fg-secondary">
+          {t('hero_context')}
+        </p>
+      </section>
 
-      <section className="mt-8 rounded-md border border-border bg-white p-5">
+      <div aria-hidden className="mt-8 h-px w-full bg-border" />
+
+      <section className="relative mt-10 overflow-hidden rounded-2xl border border-border bg-white p-6 shadow-card motion-safe:animate-fade-up-delay-60">
+        <div
+          aria-hidden
+          className="absolute top-0 start-0 h-full w-1 bg-accent-2"
+        />
         <div className="flex items-center gap-3">
-          <span className="inline-flex h-9 w-9 items-center justify-center rounded-md bg-emerald-50 text-emerald-700">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-accent-2-subtle text-accent-2-strong">
             <MapPin className="h-5 w-5" strokeWidth={1.75} aria-hidden />
           </span>
-          <h2 className="text-base font-semibold">{tTrack('promoter_log_title')}</h2>
+          <div>
+            <h2 className="text-base font-semibold text-fg">
+              {tTrack('promoter_log_title')}
+            </h2>
+            <p className="mt-0.5 text-sm text-fg-secondary">
+              {count === 0
+                ? tTrack('promoter_log_none')
+                : tTrack('promoter_log_count', { count })}
+            </p>
+          </div>
         </div>
-        <p className="mt-3 text-sm text-fg-secondary">
-          {count === 0 ? tTrack('promoter_log_none') : tTrack('promoter_log_count', { count })}
-        </p>
         {lastPingTime ? (
-          <p className="mt-1 text-xs text-fg-muted">
+          <p className="mt-3 text-xs text-fg-muted">
             {tTrack('promoter_log_last_ping', { time: lastPingTime })}
           </p>
         ) : null}

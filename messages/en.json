@@ -133,7 +133,12 @@
     },
     "dashboard": {
       "title": "Admin dashboard",
-      "description": "Overview of platform activity will live here."
+      "description": "Overview of platform activity will live here.",
+      "eyebrow": "OVERVIEW",
+      "hero_headline": "Command your field operations.",
+      "hero_context": "Monitor campaigns, attendance, and performance across every region — in one place.",
+      "placeholder_title": "Platform activity overview coming soon",
+      "placeholder_description": "KPIs, live attendance, and performance trends will surface here as data flows in. For now, jump into Campaigns, Users, or Live to start."
     },
     "stock": {
       "title": "Stock",
@@ -616,7 +621,12 @@
     },
     "dashboard": {
       "title": "Supervisor dashboard",
-      "description": "Your daily operations overview will live here."
+      "description": "Your daily operations overview will live here.",
+      "eyebrow": "TODAY",
+      "hero_headline": "Your team, at a glance.",
+      "hero_context": "Check-ins, late arrivals, stock movements, and the alerts that need your attention — together on one surface.",
+      "placeholder_title": "Today's operations will land here",
+      "placeholder_description": "Attendance snapshots, live status, and priority alerts appear as the day unfolds. Use the nav to jump to Attendance, Stock, or Visits."
     },
     "stock": {
       "title": "Stock",
@@ -910,7 +920,12 @@
     },
     "dashboard": {
       "title": "Promoter dashboard",
-      "description": "Your shifts, check-in, and tasks will live here."
+      "description": "Your shifts, check-in, and tasks will live here.",
+      "eyebrow": "YOUR DAY",
+      "hero_headline": "Ready for your shift?",
+      "hero_context": "Your schedule, check-in, and today's tasks are all within a tap. Head to Attendance to check in when you arrive at the location.",
+      "placeholder_title": "Your day at a glance",
+      "placeholder_description": "Once you start checking in, today's activity and tasks show up here."
     },
     "stock": {
       "title": "My stock",
