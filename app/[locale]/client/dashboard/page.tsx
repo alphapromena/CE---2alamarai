@@ -15,6 +15,7 @@ import {
   Filter,
   MapPin,
 } from 'lucide-react';
+import { LiveIndicator } from '@/components/ui/live-indicator';
 
 /**
  * Client Dashboard — Perception brand proof of concept.
@@ -291,18 +292,6 @@ function FeaturedKpiCard({
         <span>{deltaLabel}</span>
       </div>
     </div>
-  );
-}
-
-function LiveIndicator({ label }: { label: string }) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-lg border border-accent-2-border bg-accent-2-subtle px-2.5 py-1.5 text-xs font-semibold text-accent-2-strong">
-      <span className="relative flex h-2 w-2">
-        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-2 opacity-75" />
-        <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-2" />
-      </span>
-      {label}
-    </span>
   );
 }
 
