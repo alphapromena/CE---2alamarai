@@ -67,12 +67,22 @@ export default async function LocaleLayout({
 
   const direction = locale === 'ar' ? 'rtl' : 'ltr';
 
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+
   return (
     <html
       lang={locale}
       dir={direction}
       className={`${inter.variable} ${ibmPlexArabic.variable}`}
     >
+      <head>
+        {supabaseUrl ? (
+          <>
+            <link rel="preconnect" href={supabaseUrl} crossOrigin="anonymous" />
+            <link rel="dns-prefetch" href={supabaseUrl} />
+          </>
+        ) : null}
+      </head>
       <body>
         {/* Perception brand accent strip — 4px gradient line at the very top.
             Appears across the whole app as a subtle brand signature. */}
