@@ -32,6 +32,13 @@
     "error_generic": "Something went wrong. Please try again.",
     "more": "More"
   },
+  "LocaleSwitcher": {
+    "group_label": "Language",
+    "switch_to_en": "Switch to English",
+    "switch_to_ar": "Switch to Arabic",
+    "en_label": "EN",
+    "ar_label": "عربي"
+  },
   "IdleWatcher": {
     "title": "You'll be signed out soon",
     "description": "For your security, you'll be signed out after 30 minutes of inactivity.",

@@ -3,6 +3,7 @@ import { requireRole } from '@/lib/auth/guards';
 import { listMyReceivedVisits } from '@/lib/queries/supervisor-visits';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusPill } from '@/components/ui/status-pill';
+import { Table, THead, TBody, TR, TH, TD } from '@/components/ui/table';
 
 function formatTs(iso: string, locale: string): string {
   try {
@@ -43,51 +44,49 @@ export default async function PromoterVisitsPage({
         {visits.length === 0 ? (
           <EmptyState title={t('promoter_visits_empty')} />
         ) : (
-          <div className="overflow-hidden rounded-lg border border-border bg-white">
-            <table className="w-full">
-              <thead className="bg-bg-subtle text-xs font-medium uppercase tracking-wide text-fg-secondary">
-                <tr>
-                  <th className="px-4 py-2.5 text-start">{t('columns.date')}</th>
-                  <th className="px-4 py-2.5 text-start">{t('columns.supervisor')}</th>
-                  <th className="px-4 py-2.5 text-start">{t('columns.location')}</th>
-                  <th className="px-4 py-2.5 text-start">{t('columns.outcome')}</th>
-                  <th className="px-4 py-2.5 text-start">{t('columns.notes')}</th>
-                </tr>
-              </thead>
-              <tbody>
-                {visits.map((v) => (
-                  <tr key={v.id} className="border-t border-border">
-                    <td className="px-4 py-3 text-sm" dir="ltr">
+          <Table>
+            <THead>
+              <tr>
+                <TH>{t('columns.date')}</TH>
+                <TH>{t('columns.supervisor')}</TH>
+                <TH>{t('columns.location')}</TH>
+                <TH>{t('columns.outcome')}</TH>
+                <TH>{t('columns.notes')}</TH>
+              </tr>
+            </THead>
+            <TBody>
+              {visits.map((v) => (
+                <TR key={v.id}>
+                  <TD>
+                    <span dir="ltr" className="tabular-nums">
                       {formatTs(v.visited_at, locale)}
-                    </td>
-                    <td className="px-4 py-3 text-sm">{v.supervisor_name ?? '—'}</td>
-                    <td className="px-4 py-3 text-sm">
-                      {pickName(v.location_name_i18n, locale)}
-                    </td>
-                    <td className="px-4 py-3 text-sm">
-                      <StatusPill
-                        variant={
-                          v.outcome === 'ok'
-                            ? 'success'
-                            : v.outcome === 'issue_found'
-                              ? 'warning'
-                              : 'neutral'
-                        }
-                        label={t(`outcome_${v.outcome}` as Parameters<typeof t>[0])}
-                      />
-                    </td>
-                    <td className="px-4 py-3 text-sm text-fg-secondary">
-                      {v.notes ? (
-                        <span className="line-clamp-2 block max-w-md">{v.notes}</span>
-                      ) : (
-                        '—'
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                    </span>
+                  </TD>
+                  <TD>{v.supervisor_name ?? '—'}</TD>
+                  <TD>{pickName(v.location_name_i18n, locale)}</TD>
+                  <TD>
+                    <StatusPill
+                      variant={
+                        v.outcome === 'ok'
+                          ? 'success'
+                          : v.outcome === 'issue_found'
+                            ? 'warning'
+                            : 'neutral'
+                      }
+                      label={t(`outcome_${v.outcome}` as Parameters<typeof t>[0])}
+                    />
+                  </TD>
+                  <TD className="text-fg-secondary">
+                    {v.notes ? (
+                      <span className="line-clamp-2 block max-w-md">{v.notes}</span>
+                    ) : (
+                      '—'
+                    )}
+                  </TD>
+                </TR>
+              ))}
+            </TBody>
+          </Table>
         )}
       </div>
     </div>

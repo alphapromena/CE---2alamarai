@@ -37,6 +37,7 @@ export const Select = React.forwardRef<HTMLSelectElement, SelectProps>(function 
         className={cn(
           'w-full appearance-none rounded-md border border-border bg-white pe-8 ps-3 text-sm',
           size === 'sm' ? 'h-7' : 'h-8',
+          'transition-colors duration-150',
           'focus:ring-accent/20 focus:border-accent focus:outline-none focus:ring-2',
           'disabled:cursor-not-allowed disabled:opacity-50',
           'data-[invalid=true]:focus:ring-danger/20 data-[invalid=true]:border-danger',

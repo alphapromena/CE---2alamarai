@@ -141,12 +141,20 @@
       system-ui,
       -apple-system,
       sans-serif;
-    font-feature-settings: 'cv11', 'ss01', 'ss03';
     -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
     color: var(--color-text);
     background: var(--color-bg);
     font-size: 14px;
     line-height: 1.5;
+  }
+
+  /* Inter-specific character variants (alternate "1", stylistic sets) —
+     scoped away from the Arabic tree since IBM Plex Sans Arabic doesn't
+     implement them. Keeps the Arabic tree's computed style clean. */
+  html:not([lang='ar']) {
+    font-feature-settings: 'cv11', 'ss01', 'ss03';
   }
 
   html[lang='ar'] {
@@ -177,6 +185,48 @@
   /* Scrollable panels should not rubber-band the whole page. */
   [data-scroll='contain'] {
     overscroll-behavior: contain;
+  }
+
+  /* Sortable table headers — chevron rotates on descending sort. */
+  th[data-direction='desc'] [data-sort-icon] {
+    transform: rotate(180deg);
+  }
+  [data-sort-icon] {
+    transition: transform 150ms ease-out;
+  }
+
+  /* Table row stagger — first 8 rows fade-up with a 20ms cascade. Gated by
+     the global prefers-reduced-motion rule below, so users who prefer
+     reduced motion see instant rendering. */
+  table[data-stagger='true'] > tbody > tr {
+    animation: fade-up 200ms ease-out both;
+  }
+  table[data-stagger='true'] > tbody > tr:nth-child(1) {
+    animation-delay: 0ms;
+  }
+  table[data-stagger='true'] > tbody > tr:nth-child(2) {
+    animation-delay: 20ms;
+  }
+  table[data-stagger='true'] > tbody > tr:nth-child(3) {
+    animation-delay: 40ms;
+  }
+  table[data-stagger='true'] > tbody > tr:nth-child(4) {
+    animation-delay: 60ms;
+  }
+  table[data-stagger='true'] > tbody > tr:nth-child(5) {
+    animation-delay: 80ms;
+  }
+  table[data-stagger='true'] > tbody > tr:nth-child(6) {
+    animation-delay: 100ms;
+  }
+  table[data-stagger='true'] > tbody > tr:nth-child(7) {
+    animation-delay: 120ms;
+  }
+  table[data-stagger='true'] > tbody > tr:nth-child(8) {
+    animation-delay: 140ms;
+  }
+  table[data-stagger='true'] > tbody > tr:nth-child(n + 9) {
+    animation: none;
   }
 
   /* Honor the user's motion preferences globally — belt-and-suspenders with

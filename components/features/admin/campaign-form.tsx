@@ -4,6 +4,7 @@ import { useActionState, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
+import { AutoDismissAlert } from '@/components/ui/auto-dismiss-alert';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select } from '@/components/ui/select';
@@ -71,7 +72,7 @@ export function CampaignForm({ mode, initial, clients }: CampaignFormProps) {
 
       {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
       {mode === 'edit' && state.error === null && !isPending ? (
-        <Alert variant="success">{tCommon('saved')}</Alert>
+        <AutoDismissAlert variant="success">{tCommon('saved')}</AutoDismissAlert>
       ) : null}
 
       <div>

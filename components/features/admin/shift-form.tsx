@@ -4,6 +4,7 @@ import { useActionState, useMemo, useState } from 'react';
 import { useTranslations } from 'next-intl';
 import { Loader2 } from 'lucide-react';
 import { Alert } from '@/components/ui/alert';
+import { AutoDismissAlert } from '@/components/ui/auto-dismiss-alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -87,7 +88,7 @@ export function ShiftForm({ mode, initial, pairs, locale, dayLabels }: ShiftForm
 
       {errorMessage ? <Alert variant="danger">{errorMessage}</Alert> : null}
       {mode === 'edit' && state.error === null && !isPending ? (
-        <Alert variant="success">{tCommon('saved')}</Alert>
+        <AutoDismissAlert variant="success">{tCommon('saved')}</AutoDismissAlert>
       ) : null}
 
       <div>
