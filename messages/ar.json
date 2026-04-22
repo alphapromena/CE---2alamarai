@@ -30,7 +30,9 @@
     "page_of": "صفحة {current} من {total}",
     "results_count": "{count, plural, =0 {لا توجد نتائج} one {نتيجة واحدة} two {نتيجتان} few {# نتائج} many {# نتيجة} other {# نتيجة}}",
     "error_generic": "حدث خطأ ما. يرجى المحاولة مرة أخرى.",
-    "more": "المزيد"
+    "more": "المزيد",
+    "menu": "القائمة",
+    "close": "إغلاق"
   },
   "LocaleSwitcher": {
     "group_label": "اللغة",
