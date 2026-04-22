@@ -11,10 +11,13 @@ const config: Config = {
           subtle: 'var(--color-bg-subtle)',
           muted: 'var(--color-bg-muted)',
           hover: 'var(--color-bg-hover)',
+          inverse: 'var(--color-bg-inverse)',
+          'inverse-hover': 'var(--color-bg-inverse-hover)',
         },
         border: {
           DEFAULT: 'var(--color-border)',
           strong: 'var(--color-border-strong)',
+          inverse: 'var(--color-border-inverse)',
         },
         fg: {
           DEFAULT: 'var(--color-text)',
@@ -22,11 +25,21 @@ const config: Config = {
           muted: 'var(--color-text-muted)',
           disabled: 'var(--color-text-disabled)',
           inverse: 'var(--color-text-inverse)',
+          'inverse-secondary': 'var(--color-text-inverse-secondary)',
         },
         accent: {
           DEFAULT: 'var(--color-accent)',
           hover: 'var(--color-accent-hover)',
+          active: 'var(--color-accent-active)',
           subtle: 'var(--color-accent-subtle)',
+          border: 'var(--color-accent-border)',
+          strong: 'var(--color-accent-strong)',
+        },
+        'accent-2': {
+          DEFAULT: 'var(--color-accent-2)',
+          subtle: 'var(--color-accent-2-subtle)',
+          border: 'var(--color-accent-2-border)',
+          strong: 'var(--color-accent-2-strong)',
         },
         success: {
           DEFAULT: 'var(--color-success)',
@@ -48,9 +61,31 @@ const config: Config = {
           subtle: 'var(--color-info-subtle)',
           border: 'var(--color-info-border)',
         },
+        // Raw brand colors — available but prefer semantic tokens above
+        brand: {
+          navy: 'var(--color-navy-deep)',
+          cyan: 'var(--color-cyan-wave)',
+          teal: 'var(--color-teal-flow)',
+          mint: 'var(--color-mint)',
+          lime: 'var(--color-lime)',
+          sun: 'var(--color-sun)',
+          ink: 'var(--color-ink)',
+          slate: 'var(--color-slate)',
+        },
+      },
+      backgroundImage: {
+        'gradient-brand': 'var(--gradient-brand)',
+        'gradient-accent': 'var(--gradient-accent)',
+        'gradient-strip': 'var(--gradient-strip)',
       },
       fontFamily: {
-        sans: ['Inter', 'IBM Plex Sans Arabic', 'system-ui', 'sans-serif'],
+        sans: ['var(--font-sans)', 'Inter', 'system-ui', 'sans-serif'],
+        'sans-ar': [
+          'var(--font-sans-ar)',
+          'IBM Plex Sans Arabic',
+          'system-ui',
+          'sans-serif',
+        ],
         mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
       fontSize: {
@@ -63,15 +98,18 @@ const config: Config = {
         '2xl': ['22px', { lineHeight: '30px', letterSpacing: '-0.015em' }],
         '3xl': ['28px', { lineHeight: '36px', letterSpacing: '-0.02em' }],
         '4xl': ['36px', { lineHeight: '44px', letterSpacing: '-0.025em' }],
+        '5xl': ['48px', { lineHeight: '56px', letterSpacing: '-0.03em' }],
       },
       borderRadius: {
         sm: 'var(--radius-sm)',
         md: 'var(--radius-md)',
         lg: 'var(--radius-lg)',
         xl: 'var(--radius-xl)',
+        '2xl': 'var(--radius-2xl)',
       },
       boxShadow: {
         sm: 'var(--shadow-sm)',
+        card: 'var(--shadow-card)',
         md: 'var(--shadow-md)',
         lg: 'var(--shadow-lg)',
       },
