@@ -33,7 +33,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         />
 
         {/* Top: brand logo */}
-        <div className="relative">
+        <div className="relative motion-safe:animate-fade-in-slow">
           <Link href="/" className="inline-flex items-center" aria-label="Perception">
             <PerceptionLogo variant="horizontal" surface="dark" className="scale-110 origin-start" />
           </Link>
@@ -43,20 +43,26 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <div className="relative max-w-xl">
           <div
             aria-hidden
-            className="h-0.5 w-12"
+            className="h-0.5 w-12 motion-safe:animate-fade-in-slow"
             style={{ backgroundColor: '#0ABCD4' }}
           />
-          <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight text-white lg:text-5xl">
+          <h1 className="mt-6 text-4xl font-bold leading-[1.1] tracking-tight text-white motion-safe:animate-fade-up-delay-100 lg:text-5xl">
             {t('headline')}
           </h1>
-          <p className="mt-4 max-w-md text-base leading-relaxed" style={{ color: '#A8B8CF' }}>
+          <p
+            className="mt-4 max-w-md text-base leading-relaxed motion-safe:animate-fade-up-delay-200"
+            style={{ color: '#A8B8CF' }}
+          >
             {t('subhead')}
           </p>
         </div>
 
         {/* Bottom: trust line */}
         <div className="relative">
-          <p className="text-xs font-semibold uppercase tracking-wider" style={{ color: '#A8B8CF' }}>
+          <p
+            className="text-xs font-semibold uppercase tracking-wider motion-safe:animate-fade-in-slow-delay-300"
+            style={{ color: '#A8B8CF' }}
+          >
             {t('trust_line')}
           </p>
         </div>
@@ -64,7 +70,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* Right form panel */}
       <main className="flex items-center justify-center bg-white px-6 py-12 md:col-span-2 md:py-8">
-        <div className="w-full max-w-sm">{children}</div>
+        <div className="w-full max-w-sm motion-safe:animate-fade-up">{children}</div>
       </main>
     </div>
   );
