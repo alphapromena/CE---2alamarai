@@ -2,16 +2,18 @@ import type { ReactNode } from 'react';
 import { useTranslations } from 'next-intl';
 import { Link } from '@/i18n/navigation';
 import { PerceptionLogo } from '@/components/brand/perception-logo';
+import { LocaleSwitcher } from '@/components/features/app/locale-switcher';
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   const t = useTranslations('Auth.hero');
   return (
     <div className="min-h-screen bg-white md:grid md:grid-cols-5">
       {/* Mobile strip — compact brand bar shown above the form on narrow screens. */}
-      <header className="flex items-center justify-center border-b border-border bg-white px-6 py-4 md:hidden">
+      <header className="flex items-center justify-between border-b border-border bg-white px-6 py-4 md:hidden">
         <Link href="/" className="inline-flex items-center" aria-label="Perception">
           <PerceptionLogo variant="horizontal" surface="light" />
         </Link>
+        <LocaleSwitcher />
       </header>
 
       {/* Left brand panel — dark hero (desktop only) */}
@@ -69,7 +71,12 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
       </aside>
 
       {/* Right form panel */}
-      <main className="flex items-center justify-center bg-white px-6 py-12 md:col-span-2 md:py-8">
+      <main className="relative flex items-center justify-center bg-white px-6 py-12 md:col-span-2 md:py-8">
+        {/* Locale switcher — top-end corner on desktop; the mobile variant lives
+            in the compact header above. Hidden here on mobile to avoid duplicates. */}
+        <div className="absolute end-6 top-6 hidden md:block">
+          <LocaleSwitcher />
+        </div>
         <div className="w-full max-w-sm motion-safe:animate-fade-up">{children}</div>
       </main>
     </div>
