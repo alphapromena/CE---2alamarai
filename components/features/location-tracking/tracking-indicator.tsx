@@ -7,15 +7,21 @@ import {
   getTrackerState,
   subscribeTrackerState,
 } from '@/lib/location-tracking/state-signal';
+import type { TrackerState } from '@/lib/location-tracking/tracker';
 import { Link } from '@/i18n/navigation';
 
-function getServerSnapshot() {
-  return {
-    isTracking: false,
-    lastPingAt: null,
-    lastError: null,
-    pingCount: 0,
-  };
+// Stable reference returned by useSyncExternalStore's getServerSnapshot — must
+// be the same object on every call, otherwise React warns and re-renders
+// forever ("The result of getServerSnapshot should be cached").
+const SERVER_SNAPSHOT: TrackerState = Object.freeze({
+  isTracking: false,
+  lastPingAt: null,
+  lastError: null,
+  pingCount: 0,
+});
+
+function getServerSnapshot(): TrackerState {
+  return SERVER_SNAPSHOT;
 }
 
 function formatTime(ts: number, locale: string): string {
