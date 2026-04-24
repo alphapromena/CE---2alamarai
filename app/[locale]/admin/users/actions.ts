@@ -5,8 +5,10 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
+import { createServerSupabase } from '@/lib/supabase/server';
 import { requireAdmin } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import {
   inviteUserSchema,
   changeUserRoleSchema,
@@ -68,13 +70,30 @@ export async function inviteUserAction(
     return { error: duplicate ? 'duplicate_email' : 'unknown' };
   }
 
-  if (parsed.data.phone) {
-    await admin
-      .from('profiles')
-      .update({ phone: parsed.data.phone, created_by: actor.id })
-      .eq('id', data.user.id);
-  } else {
-    await admin.from('profiles').update({ created_by: actor.id }).eq('id', data.user.id);
+  // Post-invite profile UPDATE runs on the SSR client so auth.uid() resolves
+  // to the admin's UUID and `profiles_self_update_guard_trg` short-circuits.
+  // The service-role admin client would silently fail this UPDATE (the guard
+  // raises 'profiles: created_by is immutable' when auth.uid() is NULL).
+  // Errors here are logged but not surfaced — the invite itself already
+  // succeeded; failing the action would leave an invited user in limbo.
+  const supabase = await createServerSupabase();
+  const { error: profileUpdateError } = parsed.data.phone
+    ? await supabase
+        .from('profiles')
+        .update({ phone: parsed.data.phone, created_by: actor.id })
+        .eq('id', data.user.id)
+    : await supabase
+        .from('profiles')
+        .update({ created_by: actor.id })
+        .eq('id', data.user.id);
+
+  if (profileUpdateError) {
+    logError('admin.invite_post_create_profile_update_failed', {
+      user_id: data.user.id,
+      email: parsed.data.email,
+      code: profileUpdateError.code,
+      message: profileUpdateError.message,
+    });
   }
 
   await logAuditEvent({
@@ -120,7 +139,10 @@ export async function changeUserRoleAction(
     .eq('id', parsed.data.user_id)
     .single();
 
-  const { error } = await admin
+  // UPDATE runs on the SSR client so auth.uid() populates and the
+  // profiles_self_update_guard_trg trigger short-circuits via is_admin().
+  const supabase = await createServerSupabase();
+  const { error } = await supabase
     .from('profiles')
     .update({ role: parsed.data.role })
     .eq('id', parsed.data.user_id);
@@ -169,7 +191,10 @@ export async function setUserActiveAction(
     .eq('id', parsed.data.user_id)
     .single();
 
-  const { error } = await admin
+  // UPDATE runs on the SSR client so auth.uid() populates and the
+  // profiles_self_update_guard_trg trigger short-circuits via is_admin().
+  const supabase = await createServerSupabase();
+  const { error } = await supabase
     .from('profiles')
     .update({ active: parsed.data.active })
     .eq('id', parsed.data.user_id);
