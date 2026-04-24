@@ -1,13 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/lib/auth/audit';
-
-function safeNext(raw: string | null): string {
-  // Only allow internal same-origin paths.
-  if (!raw) return '/';
-  if (!raw.startsWith('/') || raw.startsWith('//')) return '/';
-  return raw;
-}
+import { safeNext } from '@/lib/auth/next-path';
 
 export async function GET(
   request: NextRequest,
