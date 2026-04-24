@@ -1096,3 +1096,18 @@ A running log of decisions made during the build. When an ambiguity is resolved 
 
 - **Revisit when:** Perception's own brand identity changes, or a new parent brand is adopted.
 
+---
+
+## D-044 — Admin server actions: guarded `profiles` UPDATEs run on the SSR client
+
+- **Date:** 2026-04-25
+- **Phase:** Production hotfix
+- **Question:** Which Supabase client should an admin server action use when updating columns that the `profiles_self_update_guard_trg` BEFORE-UPDATE trigger protects (`role`, `active`, `client_id`, `created_by`, `assigned_locations`)?
+- **Decision:** Any UPDATE on `public.profiles` that touches one of those columns **MUST** run on the SSR server client (`createServerSupabase()` from `lib/supabase/server.ts`), not the service-role admin client (`createAdminSupabase()`). Authorization is still gated explicitly with `requireAdmin()` at the top of the action — do not rely on the trigger as the gate.
+- **Rationale:** The guard trigger short-circuits only when `public.is_admin()` returns true, and `is_admin()` is defined in terms of `auth.uid()`. Service-role connections carry no end-user JWT, so `auth.uid()` is NULL, `is_admin()` returns false, and the trigger raises (`'profiles: only admins may change <col>'` or `'profiles: created_by is immutable'`). The SSR client carries the acting admin's session cookie, which satisfies the guard. Two reported call sites surfaced this as `{ error: 'unknown' }` toasts; a third was failing silently because the error wasn't destructured.
+- **Exceptions that stay on the service-role admin client:**
+  - `supabase.auth.admin.*` calls (invite, delete user, etc.) — require service role by design.
+  - Inserts into `audit_log` via `logAuditEvent` — regular users lack INSERT privilege on that table.
+- **Reference:** Commit `1520347` (`fix/admin-user-actions-use-ssr-client`) for the three call sites this rule was derived from: `inviteUserAction`, `changeUserRoleAction`, `setUserActiveAction` in `app/[locale]/admin/users/actions.ts`.
+- **Revisit when:** The guard trigger is replaced by RLS-only enforcement, or a SECURITY DEFINER RPC absorbs the admin-write surface.
+
