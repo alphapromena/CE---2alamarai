@@ -1,8 +1,10 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-// Note: `useEffect` is used only for the Esc/scroll-lock side effects, not
-// for closing the drawer — see the openedAt derived-state pattern below.
+import { createPortal } from 'react-dom';
+// Note: `useEffect` is used only for the Esc/scroll-lock side effects and the
+// SSR-safe portal mount flag, not for closing the drawer — see the openedAt
+// derived-state pattern below.
 import { useTranslations } from 'next-intl';
 import { Menu, X } from 'lucide-react';
 import { Link, usePathname } from '@/i18n/navigation';
@@ -40,6 +42,13 @@ export function AppNavMobile({ items, fullName, roleLabel, className }: AppNavMo
   const open = openedAt === pathname;
   const setOpen = (next: boolean) => setOpenedAt(next ? pathname : null);
 
+  // Portal target is the document body so the drawer escapes any ancestor
+  // containing block (the app-shell header sets backdrop-blur, which would
+  // otherwise re-anchor `position: fixed` to the header strip). The
+  // `typeof document` guard keeps SSR safe; in practice `open` is always
+  // false on the server because it can only flip via a client tap.
+  const canPortal = typeof document !== 'undefined';
+
   // Esc to close; lock body scroll while open so the page behind doesn't
   // rubber-band on iOS Safari when the promoter drags inside the drawer.
   // Calls setOpenedAt(null) directly rather than the setOpen helper so the
@@ -75,64 +84,67 @@ export function AppNavMobile({ items, fullName, roleLabel, className }: AppNavMo
         <Menu className="h-5 w-5" strokeWidth={1.75} aria-hidden />
       </button>
 
-      {open ? (
-        <>
-          <div
-            aria-hidden
-            onClick={() => setOpen(false)}
-            className="fixed inset-0 z-50 bg-ink/60 backdrop-blur-sm motion-safe:animate-fade-in"
-          />
-          <div
-            id="app-nav-mobile-drawer"
-            role="dialog"
-            aria-modal="true"
-            aria-label={tCommon('menu')}
-            className="fixed inset-y-0 start-0 z-50 flex w-[85vw] max-w-xs flex-col bg-white shadow-lg motion-safe:animate-fade-in"
-          >
-            <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
-              <span className="text-xs font-semibold uppercase tracking-wider text-fg-muted">
-                {tCommon('menu')}
-              </span>
-              <button
-                type="button"
+      {open && canPortal
+        ? createPortal(
+            <>
+              <div
+                aria-hidden
                 onClick={() => setOpen(false)}
-                aria-label={tCommon('close')}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-fg-secondary transition-colors duration-150 hover:bg-bg-hover hover:text-fg"
+                className="fixed inset-0 z-50 bg-brand-ink/60 backdrop-blur-sm motion-safe:animate-fade-in"
+              />
+              <div
+                id="app-nav-mobile-drawer"
+                role="dialog"
+                aria-modal="true"
+                aria-label={tCommon('menu')}
+                className="fixed inset-y-0 start-0 z-50 flex w-[85vw] max-w-xs flex-col bg-white shadow-lg motion-safe:animate-fade-in"
               >
-                <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
-              </button>
-            </div>
-
-            <nav className="flex-1 overflow-y-auto overscroll-contain p-2">
-              {items.map((item) => {
-                const active = isActive(pathname, item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    aria-current={active ? 'page' : undefined}
-                    className={
-                      active
-                        ? 'block rounded-lg bg-accent-subtle px-3 py-3 text-sm font-semibold text-accent-strong'
-                        : 'block rounded-lg px-3 py-3 text-sm text-fg transition-colors duration-150 hover:bg-bg-hover'
-                    }
+                <div className="flex h-14 shrink-0 items-center justify-between border-b border-border px-4">
+                  <span className="text-xs font-semibold uppercase tracking-wider text-fg-muted">
+                    {tCommon('menu')}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setOpen(false)}
+                    aria-label={tCommon('close')}
+                    className="inline-flex h-8 w-8 items-center justify-center rounded-md text-fg-secondary transition-colors duration-150 hover:bg-bg-hover hover:text-fg"
                   >
-                    {t(item.labelKey)}
-                  </Link>
-                );
-              })}
-            </nav>
+                    <X className="h-4 w-4" strokeWidth={1.75} aria-hidden />
+                  </button>
+                </div>
 
-            <div className="shrink-0 border-t border-border p-4">
-              <div className="mb-3">
-                <p className="truncate text-sm font-semibold text-fg">{fullName}</p>
-                <p className="text-xs text-fg-muted">{roleLabel}</p>
+                <nav className="flex-1 overflow-y-auto overscroll-contain p-2">
+                  {items.map((item) => {
+                    const active = isActive(pathname, item.href);
+                    return (
+                      <Link
+                        key={item.href}
+                        href={item.href}
+                        aria-current={active ? 'page' : undefined}
+                        className={
+                          active
+                            ? 'block rounded-lg bg-accent-subtle px-3 py-3 text-sm font-semibold text-accent-strong'
+                            : 'block rounded-lg px-3 py-3 text-sm text-fg transition-colors duration-150 hover:bg-bg-hover'
+                        }
+                      >
+                        {t(item.labelKey)}
+                      </Link>
+                    );
+                  })}
+                </nav>
+
+                <div className="shrink-0 border-t border-border p-4">
+                  <div className="mb-3">
+                    <p className="truncate text-sm font-semibold text-fg">{fullName}</p>
+                    <p className="text-xs text-fg-muted">{roleLabel}</p>
+                  </div>
+                  <LogoutButton variant="secondary" />
+                </div>
               </div>
-              <LogoutButton variant="secondary" />
-            </div>
-          </div>
-        </>
-      ) : null}
+            </>,
+            document.body,
+          )
+        : null}
     </>
   );
 }
