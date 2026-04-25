@@ -1128,3 +1128,26 @@ A running log of decisions made during the build. When an ambiguity is resolved 
   - Use `text-3xl` to stay with the system. Rejected: the prompt explicitly framed the dashboard as a brand moment, and after side-by-side mockups `text-3xl` looked underweight against the hero.
 - **Revisit when:** The design system rev next bumps base font sizes, or another dashboard adopts the same hero pattern (in which case promote `text-4xl` to a `kpi-hero` token rather than re-declaring it inline).
 
+---
+
+## D-046 — `updateProfileAsAdmin` is the canonical helper for admin-driven `profiles` UPDATEs
+
+- **Date:** 2026-04-25
+- **Phase:** Production hotfix (SEC-01 + architectural guard)
+- **Question:** D-044 fixed three call sites, was published, and was still violated a second time. How do we stop this happening a third time without bolting on lint rules whose false-positive surface is larger than the bug?
+- **Decision:** All admin-initiated UPDATEs on `public.profiles` go through a single helper, `updateProfileAsAdmin(userId, patch)`, exported from `lib/supabase/admin-helpers.ts`. The helper uses the SSR client internally; callers cannot accidentally route a guarded column through the service-role admin client because they never see the client at all. The rule applies even for benign columns (`phone`, `full_name`, `preferred_language`) — consistency makes the right path the only path, and the guard surface is the same regardless of which column was patched.
+- **Rationale:**
+  - D-044 has been violated twice in production: commit `1520347` corrected `inviteUserAction` / `changeUserRoleAction` / `setUserActiveAction`, then SEC-01 (audit, 2026-04-25) found `bulkImportAction` had repeated the same defect. Pure documentation has been tried twice and failed twice. The recurrence rate justifies a structural defense.
+  - A helper makes the correct path the easy path. The signature does not accept a client parameter, so the wrong client cannot be passed in. Calls read uniformly across the admin codebase.
+  - The helper is the natural home for a future swap to a SECURITY DEFINER RPC or a typed `Database['public']['Tables']['profiles']['Update']` patch type — both upgrades happen in one file.
+- **Alternatives considered:**
+  - **Custom ESLint rule.** Detect `createAdminSupabase()` followed by `.from('profiles').update(...)` via AST. Rejected: false-positive surface is wide (any future admin-client call that legitimately touches a non-guarded write would trip), the rule is brittle (alias renames, wrapper functions, and `as` assertions defeat AST detection), and a developer who copy-pastes the wrong pattern from another file would still ship before lint catches it. The helper achieves the same prevention without the maintenance cost.
+  - **Relax the guard trigger to allow service-role bypass.** Rejected: wrong trade-off. The guard is the last line of defense against a malformed RLS policy or a leaked service-role key being used for privilege escalation; weakening it to accommodate developer ergonomics inverts the security posture.
+  - **Documentation only (status quo).** Rejected: empirically does not work — see the two prior recurrences.
+- **Reference:**
+  - Helper: `lib/supabase/admin-helpers.ts` (`updateProfileAsAdmin`).
+  - First D-044 violation: commit `1520347` (`inviteUserAction`, `changeUserRoleAction`, `setUserActiveAction`).
+  - Second D-044 violation: SEC-01 in `audit/03-security.md` (`bulkImportAction` at `app/[locale]/admin/imports/actions.ts:140-143`), fixed by routing through this helper.
+- **Verification:** `git grep -n "createAdminSupabase" app/ | grep -A2 "from('profiles')"` followed by `.update(` should return zero matches.
+- **Revisit when:** The guard trigger is replaced by RLS-only enforcement, a SECURITY DEFINER RPC absorbs the admin-write surface, or `supabase gen types` lands and the `patch` parameter can be replaced with the generated `Database['public']['Tables']['profiles']['Update']` type.
+
