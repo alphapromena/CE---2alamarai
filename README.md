@@ -66,6 +66,39 @@ Open http://localhost:3000 — the i18n middleware will redirect you to your pre
 | `pnpm lint` | ESLint flat config (next/core-web-vitals + typescript + prettier) |
 | `pnpm format` | Prettier write — formats code + Tailwind class ordering |
 | `pnpm format:check` | Prettier check (CI-friendly) |
+| `pnpm test` | Vitest unit + integration suite |
+| `pnpm test:rls` | pgTAP RLS suite via `supabase db test` (requires Docker + Supabase CLI) |
+
+### Testing
+
+Two suites live in this repo. They run independently and target different
+risk surfaces.
+
+- **Unit / integration tests (`pnpm test`)** — vitest. Lives at
+  `lib/**/*.test.ts` and a handful of action-level tests under
+  `app/[locale]/**/*.test.ts`. Pure-function correctness, no DB.
+
+- **RLS regression tests (`pnpm test:rls`)** — pgTAP under
+  `supabase/tests/`. Spins up the local Supabase Postgres (port `54322`
+  per `supabase/config.toml`), applies all migrations + seeds + the
+  `pgtap` extension, then runs every `*.test.sql` in the directory as a
+  rolled-back transaction. Each test impersonates a Supabase auth role
+  via `set_config('request.jwt.claims', …)` and asserts the policy
+  shape — both positive ("admin can SELECT") and negative ("supervisor X
+  cannot UPDATE supervisor Y's location's row").
+
+  The suite covers ~140 assertions across 12 files; the RLS-specific
+  files start with `rls-` (the older `phase*` / `feature*` files mix
+  RLS, constraints, and trigger checks). Highest-stakes tables under
+  coverage: `profiles`, `attendance`, `daily_reports`, `notifications`,
+  `tasks`, `break_requests`, `alerts`, plus the cross-tenant cluster
+  (`campaigns`, `clients`, `consumer_feedback`, `export_jobs`,
+  `performance_snapshots`, `stock_movements`).
+
+  Requires the Supabase CLI (`brew install supabase/tap/supabase` or
+  the [official installer](https://supabase.com/docs/guides/cli)) and a
+  running Docker daemon. First run will pull the Postgres + Studio
+  container images; subsequent runs are fast.
 
 ### Project layout
 

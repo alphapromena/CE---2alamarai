@@ -12,7 +12,8 @@
     "format:check": "prettier --check .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:ui": "vitest --ui"
+    "test:ui": "vitest --ui",
+    "test:rls": "supabase db test"
   },
   "dependencies": {
     "@hookform/resolvers": "^5.2.2",
