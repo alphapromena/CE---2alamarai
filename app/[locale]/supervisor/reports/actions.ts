@@ -5,6 +5,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { invokeComputeKpis } from '@/lib/kpis/invoke';
 import {
   approveReportSchema,
@@ -56,7 +57,15 @@ export async function approveReportAction(input: unknown): Promise<SupervisorRev
       review_reason: null,
     })
     .eq('id', parsed.data.id);
-  if (error) return { error: 'approve_failed' };
+  if (error) {
+    logError('approveReportAction failed', {
+      actor_id: actor.id,
+      report_id: parsed.data.id,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'approve_failed' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,
@@ -98,7 +107,15 @@ export async function rejectReportAction(input: unknown): Promise<SupervisorRevi
       review_reason: parsed.data.review_reason,
     })
     .eq('id', parsed.data.id);
-  if (error) return { error: 'reject_failed' };
+  if (error) {
+    logError('rejectReportAction failed', {
+      actor_id: actor.id,
+      report_id: parsed.data.id,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'reject_failed' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,
@@ -141,7 +158,15 @@ export async function reopenReportAction(input: unknown): Promise<SupervisorRevi
       review_reason: null,
     })
     .eq('id', parsed.data.id);
-  if (error) return { error: 'reopen_failed' };
+  if (error) {
+    logError('reopenReportAction failed', {
+      actor_id: actor.id,
+      report_id: parsed.data.id,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'reopen_failed' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,

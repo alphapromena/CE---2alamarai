@@ -6,6 +6,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { createClientSchema, updateClientSchema } from '@/lib/validations/clients';
 
 export type ClientActionState = { error: string | null };
@@ -67,7 +68,15 @@ export async function createClientAction(
     .single();
 
   if (error || !data) {
-    return { error: isUniqueViolation(error?.message) ? 'duplicate' : 'unknown' };
+    const isDup = isUniqueViolation(error?.message);
+    if (!isDup && error) {
+      logError('createClientAction failed', {
+        actor_id: actor.id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'unknown' };
   }
 
   await logAuditEvent({
@@ -120,7 +129,16 @@ export async function updateClientAction(
     .eq('id', parsed.data.id);
 
   if (error) {
-    return { error: isUniqueViolation(error.message) ? 'duplicate' : 'unknown' };
+    const isDup = isUniqueViolation(error.message);
+    if (!isDup) {
+      logError('updateClientAction failed', {
+        actor_id: actor.id,
+        client_id: parsed.data.id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'unknown' };
   }
 
   await logAuditEvent({

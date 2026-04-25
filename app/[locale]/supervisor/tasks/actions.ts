@@ -5,6 +5,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import {
   createTaskSchema,
   updateTaskSchema,
@@ -62,7 +63,17 @@ export async function createTaskAction(input: unknown): Promise<TaskActionState>
     .single();
 
   if (error || !inserted) {
-    return { error: isUniqueViolation(error?.message) ? 'duplicate' : 'create_failed' };
+    const isDup = isUniqueViolation(error?.message);
+    if (!isDup && error) {
+      logError('createTaskAction failed', {
+        actor_id: actor.id,
+        campaign_id: parsed.data.campaign_id,
+        location_id: parsed.data.location_id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'create_failed' };
   }
 
   await logAuditEvent({
@@ -119,7 +130,15 @@ export async function updateTaskAction(input: unknown): Promise<TaskActionState>
       due_date: parsed.data.due_date ?? null,
     })
     .eq('id', parsed.data.id);
-  if (error) return { error: 'update_failed' };
+  if (error) {
+    logError('updateTaskAction failed', {
+      actor_id: actor.id,
+      task_id: parsed.data.id,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'update_failed' };
+  }
 
   const locale = await getLocale();
   revalidatePath(`/${locale}/supervisor/tasks`);
@@ -161,7 +180,16 @@ export async function changeTaskStatusAction(input: unknown): Promise<TaskAction
   }
 
   const { error } = await admin.from('tasks').update(patch).eq('id', parsed.data.id);
-  if (error) return { error: 'update_failed' };
+  if (error) {
+    logError('changeTaskStatusAction failed', {
+      actor_id: actor.id,
+      task_id: parsed.data.id,
+      next_status: parsed.data.status,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'update_failed' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,

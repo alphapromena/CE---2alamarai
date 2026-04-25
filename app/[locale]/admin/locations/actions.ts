@@ -6,6 +6,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { createLocationSchema, updateLocationSchema } from '@/lib/validations/locations';
 
 export type LocationActionState = { error: string | null };
@@ -57,7 +58,16 @@ export async function createLocationAction(
     .single();
 
   if (error || !data) {
-    return { error: isUniqueViolation(error?.message) ? 'duplicate' : 'unknown' };
+    const isDup = isUniqueViolation(error?.message);
+    if (!isDup && error) {
+      logError('createLocationAction failed', {
+        actor_id: actor.id,
+        city_id: parsed.data.city_id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'unknown' };
   }
 
   await logAuditEvent({
@@ -105,7 +115,18 @@ export async function updateLocationAction(
     })
     .eq('id', parsed.data.id);
 
-  if (error) return { error: isUniqueViolation(error.message) ? 'duplicate' : 'unknown' };
+  if (error) {
+    const isDup = isUniqueViolation(error.message);
+    if (!isDup) {
+      logError('updateLocationAction failed', {
+        actor_id: actor.id,
+        location_id: parsed.data.id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'unknown' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,

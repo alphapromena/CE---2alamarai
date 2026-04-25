@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getLocale } from 'next-intl/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { confirmResetSchema } from '@/lib/validations/auth';
 import { checkRateLimit } from '@/lib/rate-limit/check';
 
@@ -39,6 +40,12 @@ export async function resetConfirmAction(
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) {
+    logError('resetConfirmAction failed', {
+      actor_id: user.id,
+      code: (error as { name?: string; status?: number }).name,
+      status: (error as { status?: number }).status,
+      message: error.message,
+    });
     return { error: 'unknown' };
   }
 

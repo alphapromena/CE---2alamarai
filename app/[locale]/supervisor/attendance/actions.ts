@@ -5,6 +5,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import {
   approveGeofenceOverrideSchema,
   resolveAlertSchema,
@@ -69,7 +70,15 @@ export async function approveGeofenceOverrideAction(
       override_at: nowIso,
     })
     .eq('id', parsed.data.attendance_id);
-  if (upErr) return { error: 'unknown' };
+  if (upErr) {
+    logError('approveGeofenceOverrideAction failed', {
+      actor_id: actor.id,
+      attendance_id: parsed.data.attendance_id,
+      code: upErr.code,
+      message: upErr.message,
+    });
+    return { error: 'unknown' };
+  }
 
   // Resolve any open / acknowledged override-request alert on this row.
   await admin
@@ -132,7 +141,15 @@ export async function updateAttendanceNotesAction(
     .from('attendance')
     .update({ notes: parsed.data.notes ?? null })
     .eq('id', parsed.data.attendance_id);
-  if (upErr) return { error: 'unknown' };
+  if (upErr) {
+    logError('updateAttendanceNotesAction failed', {
+      actor_id: actor.id,
+      attendance_id: parsed.data.attendance_id,
+      code: upErr.code,
+      message: upErr.message,
+    });
+    return { error: 'unknown' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,
@@ -201,7 +218,16 @@ export async function resolveAlertAction(
       resolution_note: parsed.data.resolution_note ?? null,
     })
     .eq('id', parsed.data.alert_id);
-  if (upErr) return { error: 'unknown' };
+  if (upErr) {
+    logError('resolveAlertAction failed', {
+      actor_id: actor.id,
+      alert_id: parsed.data.alert_id,
+      next_status: nextStatus,
+      code: upErr.code,
+      message: upErr.message,
+    });
+    return { error: 'unknown' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,

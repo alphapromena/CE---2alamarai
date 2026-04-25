@@ -5,6 +5,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { promoterUpdateTaskStatusSchema } from '@/lib/validations/tasks';
 
 /**
@@ -43,7 +44,16 @@ export async function markMyTaskStatusAction(input: unknown): Promise<PromoterTa
   else patch.completed_at = null;
 
   const { error } = await admin.from('tasks').update(patch).eq('id', parsed.data.id);
-  if (error) return { error: 'update_failed' };
+  if (error) {
+    logError('markMyTaskStatusAction failed', {
+      actor_id: actor.id,
+      task_id: parsed.data.id,
+      next_status: to,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'update_failed' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,

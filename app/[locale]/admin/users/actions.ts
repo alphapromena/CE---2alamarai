@@ -139,6 +139,12 @@ export async function changeUserRoleAction(
   });
 
   if (error) {
+    logError('changeUserRoleAction failed', {
+      actor_id: actor.id,
+      user_id: parsed.data.user_id,
+      code: error.code,
+      message: error.message,
+    });
     return { error: 'unknown' };
   }
 
@@ -189,6 +195,13 @@ export async function setUserActiveAction(
   });
 
   if (error) {
+    logError('setUserActiveAction failed', {
+      actor_id: actor.id,
+      user_id: parsed.data.user_id,
+      active: parsed.data.active,
+      code: error.code,
+      message: error.message,
+    });
     return { error: 'unknown' };
   }
 

@@ -6,6 +6,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import {
   createCampaignSchema,
   updateCampaignSchema,
@@ -64,7 +65,16 @@ export async function createCampaignAction(
     .single();
 
   if (error || !data) {
-    return { error: isUniqueViolation(error?.message) ? 'duplicate' : 'unknown' };
+    const isDup = isUniqueViolation(error?.message);
+    if (!isDup && error) {
+      logError('createCampaignAction failed', {
+        actor_id: actor.id,
+        client_id: parsed.data.client_id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'unknown' };
   }
 
   await logAuditEvent({
@@ -112,7 +122,18 @@ export async function updateCampaignAction(
     })
     .eq('id', parsed.data.id);
 
-  if (error) return { error: isUniqueViolation(error.message) ? 'duplicate' : 'unknown' };
+  if (error) {
+    const isDup = isUniqueViolation(error.message);
+    if (!isDup) {
+      logError('updateCampaignAction failed', {
+        actor_id: actor.id,
+        campaign_id: parsed.data.id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'unknown' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,
@@ -153,7 +174,15 @@ export async function setCampaignLocationsAction(
     .from('campaign_locations')
     .select('location_id')
     .eq('campaign_id', parsed.data.campaign_id);
-  if (fetchErr) return { error: 'unknown' };
+  if (fetchErr) {
+    logError('setCampaignLocationsAction fetch failed', {
+      actor_id: actor.id,
+      campaign_id: parsed.data.campaign_id,
+      code: fetchErr.code,
+      message: fetchErr.message,
+    });
+    return { error: 'unknown' };
+  }
 
   const current = new Set((currentRows ?? []).map((r) => r.location_id as string));
   const next = new Set(parsed.data.location_ids);
@@ -166,14 +195,32 @@ export async function setCampaignLocationsAction(
       .delete()
       .eq('campaign_id', parsed.data.campaign_id)
       .in('location_id', toRemove);
-    if (error) return { error: 'unknown' };
+    if (error) {
+      logError('setCampaignLocationsAction delete failed', {
+        actor_id: actor.id,
+        campaign_id: parsed.data.campaign_id,
+        remove_count: toRemove.length,
+        code: error.code,
+        message: error.message,
+      });
+      return { error: 'unknown' };
+    }
   }
 
   if (toAdd.length > 0) {
     const { error } = await admin
       .from('campaign_locations')
       .insert(toAdd.map((location_id) => ({ campaign_id: parsed.data.campaign_id, location_id })));
-    if (error) return { error: 'unknown' };
+    if (error) {
+      logError('setCampaignLocationsAction insert failed', {
+        actor_id: actor.id,
+        campaign_id: parsed.data.campaign_id,
+        add_count: toAdd.length,
+        code: error.code,
+        message: error.message,
+      });
+      return { error: 'unknown' };
+    }
   }
 
   await logAuditEvent({
@@ -231,7 +278,16 @@ export async function createSkuAction(
     .single();
 
   if (error || !data) {
-    return { error: isUniqueViolation(error?.message) ? 'duplicate' : 'unknown' };
+    const isDup = isUniqueViolation(error?.message);
+    if (!isDup && error) {
+      logError('createSkuAction failed', {
+        actor_id: actor.id,
+        campaign_id: parsed.data.campaign_id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'unknown' };
   }
 
   await logAuditEvent({
@@ -271,7 +327,19 @@ export async function updateSkuAction(
     })
     .eq('id', parsed.data.id);
 
-  if (error) return { error: isUniqueViolation(error.message) ? 'duplicate' : 'unknown' };
+  if (error) {
+    const isDup = isUniqueViolation(error.message);
+    if (!isDup) {
+      logError('updateSkuAction failed', {
+        actor_id: actor.id,
+        sku_id: parsed.data.id,
+        campaign_id: parsed.data.campaign_id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'unknown' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,
@@ -300,7 +368,16 @@ export async function deleteSkuAction(
 
   const admin = createAdminSupabase();
   const { error } = await admin.from('skus').delete().eq('id', parsed.data.id);
-  if (error) return { error: 'unknown' };
+  if (error) {
+    logError('deleteSkuAction failed', {
+      actor_id: actor.id,
+      sku_id: parsed.data.id,
+      campaign_id: parsed.data.campaign_id,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'unknown' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,

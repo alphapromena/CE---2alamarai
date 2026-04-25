@@ -5,6 +5,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { invokeComputeKpis } from '@/lib/kpis/invoke';
 import {
   saveDraftReportSchema,
@@ -101,7 +102,15 @@ export async function saveDraftReportAction(input: unknown): Promise<ActionState
         review_reason: null,
       })
       .eq('id', data.id);
-    if (error) return { error: 'update_failed' };
+    if (error) {
+      logError('saveDraftReportAction update failed', {
+        actor_id: actor.id,
+        report_id: data.id,
+        code: error.code,
+        message: error.message,
+      });
+      return { error: 'update_failed' };
+    }
     return { error: null, reportId: data.id };
   }
 
@@ -142,6 +151,16 @@ export async function saveDraftReportAction(input: unknown): Promise<ActionState
         .eq('report_date', data.report_date)
         .maybeSingle();
       if (sibling) return { error: null, reportId: sibling.id };
+    }
+    if (error) {
+      logError('saveDraftReportAction insert failed', {
+        actor_id: actor.id,
+        campaign_id: data.campaign_id,
+        location_id: data.location_id,
+        report_date: data.report_date,
+        code: error.code,
+        message: error.message,
+      });
     }
     return { error: 'create_failed' };
   }
@@ -185,7 +204,15 @@ export async function submitReportAction(input: unknown): Promise<ActionState> {
       review_reason: null,
     })
     .eq('id', parsed.data.id);
-  if (error) return { error: 'submit_failed' };
+  if (error) {
+    logError('submitReportAction failed', {
+      actor_id: actor.id,
+      report_id: parsed.data.id,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'submit_failed' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,
@@ -227,7 +254,16 @@ export async function upsertSalesEntryAction(input: unknown): Promise<ActionStat
       },
       { onConflict: 'daily_report_id,sku_id' },
     );
-  if (error) return { error: 'upsert_failed' };
+  if (error) {
+    logError('upsertSalesEntryAction failed', {
+      actor_id: actor.id,
+      report_id: parsed.data.daily_report_id,
+      sku_id: parsed.data.sku_id,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'upsert_failed' };
+  }
 
   await recomputeReportTotals(admin, parsed.data.daily_report_id);
   return { error: null, reportId: parsed.data.daily_report_id };
@@ -250,7 +286,16 @@ export async function deleteSalesEntryAction(input: unknown): Promise<ActionStat
     .delete()
     .eq('daily_report_id', parsed.data.daily_report_id)
     .eq('sku_id', parsed.data.sku_id);
-  if (error) return { error: 'delete_failed' };
+  if (error) {
+    logError('deleteSalesEntryAction failed', {
+      actor_id: actor.id,
+      report_id: parsed.data.daily_report_id,
+      sku_id: parsed.data.sku_id,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'delete_failed' };
+  }
 
   await recomputeReportTotals(admin, parsed.data.daily_report_id);
   return { error: null, reportId: parsed.data.daily_report_id };
@@ -291,7 +336,16 @@ export async function registerActivityPhotoAction(input: unknown): Promise<Actio
       },
       { onConflict: 'daily_report_id,photo_kind' },
     );
-  if (upErr) return { error: 'register_failed' };
+  if (upErr) {
+    logError('registerActivityPhotoAction failed', {
+      actor_id: actor.id,
+      report_id: parsed.data.daily_report_id,
+      photo_kind: parsed.data.photo_kind,
+      code: upErr.code,
+      message: upErr.message,
+    });
+    return { error: 'register_failed' };
+  }
 
   if (prior?.storage_path && prior.storage_path !== parsed.data.storage_path) {
     await admin.storage.from('activity-photos').remove([prior.storage_path]);
@@ -329,7 +383,16 @@ export async function deleteActivityPhotoAction(input: unknown): Promise<ActionS
     .delete()
     .eq('daily_report_id', parsed.data.daily_report_id)
     .eq('photo_kind', parsed.data.photo_kind);
-  if (error) return { error: 'delete_failed' };
+  if (error) {
+    logError('deleteActivityPhotoAction failed', {
+      actor_id: actor.id,
+      report_id: parsed.data.daily_report_id,
+      photo_kind: parsed.data.photo_kind,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'delete_failed' };
+  }
 
   const locale = await getLocale();
   revalidatePath(`/${locale}/promoter/reports/today`);

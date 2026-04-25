@@ -26,6 +26,7 @@ import {
   type AnomalyFlag,
 } from '@/lib/stock/ledger';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 
 export type StockActionState = {
   error: InsertMovementError | 'invalid_input' | 'location_not_assigned' | null;
@@ -259,7 +260,16 @@ export async function runReconcileAction(input: unknown): Promise<ReconcileActio
       'id, campaign_id, sku_id, from_entity_type, from_entity_id, to_entity_type, to_entity_id, quantity, movement_kind, created_at',
     )
     .eq('campaign_id', parsed.data.campaign_id);
-  if (movErr) return { error: 'reconcile_failed' };
+  if (movErr) {
+    logError('reconcileStockAction movement load failed', {
+      actor_id: actor.id,
+      campaign_id: parsed.data.campaign_id,
+      supervisor_id: parsed.data.supervisor_id,
+      code: movErr.code,
+      message: movErr.message,
+    });
+    return { error: 'reconcile_failed' };
+  }
 
   const movements: Movement[] = (movRows as unknown as Movement[] | null) ?? [];
   const balances = computeBalances(movements);
@@ -343,7 +353,18 @@ export async function runReconcileAction(input: unknown): Promise<ReconcileActio
     })
     .select('id')
     .single();
-  if (reconErr || !reconRow) return { error: 'reconcile_failed' };
+  if (reconErr || !reconRow) {
+    if (reconErr) {
+      logError('reconcileStockAction insert failed', {
+        actor_id: actor.id,
+        campaign_id: parsed.data.campaign_id,
+        supervisor_id: parsed.data.supervisor_id,
+        code: reconErr.code,
+        message: reconErr.message,
+      });
+    }
+    return { error: 'reconcile_failed' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,

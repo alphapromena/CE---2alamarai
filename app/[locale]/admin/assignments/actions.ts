@@ -6,6 +6,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { createAssignmentSchema, updateAssignmentSchema } from '@/lib/validations/assignments';
 
 export type AssignmentActionState = { error: string | null };
@@ -55,7 +56,17 @@ export async function createAssignmentAction(
     .single();
 
   if (error || !data) {
-    return { error: isUniqueViolation(error?.message) ? 'duplicate' : 'unknown' };
+    const isDup = isUniqueViolation(error?.message);
+    if (!isDup && error) {
+      logError('createAssignmentAction failed', {
+        actor_id: actor.id,
+        user_id: parsed.data.user_id,
+        location_id: parsed.data.location_id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'unknown' };
   }
 
   await logAuditEvent({
@@ -103,7 +114,18 @@ export async function updateAssignmentAction(
     })
     .eq('id', parsed.data.id);
 
-  if (error) return { error: isUniqueViolation(error.message) ? 'duplicate' : 'unknown' };
+  if (error) {
+    const isDup = isUniqueViolation(error.message);
+    if (!isDup) {
+      logError('updateAssignmentAction failed', {
+        actor_id: actor.id,
+        assignment_id: parsed.data.id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: isDup ? 'duplicate' : 'unknown' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,

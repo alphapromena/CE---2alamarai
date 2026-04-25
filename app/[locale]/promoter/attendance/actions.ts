@@ -5,6 +5,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { requestGeofenceOverrideSchema } from '@/lib/validations/attendance';
 
 export type ActionState = { error: string | null };
@@ -70,7 +71,15 @@ export async function requestGeofenceOverrideAction(
     message_key: 'alerts.geofence_override_requested',
     message_params: { reason: parsed.data.reason },
   });
-  if (insErr) return { error: 'unknown' };
+  if (insErr) {
+    logError('requestGeofenceOverrideAction failed', {
+      actor_id: actor.id,
+      attendance_id: parsed.data.attendance_id,
+      code: insErr.code,
+      message: insErr.message,
+    });
+    return { error: 'unknown' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,

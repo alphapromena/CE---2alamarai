@@ -6,6 +6,7 @@ import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { createShiftSchema, updateShiftSchema } from '@/lib/validations/shifts';
 
 export type ShiftActionState = { error: string | null };
@@ -52,7 +53,18 @@ export async function createShiftAction(
     .select('id')
     .single();
 
-  if (error || !data) return { error: 'unknown' };
+  if (error || !data) {
+    if (error) {
+      logError('createShiftAction failed', {
+        actor_id: actor.id,
+        campaign_id: parsed.data.campaign_id,
+        location_id: parsed.data.location_id,
+        code: error.code,
+        message: error.message,
+      });
+    }
+    return { error: 'unknown' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,
@@ -98,7 +110,15 @@ export async function updateShiftAction(
     })
     .eq('id', parsed.data.id);
 
-  if (error) return { error: 'unknown' };
+  if (error) {
+    logError('updateShiftAction failed', {
+      actor_id: actor.id,
+      shift_id: parsed.data.id,
+      code: error.code,
+      message: error.message,
+    });
+    return { error: 'unknown' };
+  }
 
   await logAuditEvent({
     actor_id: actor.id,

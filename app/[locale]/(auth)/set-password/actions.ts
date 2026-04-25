@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getLocale } from 'next-intl/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { isUserRole, LANDING_PATH_BY_ROLE } from '@/lib/auth/roles';
 import { setPasswordSchema } from '@/lib/validations/auth';
 
@@ -34,6 +35,12 @@ export async function setPasswordAction(
 
   const { error } = await supabase.auth.updateUser({ password: parsed.data.password });
   if (error) {
+    logError('setPasswordAction failed', {
+      actor_id: user.id,
+      code: (error as { name?: string; status?: number }).name,
+      status: (error as { status?: number }).status,
+      message: error.message,
+    });
     return { error: 'unknown' };
   }
 
