@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { logError } from '@/lib/observability/logger';
 import type { ExportFormat, ExportScope } from '@/lib/exports/types';
 
 export type ExportJobRow = {
@@ -67,11 +68,21 @@ export async function listExportJobs(limit = 50): Promise<ExportJobRow[]> {
 
 export async function getExportJob(id: string): Promise<ExportJobRow | null> {
   const supabase = await createServerSupabase();
-  const { data } = await supabase
+  // Destructure error so DB failures are logged; previous code returned null
+  // on both genuine not-found and DB error indistinguishably.
+  const { data, error } = await supabase
     .from('export_jobs')
     .select(SELECT_COLS)
     .eq('id', id)
     .maybeSingle();
+  if (error) {
+    logError('getExportJob failed', {
+      job_id: id,
+      code: error.code,
+      message: error.message,
+    });
+    return null;
+  }
   if (!data) return null;
   return shape(data as unknown as Parameters<typeof shape>[0]);
 }

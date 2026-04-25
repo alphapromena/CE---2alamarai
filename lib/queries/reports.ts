@@ -2,6 +2,7 @@ import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { todayLocalDateString } from '@/lib/attendance/shift-time';
+import { logError } from '@/lib/observability/logger';
 
 export type DailyReportRow = {
   id: string;
@@ -79,11 +80,22 @@ export async function getMyReportForToday(
 
 export async function getReportById(id: string): Promise<DailyReportRow | null> {
   const supabase = await createServerSupabase();
-  const { data } = await supabase
+  // Destructure error so a real DB failure is logged rather than silently
+  // becoming "not found" (data === null). Contract unchanged: null is still
+  // returned both for genuine not-found and for DB error.
+  const { data, error } = await supabase
     .from('daily_reports')
     .select(REPORT_COLS)
     .eq('id', id)
     .maybeSingle();
+  if (error) {
+    logError('getReportById failed', {
+      report_id: id,
+      code: error.code,
+      message: error.message,
+    });
+    return null;
+  }
   return (data as DailyReportRow) ?? null;
 }
 
@@ -107,13 +119,22 @@ export async function listActivityPhotos(dailyReportId: string): Promise<Activit
 
 export async function getKpiSnapshot(dailyReportId: string): Promise<KpiSnapshotRow | null> {
   const supabase = await createServerSupabase();
-  const { data } = await supabase
+  // See note on getReportById above — same destructure-and-log pattern.
+  const { data, error } = await supabase
     .from('kpi_snapshots')
     .select(
       'daily_report_id, interaction_rate, engagement_rate, sampling_rate, conversion_rate, sample_to_conversion_rate, sku_contributions, sampling_rate_denominator, computation_version, computed_at',
     )
     .eq('daily_report_id', dailyReportId)
     .maybeSingle();
+  if (error) {
+    logError('getKpiSnapshot failed', {
+      daily_report_id: dailyReportId,
+      code: error.code,
+      message: error.message,
+    });
+    return null;
+  }
   return (data as KpiSnapshotRow) ?? null;
 }
 

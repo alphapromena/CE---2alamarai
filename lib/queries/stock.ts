@@ -1,6 +1,7 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
+import { logError } from '@/lib/observability/logger';
 import type { StockEntityType, StockMovementKind } from '@/lib/stock/ledger';
 
 export type StockBalanceRow = {
@@ -112,7 +113,9 @@ export async function listMovements(filters: {
 
 export async function getMovement(id: string): Promise<StockMovementListRow | null> {
   const supabase = await createServerSupabase();
-  const { data } = await supabase
+  // Destructure error so DB failures are logged; previous code returned null
+  // on both genuine not-found and DB error indistinguishably.
+  const { data, error } = await supabase
     .from('stock_movements')
     .select(
       `${MOVEMENT_COLS},
@@ -123,6 +126,14 @@ export async function getMovement(id: string): Promise<StockMovementListRow | nu
     )
     .eq('id', id)
     .maybeSingle();
+  if (error) {
+    logError('getMovement failed', {
+      movement_id: id,
+      code: error.code,
+      message: error.message,
+    });
+    return null;
+  }
   if (!data) return null;
   type RelOne<T> = T | T[] | null;
   type Row = StockMovementListRow & {
