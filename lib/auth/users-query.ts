@@ -1,5 +1,6 @@
 import 'server-only';
 import { createAdminSupabase } from '@/lib/supabase/admin';
+import { logError } from '@/lib/observability/logger';
 import { isUserRole, type UserRole } from './roles';
 
 export type AdminUserRow = {
@@ -59,11 +60,22 @@ export async function listAdminUsers(roleFilter: UserRole | null): Promise<Admin
 
 export async function getAdminUser(userId: string): Promise<AdminUserRow | null> {
   const admin = createAdminSupabase();
-  const { data: profile } = await admin
+  // .maybeSingle() + destructure error: previous .single() without an error
+  // destructure silently turned a real DB error into data=null, indistinguishable
+  // from "user not found". The caller would render a 404 in either case.
+  const { data: profile, error } = await admin
     .from('profiles')
     .select('id, role, full_name, preferred_language, assigned_locations, active, created_at')
     .eq('id', userId)
-    .single();
+    .maybeSingle();
+  if (error) {
+    logError('getAdminUser failed', {
+      user_id: userId,
+      code: error.code,
+      message: error.message,
+    });
+    return null;
+  }
   if (!profile || !isUserRole(profile.role)) return null;
   if (profile.preferred_language !== 'ar' && profile.preferred_language !== 'en') return null;
 

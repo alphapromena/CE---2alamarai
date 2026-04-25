@@ -60,13 +60,36 @@ export async function setPasswordAction(
     entity_id: user.id,
   });
 
-  const { data: profile } = await supabase
+  // .maybeSingle() + destructure error: previous .single() collapsed four
+  // cases (DB error, missing profile, role corrupted, account deactivated)
+  // into a single 'deactivated' return — a transient DB error would tell
+  // the user their account was deactivated. (TS-03.) Now: DB error and
+  // missing-profile / corrupted-role surface as 'unknown'; only the
+  // genuinely-deactivated case still returns 'deactivated'.
+  const { data: profile, error: profileErr } = await supabase
     .from('profiles')
     .select('role, active')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
-  if (!profile?.active || !isUserRole(profile.role)) {
+  if (profileErr) {
+    logError('setPasswordAction.profile_lookup_failed', {
+      user_id: user.id,
+      code: profileErr.code,
+      message: profileErr.message,
+    });
+    await supabase.auth.signOut();
+    return { error: 'unknown' };
+  }
+
+  if (!profile || !isUserRole(profile.role)) {
+    // Profile genuinely missing (impossible after a successful auth.updateUser
+    // unless the row was deleted between calls) or role enum corrupted.
+    await supabase.auth.signOut();
+    return { error: 'unknown' };
+  }
+
+  if (!profile.active) {
     await supabase.auth.signOut();
     return { error: 'deactivated' };
   }

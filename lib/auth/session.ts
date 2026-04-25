@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { logError } from '@/lib/observability/logger';
 import { isUserRole, type UserRole } from './roles';
 
 export type SessionProfile = {
@@ -29,13 +30,24 @@ export async function getSessionProfile(): Promise<SessionProfile | null> {
   } = await supabase.auth.getUser();
   if (!user) return null;
 
+  // .maybeSingle() so a missing profile (auth user exists, profile row not
+  // yet materialised by handle_new_user trigger, etc.) returns data=null
+  // without raising. .single() conflated that case with a real DB error.
   const { data, error } = await supabase
     .from('profiles')
     .select('id, role, full_name, phone, preferred_language, assigned_locations, active, client_id')
     .eq('id', user.id)
-    .single();
+    .maybeSingle();
 
-  if (error || !data) return null;
+  if (error) {
+    logError('getSessionProfile failed', {
+      user_id: user.id,
+      code: error.code,
+      message: error.message,
+    });
+    return null;
+  }
+  if (!data) return null;
   if (!isUserRole(data.role)) return null;
   if (data.preferred_language !== 'ar' && data.preferred_language !== 'en') return null;
 

@@ -23,12 +23,23 @@ export async function notifyExportReady(jobId: string, requestedBy: string): Pro
   try {
     const admin = createAdminSupabase();
 
-    // 1. Resolve recipient + preferred language.
-    const { data: profile } = await admin
+    // 1. Resolve recipient + preferred language. .maybeSingle() so a real DB
+    // error gets a logError (escalation) and a genuinely-missing profile
+    // gets a logWarn (the existing softer signal).
+    const { data: profile, error: profileErr } = await admin
       .from('profiles')
       .select('full_name, preferred_language')
       .eq('id', requestedBy)
-      .single();
+      .maybeSingle();
+    if (profileErr) {
+      logError('export.notify.profile_lookup_failed', {
+        job_id: jobId,
+        user_id: requestedBy,
+        code: profileErr.code,
+        message: profileErr.message,
+      });
+      return;
+    }
     if (!profile) {
       logWarn('export.notify.profile_missing', { job_id: jobId, user_id: requestedBy });
       return;

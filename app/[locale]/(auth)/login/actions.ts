@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { getLocale } from 'next-intl/server';
 import { createServerSupabase } from '@/lib/supabase/server';
 import { logAuditEvent } from '@/lib/auth/audit';
+import { logError } from '@/lib/observability/logger';
 import { isUserRole, LANDING_PATH_BY_ROLE } from '@/lib/auth/roles';
 import { loginSchema } from '@/lib/validations/auth';
 import { checkRateLimit } from '@/lib/rate-limit/check';
@@ -51,11 +52,27 @@ export async function loginAction(
     return { error: 'invalid_credentials' };
   }
 
-  const { data: profile } = await supabase
+  // .maybeSingle() + destructure error: previous .single() conflated a DB
+  // error with a missing profile, then masked both as 'invalid_credentials' —
+  // a transient DB issue would log the user out as if their password was
+  // wrong, with no breadcrumb. (TS-03.) DB errors now surface as 'unknown';
+  // the genuinely-missing-profile case still returns 'invalid_credentials'
+  // intentionally (security UX — don't reveal which users have profiles).
+  const { data: profile, error: profileErr } = await supabase
     .from('profiles')
     .select('role, active')
     .eq('id', data.user.id)
-    .single();
+    .maybeSingle();
+
+  if (profileErr) {
+    logError('loginAction.profile_lookup_failed', {
+      user_id: data.user.id,
+      code: profileErr.code,
+      message: profileErr.message,
+    });
+    await supabase.auth.signOut();
+    return { error: 'unknown' };
+  }
 
   if (!profile) {
     await supabase.auth.signOut();
