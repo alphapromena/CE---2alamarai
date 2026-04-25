@@ -19,7 +19,6 @@ export function reportClientError(error: unknown, context: ClientErrorContext = 
   };
 
   // Always log so local dev + production browser consoles see it.
-  // eslint-disable-next-line no-console
   console.error('[client-error]', payload);
 
   // Optional Sentry pass-through (only if the global was mounted via
