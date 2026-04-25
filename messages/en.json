@@ -147,7 +147,20 @@
       "hero_headline": "Command your field operations.",
       "hero_context": "Monitor campaigns, attendance, and performance across every region — in one place.",
       "placeholder_title": "Platform activity overview coming soon",
-      "placeholder_description": "KPIs, live attendance, and performance trends will surface here as data flows in. For now, jump into Campaigns, Users, or Live to start."
+      "placeholder_description": "KPIs, live attendance, and performance trends will surface here as data flows in. For now, jump into Campaigns, Users, or Live to start.",
+      "hero": {
+        "kicker": "OVERVIEW · TODAY",
+        "greeting_morning": "Good morning",
+        "greeting_afternoon": "Good afternoon",
+        "greeting_evening": "Good evening",
+        "greeting_with_name": "{greeting}, {name}",
+        "fallback_name": "Admin",
+        "subtitle": "Here's what's happening across your operations today.",
+        "mini_promoters": "promoters active",
+        "mini_checkins": "check-ins",
+        "mini_visits": "visits",
+        "mini_campaigns": "active campaigns"
+      }
     },
     "stock": {
       "title": "Stock",
