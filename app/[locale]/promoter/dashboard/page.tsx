@@ -2,10 +2,7 @@ import { getTranslations, setRequestLocale } from 'next-intl/server';
 import { MapPin } from 'lucide-react';
 import { requireRole } from '@/lib/auth/guards';
 import { countMyPingsForDate } from '@/lib/queries/location-pings';
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
+import { todayLocalDateString } from '@/lib/attendance/shift-time';
 
 function formatTime(iso: string | null, locale: string): string | null {
   if (!iso) return null;
@@ -30,7 +27,7 @@ export default async function PromoterDashboardPage({
 
   const t = await getTranslations('Promoter.dashboard');
   const tTrack = await getTranslations('LocationTracking');
-  const { count, lastPingAt } = await countMyPingsForDate(todayIso());
+  const { count, lastPingAt } = await countMyPingsForDate(todayLocalDateString());
   const lastPingTime = formatTime(lastPingAt, locale);
 
   return (

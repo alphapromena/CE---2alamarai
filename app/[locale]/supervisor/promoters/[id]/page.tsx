@@ -7,6 +7,7 @@ import { createAdminSupabase } from '@/lib/supabase/admin';
 import { listAttendanceForUser } from '@/lib/queries/attendance';
 import { listSupervisorVisits } from '@/lib/queries/supervisor-visits';
 import { listPingsForPromoterOnDate } from '@/lib/queries/location-pings';
+import { todayLocalDateString } from '@/lib/attendance/shift-time';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusPill } from '@/components/ui/status-pill';
@@ -37,10 +38,6 @@ function formatTs(iso: string, locale: string): string {
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
-
 function isoDaysAgo(days: number): string {
   const d = new Date();
   d.setUTCDate(d.getUTCDate() - days);
@@ -64,7 +61,7 @@ export default async function SupervisorPromoterDetailPage({
   const t = await getTranslations('FieldVisits');
   const tAttendance = await getTranslations('Supervisor.attendance');
 
-  const today = todayIso();
+  const today = todayLocalDateString();
   const minDate = isoDaysAgo(30);
   const rawDate = sp.trail_date;
   const trailDate =
