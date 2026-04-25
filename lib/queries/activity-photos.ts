@@ -1,5 +1,6 @@
 import 'server-only';
 import { createAdminSupabase } from '@/lib/supabase/admin';
+import { logError } from '@/lib/observability/logger';
 
 /**
  * Sign a short-lived URL for a private activity photo. Caller must have
@@ -14,6 +15,15 @@ export async function signActivityPhotoUrl(
   const { data, error } = await admin.storage
     .from('activity-photos')
     .createSignedUrl(path, ttlSeconds);
-  if (error || !data) return null;
+  if (error || !data) {
+    if (error) {
+      // Path is intentionally NOT logged (storage path = potential PII / row identifier).
+      logError('signActivityPhotoUrl failed', {
+        code: (error as { name?: string }).name,
+        message: error.message,
+      });
+    }
+    return null;
+  }
   return data.signedUrl;
 }

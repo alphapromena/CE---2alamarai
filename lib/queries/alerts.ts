@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { logError } from '@/lib/observability/logger';
 
 export type AlertType =
   | 'late_check_in'
@@ -65,7 +66,15 @@ export async function listOpenAlerts(opts?: {
   if (opts?.campaignId) q = q.eq('campaign_id', opts.campaignId);
   if (opts?.locationId) q = q.eq('location_id', opts.locationId);
   const { data, error } = await q.limit(opts?.limit ?? 200);
-  if (error) return [];
+  if (error) {
+    logError('listOpenAlerts failed', {
+      code: error.code,
+      message: error.message,
+      campaign_id: opts?.campaignId,
+      location_id: opts?.locationId,
+    });
+    return [];
+  }
   return (data ?? []) as AlertRow[];
 }
 
@@ -82,7 +91,14 @@ export async function listAlertsForAttendance(
     .select(ALERT_COLS)
     .eq('attendance_id', attendanceId)
     .order('created_at', { ascending: false });
-  if (error) return [];
+  if (error) {
+    logError('listAlertsForAttendance failed', {
+      code: error.code,
+      message: error.message,
+      attendance_id: attendanceId,
+    });
+    return [];
+  }
   return (data ?? []) as AlertRow[];
 }
 
@@ -104,6 +120,13 @@ export async function listOpenStockAlerts(opts?: {
     .order('created_at', { ascending: false });
   if (opts?.campaignId) q = q.eq('campaign_id', opts.campaignId);
   const { data, error } = await q.limit(opts?.limit ?? 100);
-  if (error) return [];
+  if (error) {
+    logError('listOpenStockAlerts failed', {
+      code: error.code,
+      message: error.message,
+      campaign_id: opts?.campaignId,
+    });
+    return [];
+  }
   return (data ?? []) as AlertRow[];
 }

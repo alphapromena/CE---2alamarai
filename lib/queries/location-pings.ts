@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { logError } from '@/lib/observability/logger';
 
 export type LocationPingRow = {
   id: string;
@@ -78,7 +79,16 @@ export async function countMyPingsForDate(
     .gte('captured_at', startIso)
     .lte('captured_at', endIso)
     .order('captured_at', { ascending: false });
-  if (error || !data) return { count: 0, lastPingAt: null };
+  if (error || !data) {
+    if (error) {
+      logError('countMyPingsForDate failed', {
+        code: error.code,
+        message: error.message,
+        date: dateYYYYMMDD,
+      });
+    }
+    return { count: 0, lastPingAt: null };
+  }
   return {
     count: data.length,
     lastPingAt: data.length > 0 ? (data[0]!.captured_at as string) : null,

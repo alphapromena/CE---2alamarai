@@ -55,7 +55,13 @@ export async function listMyAttendanceToday(): Promise<AttendanceRow[]> {
     .select(ATTENDANCE_COLS)
     .eq('attendance_date', today)
     .order('check_in_time', { ascending: false, nullsFirst: false });
-  if (error) return [];
+  if (error) {
+    logError('listMyAttendanceToday failed', {
+      code: error.code,
+      message: error.message,
+    });
+    return [];
+  }
   return (data ?? []) as AttendanceRow[];
 }
 
@@ -80,7 +86,16 @@ export async function listLiveAttendance(opts?: {
     ascending: false,
     nullsFirst: false,
   });
-  if (error) return [];
+  if (error) {
+    logError('listLiveAttendance failed', {
+      code: error.code,
+      message: error.message,
+      date,
+      campaign_id: opts?.campaignId,
+      location_id: opts?.locationId,
+    });
+    return [];
+  }
   return (data ?? []) as AttendanceRow[];
 }
 
@@ -157,7 +172,14 @@ export async function listAttendanceForUser(
     .order('attendance_date', { ascending: false })
     .order('check_in_time', { ascending: false, nullsFirst: false })
     .limit(limit);
-  if (error) return [];
+  if (error) {
+    logError('listAttendanceForUser failed', {
+      code: error.code,
+      message: error.message,
+      user_id: userId,
+    });
+    return [];
+  }
   return (data ?? []) as AttendanceRow[];
 }
 
@@ -190,7 +212,16 @@ export async function signAttendancePhotoUrl(
   const { data, error } = await admin.storage
     .from('attendance-photos')
     .createSignedUrl(path, ttlSeconds);
-  if (error || !data) return null;
+  if (error || !data) {
+    if (error) {
+      // Path is intentionally NOT logged (storage path = potential PII / row identifier).
+      logError('signAttendancePhotoUrl failed', {
+        code: (error as { name?: string }).name,
+        message: error.message,
+      });
+    }
+    return null;
+  }
   return data.signedUrl;
 }
 

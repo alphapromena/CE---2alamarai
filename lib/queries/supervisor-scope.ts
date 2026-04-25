@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { logError } from '@/lib/observability/logger';
 
 export type CampaignRef = {
   id: string;
@@ -24,7 +25,13 @@ export async function listVisibleCampaignsForSupervisor(): Promise<
     .from('campaigns')
     .select('id, name_i18n')
     .order('created_at', { ascending: false });
-  if (error) return [];
+  if (error) {
+    logError('listVisibleCampaignsForSupervisor failed', {
+      code: error.code,
+      message: error.message,
+    });
+    return [];
+  }
   return (data ?? []) as CampaignRef[];
 }
 
@@ -39,7 +46,13 @@ export async function listVisibleLocationsForSupervisor(): Promise<
     .from('locations')
     .select('id, name_i18n')
     .order('created_at', { ascending: false });
-  if (error) return [];
+  if (error) {
+    logError('listVisibleLocationsForSupervisor failed', {
+      code: error.code,
+      message: error.message,
+    });
+    return [];
+  }
   return (data ?? []) as LocationRef[];
 }
 
@@ -78,7 +91,14 @@ export async function listPromotersAtLocations(
     .eq('role', 'promoter')
     .eq('active', true)
     .overlaps('assigned_locations', locationIds);
-  if (error) return [];
+  if (error) {
+    logError('listPromotersAtLocations failed', {
+      code: error.code,
+      message: error.message,
+      location_count: locationIds.length,
+    });
+    return [];
+  }
   type Row = { id: string; full_name: string; assigned_locations: string[] | null };
   const out: LocationPromoter[] = [];
   for (const r of (data ?? []) as Row[]) {
@@ -111,7 +131,13 @@ export async function listSupervisorVisitTargets(): Promise<
       location:locations ( name_i18n, lat, lng, geofence_radius_m, active )
       `,
     );
-  if (error) return [];
+  if (error) {
+    logError('listSupervisorVisitTargets failed', {
+      code: error.code,
+      message: error.message,
+    });
+    return [];
+  }
   type Raw = {
     campaign_id: string;
     location_id: string;

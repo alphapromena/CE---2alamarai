@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { logError } from '@/lib/observability/logger';
 
 export type SupervisorVisitRow = {
   id: string;
@@ -74,7 +75,17 @@ export async function listSupervisorVisits(opts?: {
   if (opts?.fromDate) q = q.gte('visited_at', opts.fromDate);
   if (opts?.toDate) q = q.lte('visited_at', opts.toDate);
   const { data, error } = await q.limit(opts?.limit ?? 100);
-  if (error) return [];
+  if (error) {
+    logError('listSupervisorVisits failed', {
+      code: error.code,
+      message: error.message,
+      campaign_id: opts?.campaignId,
+      location_id: opts?.locationId,
+      promoter_id: opts?.promoterId,
+      supervisor_id: opts?.supervisorId,
+    });
+    return [];
+  }
   return ((data ?? []) as unknown as RawVisitRow[]).map(mapRaw);
 }
 
@@ -92,6 +103,12 @@ export async function listMyReceivedVisits(limit = 50): Promise<SupervisorVisitR
     .eq('promoter_id', userData.user.id)
     .order('visited_at', { ascending: false })
     .limit(limit);
-  if (error) return [];
+  if (error) {
+    logError('listMyReceivedVisits failed', {
+      code: error.code,
+      message: error.message,
+    });
+    return [];
+  }
   return ((data ?? []) as unknown as RawVisitRow[]).map(mapRaw);
 }

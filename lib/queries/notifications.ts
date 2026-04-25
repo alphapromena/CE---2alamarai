@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { logError } from '@/lib/observability/logger';
 
 export type NotificationKind =
   | 'alert_new'
@@ -30,7 +31,13 @@ export async function listMyNotifications(limit = 30): Promise<NotificationRow[]
     .select(COLS)
     .order('created_at', { ascending: false })
     .limit(limit);
-  if (error) return [];
+  if (error) {
+    logError('listMyNotifications failed', {
+      code: error.code,
+      message: error.message,
+    });
+    return [];
+  }
   return (data ?? []) as NotificationRow[];
 }
 
@@ -40,6 +47,12 @@ export async function getMyUnreadCount(): Promise<number> {
     .from('notifications')
     .select('*', { count: 'exact', head: true })
     .is('read_at', null);
-  if (error) return 0;
+  if (error) {
+    logError('getMyUnreadCount failed', {
+      code: error.code,
+      message: error.message,
+    });
+    return 0;
+  }
   return count ?? 0;
 }

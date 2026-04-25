@@ -1,5 +1,6 @@
 import 'server-only';
 import { createServerSupabase } from '@/lib/supabase/server';
+import { logError } from '@/lib/observability/logger';
 
 export type BreakRequestStatus = 'pending' | 'approved' | 'rejected' | 'modified';
 
@@ -43,7 +44,13 @@ export async function listMyBreakRequests(): Promise<BreakRequestRow[]> {
     .select(COLS)
     .order('created_at', { ascending: false })
     .limit(50);
-  if (error) return [];
+  if (error) {
+    logError('listMyBreakRequests failed', {
+      code: error.code,
+      message: error.message,
+    });
+    return [];
+  }
   return (data ?? []) as BreakRequestRow[];
 }
 
@@ -64,7 +71,13 @@ export async function listVisibleBreakRequests(): Promise<BreakRequestJoined[]> 
     )
     .order('created_at', { ascending: false })
     .limit(100);
-  if (error) return [];
+  if (error) {
+    logError('listVisibleBreakRequests failed', {
+      code: error.code,
+      message: error.message,
+    });
+    return [];
+  }
   type Raw = BreakRequestRow & {
     promoter: { full_name: string } | null;
     campaign: { name_i18n: { ar?: string; en?: string } } | null;
