@@ -21,6 +21,10 @@ import {
   ActivityFeed,
   type ActivityEvent,
 } from '@/components/features/admin/dashboard/activity-feed';
+import {
+  AttendanceTrendChart,
+  type TrendDay,
+} from '@/components/features/admin/dashboard/attendance-trend-chart';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,6 +82,7 @@ export default async function AdminDashboardPage({
   const tHero = await getTranslations('Admin.dashboard.hero');
   const tField = await getTranslations('Admin.dashboard.fieldActivity');
   const tActivity = await getTranslations('Admin.dashboard.activity');
+  const tTrend = await getTranslations('Admin.dashboard.trend');
 
   const now = new Date();
   const nowMs = now.getTime();
@@ -85,6 +90,12 @@ export default async function AdminDashboardPage({
   const yesterday = localDateString(new Date(nowMs - DAY_MS));
   const startOfToday = startOfDateUtcIso(today);
   const startOfYesterday = startOfDateUtcIso(yesterday);
+
+  // 7 days inclusive of today, oldest → newest.
+  const trendDateIsos: string[] = Array.from({ length: 7 }, (_, i) =>
+    localDateString(new Date(nowMs - (6 - i) * DAY_MS)),
+  );
+  const trendStartDate = trendDateIsos[0]!;
 
   const [
     promotersRes,
@@ -97,6 +108,7 @@ export default async function AdminDashboardPage({
     feedAttendanceRes,
     feedVisitsRes,
     feedReportsRes,
+    trendRowsRes,
   ] = await Promise.all([
     supabase
       .from('profiles')
@@ -164,6 +176,12 @@ export default async function AdminDashboardPage({
       .not('submitted_at', 'is', null)
       .order('submitted_at', { ascending: false })
       .limit(10),
+    supabase
+      .from('attendance')
+      .select('attendance_date')
+      .gte('attendance_date', trendStartDate)
+      .lte('attendance_date', today)
+      .not('check_in_time', 'is', null),
   ]);
 
   const promoters = promotersRes.count ?? 0;
@@ -262,6 +280,27 @@ export default async function AdminDashboardPage({
     .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
     .slice(0, 10);
 
+  // Build the 7-day attendance trend. The query returns one row per check-in
+  // (we filtered out absent rows); reduce by date into a count map, then walk
+  // the date sequence so missing days get explicit zeros.
+  const trendCountByDate = new Map<string, number>();
+  for (const row of (trendRowsRes.data as { attendance_date: string }[] | null) ??
+    []) {
+    trendCountByDate.set(
+      row.attendance_date,
+      (trendCountByDate.get(row.attendance_date) ?? 0) + 1,
+    );
+  }
+  const weekdayFmt = new Intl.DateTimeFormat(isAr ? 'ar-JO' : 'en', {
+    weekday: 'short',
+    timeZone: 'UTC',
+  });
+  const trendDays: TrendDay[] = trendDateIsos.map((dateIso) => ({
+    dateIso,
+    dayLabel: weekdayFmt.format(new Date(`${dateIso}T00:00:00Z`)),
+    count: trendCountByDate.get(dateIso) ?? 0,
+  }));
+
   const firstName =
     profile.full_name.trim().split(/\s+/)[0] || tHero('fallback_name');
   const timeOfDay = timeOfDayFromHour(localHour(now));
@@ -311,6 +350,13 @@ export default async function AdminDashboardPage({
               nowMs={nowMs}
             />
           </div>
+        </div>
+      </section>
+
+      <section>
+        <SectionHeader kicker={tTrend('kicker')} title={tTrend('title')} />
+        <div className="h-[280px] rounded-xl bg-white p-5 shadow-card ring-1 ring-black/5 md:h-[320px] md:p-6">
+          <AttendanceTrendChart days={trendDays} />
         </div>
       </section>
     </div>

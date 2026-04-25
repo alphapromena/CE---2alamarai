@@ -203,6 +203,12 @@
           "visit": "{name} logged a visit at {location}",
           "report": "{name} submitted a daily report"
         }
+      },
+      "trend": {
+        "kicker": "TRENDS",
+        "title": "Attendance — last 7 days",
+        "summary": "{total, plural, =0 {No check-ins} one {# check-in} other {# check-ins}} · avg {avg}/day",
+        "empty": "Not enough data yet"
       }
     },
     "stock": {
