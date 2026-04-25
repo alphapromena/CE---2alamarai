@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation';
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
-import { createServerSupabase } from '@/lib/supabase/server';
+import { updateProfileAsAdmin } from '@/lib/supabase/admin-helpers';
 import { requireAdmin } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
 import { logError } from '@/lib/observability/logger';
@@ -70,22 +70,15 @@ export async function inviteUserAction(
     return { error: duplicate ? 'duplicate_email' : 'unknown' };
   }
 
-  // Post-invite profile UPDATE runs on the SSR client so auth.uid() resolves
-  // to the admin's UUID and `profiles_self_update_guard_trg` short-circuits.
-  // The service-role admin client would silently fail this UPDATE (the guard
-  // raises 'profiles: created_by is immutable' when auth.uid() is NULL).
-  // Errors here are logged but not surfaced — the invite itself already
-  // succeeded; failing the action would leave an invited user in limbo.
-  const supabase = await createServerSupabase();
-  const { error: profileUpdateError } = parsed.data.phone
-    ? await supabase
-        .from('profiles')
-        .update({ phone: parsed.data.phone, created_by: actor.id })
-        .eq('id', data.user.id)
-    : await supabase
-        .from('profiles')
-        .update({ created_by: actor.id })
-        .eq('id', data.user.id);
+  // D-046: route admin profile UPDATEs through updateProfileAsAdmin so the
+  // SSR client (and `auth.uid()`) is guaranteed and `profiles_self_update_guard_trg`
+  // short-circuits via is_admin(). Errors here are logged but not surfaced —
+  // the invite itself already succeeded; failing the action would leave an
+  // invited user in limbo.
+  const { error: profileUpdateError } = await updateProfileAsAdmin(data.user.id, {
+    created_by: actor.id,
+    ...(parsed.data.phone ? { phone: parsed.data.phone } : {}),
+  });
 
   if (profileUpdateError) {
     logError('admin.invite_post_create_profile_update_failed', {
@@ -139,13 +132,11 @@ export async function changeUserRoleAction(
     .eq('id', parsed.data.user_id)
     .single();
 
-  // UPDATE runs on the SSR client so auth.uid() populates and the
-  // profiles_self_update_guard_trg trigger short-circuits via is_admin().
-  const supabase = await createServerSupabase();
-  const { error } = await supabase
-    .from('profiles')
-    .update({ role: parsed.data.role })
-    .eq('id', parsed.data.user_id);
+  // D-046: admin profile UPDATEs go through updateProfileAsAdmin (SSR client,
+  // so auth.uid() populates and profiles_self_update_guard_trg short-circuits).
+  const { error } = await updateProfileAsAdmin(parsed.data.user_id, {
+    role: parsed.data.role,
+  });
 
   if (error) {
     return { error: 'unknown' };
@@ -191,13 +182,11 @@ export async function setUserActiveAction(
     .eq('id', parsed.data.user_id)
     .single();
 
-  // UPDATE runs on the SSR client so auth.uid() populates and the
-  // profiles_self_update_guard_trg trigger short-circuits via is_admin().
-  const supabase = await createServerSupabase();
-  const { error } = await supabase
-    .from('profiles')
-    .update({ active: parsed.data.active })
-    .eq('id', parsed.data.user_id);
+  // D-046: admin profile UPDATEs go through updateProfileAsAdmin (SSR client,
+  // so auth.uid() populates and profiles_self_update_guard_trg short-circuits).
+  const { error } = await updateProfileAsAdmin(parsed.data.user_id, {
+    active: parsed.data.active,
+  });
 
   if (error) {
     return { error: 'unknown' };
