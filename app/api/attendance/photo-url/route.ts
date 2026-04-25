@@ -3,6 +3,16 @@ import { requireRole } from '@/lib/auth/guards';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { signAttendancePhotoUrl } from '@/lib/queries/attendance';
 
+// Attendance photos are uploaded by the geo-validate-checkin/checkout edge
+// functions at exactly this shape:
+//   attendance/{user-uuid}/{YYYY-MM-DD}/check_(in|out)_{idempotency-uuid}.jpg
+// see supabase/functions/geo-validate-checkin/index.ts:280 and
+// supabase/functions/geo-validate-checkout/index.ts:235. Anything outside this
+// pattern is either malformed input or an attempt to inject PostgREST control
+// characters (`,`, `(`, `)`, `=`, …) into the .or() filter below — SEC-02.
+const ATTENDANCE_PHOTO_PATH =
+  /^attendance\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/\d{4}-\d{2}-\d{2}\/check_(in|out)_[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.jpg$/;
+
 /**
  * Issue a short-lived signed URL for a private attendance photo.
  *
@@ -23,6 +33,9 @@ export async function POST(req: Request) {
   const path = typeof body?.path === 'string' ? body.path : null;
   if (!path) {
     return NextResponse.json({ error: 'missing_path' }, { status: 400 });
+  }
+  if (!ATTENDANCE_PHOTO_PATH.test(path)) {
+    return NextResponse.json({ error: 'invalid_path' }, { status: 400 });
   }
 
   const admin = createAdminSupabase();
