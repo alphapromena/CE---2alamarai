@@ -16,6 +16,7 @@ import { Alert } from '@/components/ui/alert';
 import { EmptyState } from '@/components/ui/empty-state';
 import { StatusPill, type StatusPillVariant } from '@/components/ui/status-pill';
 import { Dialog } from '@/components/ui/dialog';
+import { pickLocalizedName } from '@/lib/i18n/picker';
 import { toCsvWithBom, csvFilename } from '@/lib/utils/csv';
 import type { LiveAttendanceJoined } from '@/lib/queries/attendance';
 import type { AlertRow } from '@/lib/queries/alerts';
@@ -25,15 +26,6 @@ import { ResolveAlertForm } from './resolve-alert-form';
 import { LocationTrustDetail } from '@/components/features/alerts/location-trust-detail';
 
 const POLL_INTERVAL_MS = 30_000;
-
-function pickLocalizedName(
-  n: { ar?: string; en?: string } | null | undefined,
-  locale: string,
-): string {
-  if (!n) return '';
-  if (locale === 'ar') return n.ar ?? n.en ?? '';
-  return n.en ?? n.ar ?? '';
-}
 
 function formatTime(iso: string | null, locale: string): string {
   if (!iso) return '';

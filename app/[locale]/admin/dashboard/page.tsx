@@ -25,6 +25,7 @@ import {
   AttendanceTrendChart,
   type TrendDay,
 } from '@/components/features/admin/dashboard/attendance-trend-chart';
+import { pickLocalized } from '@/lib/i18n/picker';
 
 export const dynamic = 'force-dynamic';
 
@@ -57,14 +58,6 @@ function computeDelta(today: number, yesterday: number): KpiDelta | undefined {
   const pct = Math.round(Math.abs(change / yesterday) * 100);
   if (pct === 0) return undefined;
   return { pct, positive: change > 0 };
-}
-
-function pickLocalized(name: LocalizedName, locale: string): string | null {
-  if (!name) return null;
-  const ar = name.ar?.trim();
-  const en = name.en?.trim();
-  if (locale === 'ar') return ar ?? en ?? null;
-  return en ?? ar ?? null;
 }
 
 export default async function AdminDashboardPage({

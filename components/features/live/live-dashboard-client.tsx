@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { StatusPill, type StatusPillVariant } from '@/components/ui/status-pill';
 import { EmptyState } from '@/components/ui/empty-state';
 import { useRealtimeTables } from '@/lib/supabase/realtime';
+import { pickLocalizedName } from '@/lib/i18n/picker';
 import type { AlertRow, AlertType } from '@/lib/queries/alerts';
 import type { LiveAttendanceJoined } from '@/lib/queries/attendance';
 
@@ -38,15 +39,6 @@ const ALERT_VARIANT: Record<AlertType, StatusPillVariant> = {
   no_activity: 'warning',
   location_trust_low: 'warning',
 };
-
-function pickLocalizedName(
-  n: { ar?: string; en?: string } | null | undefined,
-  locale: string,
-): string {
-  if (!n) return '';
-  if (locale === 'ar') return n.ar ?? n.en ?? '';
-  return n.en ?? n.ar ?? '';
-}
 
 function formatTime(iso: string | null, locale: string): string {
   if (!iso) return '—';

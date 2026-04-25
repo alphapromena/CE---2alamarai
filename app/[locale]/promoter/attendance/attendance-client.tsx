@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import { createBrowserSupabase } from '@/lib/supabase/browser';
+import { pickLocalizedName } from '@/lib/i18n/picker';
 import { Button } from '@/components/ui/button';
 import { StatusPill, type StatusPillVariant } from '@/components/ui/status-pill';
 import { Alert } from '@/components/ui/alert';
@@ -30,15 +31,6 @@ type GeoError = 'permission' | 'unavailable' | 'timeout';
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const GEO_TIMEOUT_MS = 15_000;
-
-function pickLocalizedName(
-  name: { ar?: string; en?: string } | null | undefined,
-  locale: string,
-): string {
-  if (!name) return '';
-  if (locale === 'ar') return name.ar ?? name.en ?? '';
-  return name.en ?? name.ar ?? '';
-}
 
 function trimSec(t: string | null | undefined): string {
   if (!t) return '';
