@@ -62,7 +62,9 @@ export function PingTrailMap({ pings, checkInPoint }: PingTrailMapProps) {
     (checkInPoint ? [checkInPoint.lat, checkInPoint.lng] : [31.95, 35.91]);
 
   return (
-    <div className="h-[420px] w-full overflow-hidden rounded-md border border-border">
+    // relative + z-0 creates a stacking context so Leaflet's internal panes
+    // (z-index 200-700) cannot paint over headers / dropdowns above the map.
+    <div className="relative z-0 h-[420px] w-full overflow-hidden rounded-md border border-border">
       <MapContainer
         center={center}
         zoom={15}

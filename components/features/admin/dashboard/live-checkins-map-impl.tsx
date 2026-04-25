@@ -85,40 +85,44 @@ export function LiveCheckinsMapImpl({
   );
 
   return (
-    <MapContainer
-      center={center}
-      zoom={12}
-      scrollWheelZoom={false}
-      zoomControl={false}
-      style={{ height: '100%', width: '100%' }}
-    >
-      <TileLayer
-        attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-        url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-      />
-      <FitBounds bounds={bounds} />
-      {points.map((p) => (
-        <Marker
-          key={p.id}
-          position={[p.lat, p.lng]}
-          icon={p.isWithinGeofence ? okIcon : warnIcon}
-        >
-          <Popup>
-            <div className="text-xs">
-              <p className="text-sm font-semibold text-fg">{p.promoterName}</p>
-              <p className="mt-0.5 text-fg-muted">{p.locationName}</p>
-              <p className="mt-1 font-mono text-fg-muted" dir="ltr">
-                {timeFormatter.format(new Date(p.checkInTime))}
-              </p>
-              {!p.isWithinGeofence ? (
-                <p className="mt-1 font-semibold text-warning">{pinWarnLabel}</p>
-              ) : (
-                <p className="mt-1 font-semibold text-success">{pinOkLabel}</p>
-              )}
-            </div>
-          </Popup>
-        </Marker>
-      ))}
-    </MapContainer>
+    // relative + z-0 creates a stacking context so Leaflet's internal panes
+    // (z-index 200-700) cannot paint over the page header / sticky elements.
+    <div className="relative z-0 h-full w-full">
+      <MapContainer
+        center={center}
+        zoom={12}
+        scrollWheelZoom={false}
+        zoomControl={false}
+        style={{ height: '100%', width: '100%' }}
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
+        <FitBounds bounds={bounds} />
+        {points.map((p) => (
+          <Marker
+            key={p.id}
+            position={[p.lat, p.lng]}
+            icon={p.isWithinGeofence ? okIcon : warnIcon}
+          >
+            <Popup>
+              <div className="text-xs">
+                <p className="text-sm font-semibold text-fg">{p.promoterName}</p>
+                <p className="mt-0.5 text-fg-muted">{p.locationName}</p>
+                <p className="mt-1 font-mono text-fg-muted" dir="ltr">
+                  {timeFormatter.format(new Date(p.checkInTime))}
+                </p>
+                {!p.isWithinGeofence ? (
+                  <p className="mt-1 font-semibold text-warning">{pinWarnLabel}</p>
+                ) : (
+                  <p className="mt-1 font-semibold text-success">{pinOkLabel}</p>
+                )}
+              </div>
+            </Popup>
+          </Marker>
+        ))}
+      </MapContainer>
+    </div>
   );
 }
