@@ -160,6 +160,27 @@
         "mini_checkins": "check-ins",
         "mini_visits": "visits",
         "mini_campaigns": "active campaigns"
+      },
+      "kpi": {
+        "promoters": {
+          "label": "Active promoters",
+          "sub": "Currently active on the platform"
+        },
+        "attendance": {
+          "label": "Attendance today",
+          "sub": "Check-ins since midnight"
+        },
+        "visits": {
+          "label": "Supervisor visits today",
+          "sub": "Field visits logged"
+        },
+        "campaigns": {
+          "label": "Active campaigns",
+          "sub": "Running right now"
+        },
+        "delta": {
+          "vsYesterday": "vs yesterday"
+        }
       }
     },
     "stock": {

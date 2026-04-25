@@ -1111,3 +1111,20 @@ A running log of decisions made during the build. When an ambiguity is resolved 
 - **Reference:** Commit `1520347` (`fix/admin-user-actions-use-ssr-client`) for the three call sites this rule was derived from: `inviteUserAction`, `changeUserRoleAction`, `setUserActiveAction` in `app/[locale]/admin/users/actions.ts`.
 - **Revisit when:** The guard trigger is replaced by RLS-only enforcement, or a SECURITY DEFINER RPC absorbs the admin-write surface.
 
+---
+
+## D-045 — Admin dashboard KPI numbers use `text-4xl`
+
+- **Date:** 2026-04-25
+- **Phase:** Admin dashboard rebuild
+- **Question:** The design system fixes KPI-card numerals at `text-3xl font-bold tabular-nums` (SKILL.md typography table, KPI Card section). Should the new admin dashboard inherit that, or is a larger size justified for the headline experience?
+- **Decision:** KPI numerals on `/admin/dashboard` use `text-4xl font-bold tabular-nums tracking-tight`. Every other table, list, stat strip, and KPI card in the application — including the live dashboard's `Tally` component, performance summaries, and any future role dashboards — continues to use the `text-3xl` default.
+- **Rationale:**
+  - The admin dashboard is the operator's primary landing experience and is intentionally a brand showcase. Slightly larger numerals reinforce the "command your operations" hero feel set by the gradient strip directly above them, without disturbing density on data-rich pages elsewhere.
+  - Scoping the exception to a single route keeps the rest of the app coherent and prevents the size from spreading by mimicry.
+  - The card label, sub line, and delta indicator stay at the design-system defaults (`text-xs`), so vertical rhythm within the card remains conventional.
+- **Alternatives considered:**
+  - Update the design system default to `text-4xl` globally. Rejected: too disruptive — every list page would look heavier and the existing `Tally` strip would compete with its surroundings.
+  - Use `text-3xl` to stay with the system. Rejected: the prompt explicitly framed the dashboard as a brand moment, and after side-by-side mockups `text-3xl` looked underweight against the hero.
+- **Revisit when:** The design system rev next bumps base font sizes, or another dashboard adopts the same hero pattern (in which case promote `text-4xl` to a `kpi-hero` token rather than re-declaring it inline).
+
