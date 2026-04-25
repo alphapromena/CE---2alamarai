@@ -181,6 +181,28 @@
         "delta": {
           "vsYesterday": "vs yesterday"
         }
+      },
+      "fieldActivity": {
+        "kicker": "LIVE",
+        "title": "Field activity",
+        "viewFull": "View full live ops →",
+        "mapEmpty": "No check-ins yet today",
+        "mapUnknownPromoter": "Unknown promoter",
+        "mapUnknownLocation": "Unknown location",
+        "pinOk": "Within geofence",
+        "pinWarn": "Outside geofence"
+      },
+      "activity": {
+        "title": "Recent activity",
+        "empty": "No recent activity",
+        "unknownUser": "Unknown user",
+        "unknownLocation": "an unknown location",
+        "justNow": "just now",
+        "event": {
+          "checkIn": "{name} checked in at {location}",
+          "visit": "{name} logged a visit at {location}",
+          "report": "{name} submitted a daily report"
+        }
       }
     },
     "stock": {

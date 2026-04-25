@@ -1,4 +1,5 @@
 import { setRequestLocale, getTranslations } from 'next-intl/server';
+import { Link } from '@/i18n/navigation';
 import { requireAdmin } from '@/lib/auth/guards';
 import { createServerSupabase } from '@/lib/supabase/server';
 import {
@@ -12,10 +13,20 @@ import {
 } from '@/components/features/admin/dashboard/hero-strip';
 import { KpiGrid } from '@/components/features/admin/dashboard/kpi-grid';
 import type { KpiDelta } from '@/components/features/admin/dashboard/kpi-card';
+import {
+  LiveCheckinsMap,
+  type CheckinPoint,
+} from '@/components/features/admin/dashboard/live-checkins-map';
+import {
+  ActivityFeed,
+  type ActivityEvent,
+} from '@/components/features/admin/dashboard/activity-feed';
 
 export const dynamic = 'force-dynamic';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
+
+type LocalizedName = { en?: string; ar?: string } | null;
 
 function localHour(now: Date = new Date()): number {
   return new Date(now.getTime() + SHIFT_TZ_OFFSET_MINUTES * 60_000).getUTCHours();
@@ -44,6 +55,14 @@ function computeDelta(today: number, yesterday: number): KpiDelta | undefined {
   return { pct, positive: change > 0 };
 }
 
+function pickLocalized(name: LocalizedName, locale: string): string | null {
+  if (!name) return null;
+  const ar = name.ar?.trim();
+  const en = name.en?.trim();
+  if (locale === 'ar') return ar ?? en ?? null;
+  return en ?? ar ?? null;
+}
+
 export default async function AdminDashboardPage({
   params,
 }: {
@@ -51,14 +70,19 @@ export default async function AdminDashboardPage({
 }) {
   const { locale } = await params;
   setRequestLocale(locale);
+  const isAr = locale === 'ar';
+  const narrowLocale: 'en' | 'ar' = isAr ? 'ar' : 'en';
 
   const profile = await requireAdmin();
   const supabase = await createServerSupabase();
-  const t = await getTranslations('Admin.dashboard.hero');
+  const tHero = await getTranslations('Admin.dashboard.hero');
+  const tField = await getTranslations('Admin.dashboard.fieldActivity');
+  const tActivity = await getTranslations('Admin.dashboard.activity');
 
   const now = new Date();
+  const nowMs = now.getTime();
   const today = todayLocalDateString(now);
-  const yesterday = localDateString(new Date(now.getTime() - DAY_MS));
+  const yesterday = localDateString(new Date(nowMs - DAY_MS));
   const startOfToday = startOfDateUtcIso(today);
   const startOfYesterday = startOfDateUtcIso(yesterday);
 
@@ -69,6 +93,10 @@ export default async function AdminDashboardPage({
     campaignsRes,
     attendanceYesterdayRes,
     visitsYesterdayRes,
+    mapPointsRes,
+    feedAttendanceRes,
+    feedVisitsRes,
+    feedReportsRes,
   ] = await Promise.all([
     supabase
       .from('profiles')
@@ -98,6 +126,44 @@ export default async function AdminDashboardPage({
       .select('id', { count: 'exact', head: true })
       .gte('visited_at', startOfYesterday)
       .lt('visited_at', startOfToday),
+    supabase
+      .from('attendance')
+      .select(
+        'id, check_in_time, check_in_lat, check_in_lng, is_within_geofence,' +
+          ' user:profiles!user_id ( full_name ),' +
+          ' location:locations ( name_i18n )',
+      )
+      .eq('attendance_date', today)
+      .not('check_in_lat', 'is', null)
+      .not('check_in_time', 'is', null),
+    supabase
+      .from('attendance')
+      .select(
+        'id, check_in_time,' +
+          ' user:profiles!user_id ( full_name ),' +
+          ' location:locations ( name_i18n )',
+      )
+      .not('check_in_time', 'is', null)
+      .order('check_in_time', { ascending: false })
+      .limit(10),
+    supabase
+      .from('supervisor_visits')
+      .select(
+        'id, visited_at,' +
+          ' supervisor:profiles!supervisor_id ( full_name ),' +
+          ' location:locations ( name_i18n )',
+      )
+      .order('visited_at', { ascending: false })
+      .limit(10),
+    supabase
+      .from('daily_reports')
+      .select(
+        'id, submitted_at,' +
+          ' promoter:profiles!promoter_user_id ( full_name )',
+      )
+      .not('submitted_at', 'is', null)
+      .order('submitted_at', { ascending: false })
+      .limit(10),
   ]);
 
   const promoters = promotersRes.count ?? 0;
@@ -121,8 +187,83 @@ export default async function AdminDashboardPage({
     visitsYesterdayRes.count ?? 0,
   );
 
+  const unknownPromoter = tField('mapUnknownPromoter');
+  const unknownLocationMap = tField('mapUnknownLocation');
+
+  type RawMapRow = {
+    id: string;
+    check_in_time: string;
+    check_in_lat: number;
+    check_in_lng: number;
+    is_within_geofence: boolean;
+    user: { full_name: string } | null;
+    location: { name_i18n: LocalizedName } | null;
+  };
+  const mapPoints: CheckinPoint[] = (
+    (mapPointsRes.data as unknown as RawMapRow[] | null) ?? []
+  ).map((r) => ({
+    id: r.id,
+    lat: r.check_in_lat,
+    lng: r.check_in_lng,
+    promoterName: r.user?.full_name ?? unknownPromoter,
+    locationName:
+      pickLocalized(r.location?.name_i18n ?? null, locale) ?? unknownLocationMap,
+    checkInTime: r.check_in_time,
+    isWithinGeofence: r.is_within_geofence,
+  }));
+
+  type RawFeedAttendance = {
+    id: string;
+    check_in_time: string;
+    user: { full_name: string } | null;
+    location: { name_i18n: LocalizedName } | null;
+  };
+  type RawFeedVisit = {
+    id: string;
+    visited_at: string;
+    supervisor: { full_name: string } | null;
+    location: { name_i18n: LocalizedName } | null;
+  };
+  type RawFeedReport = {
+    id: string;
+    submitted_at: string;
+    promoter: { full_name: string } | null;
+  };
+
+  const events: ActivityEvent[] = [
+    ...((feedAttendanceRes.data as unknown as RawFeedAttendance[] | null) ?? []).map(
+      (r): ActivityEvent => ({
+        id: r.id,
+        type: 'check-in',
+        timestamp: r.check_in_time,
+        actorName: r.user?.full_name ?? null,
+        locationName: pickLocalized(r.location?.name_i18n ?? null, locale),
+      }),
+    ),
+    ...((feedVisitsRes.data as unknown as RawFeedVisit[] | null) ?? []).map(
+      (r): ActivityEvent => ({
+        id: r.id,
+        type: 'visit',
+        timestamp: r.visited_at,
+        actorName: r.supervisor?.full_name ?? null,
+        locationName: pickLocalized(r.location?.name_i18n ?? null, locale),
+      }),
+    ),
+    ...((feedReportsRes.data as unknown as RawFeedReport[] | null) ?? []).map(
+      (r): ActivityEvent => ({
+        id: r.id,
+        type: 'report',
+        timestamp: r.submitted_at,
+        actorName: r.promoter?.full_name ?? null,
+        locationName: null,
+      }),
+    ),
+  ]
+    .sort((a, b) => (a.timestamp < b.timestamp ? 1 : -1))
+    .slice(0, 10);
+
   const firstName =
-    profile.full_name.trim().split(/\s+/)[0] || t('fallback_name');
+    profile.full_name.trim().split(/\s+/)[0] || tHero('fallback_name');
   const timeOfDay = timeOfDayFromHour(localHour(now));
 
   return (
@@ -137,6 +278,82 @@ export default async function AdminDashboardPage({
         attendanceDelta={attendanceDelta}
         visitsDelta={visitsDelta}
       />
+
+      <section className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <SectionHeader
+            kicker={tField('kicker')}
+            title={tField('title')}
+            linkLabel={tField('viewFull')}
+            linkHref="/admin/live"
+            live
+          />
+          <div className="h-[420px] overflow-hidden rounded-xl bg-white shadow-card ring-1 ring-black/5 md:h-[520px]">
+            <LiveCheckinsMap
+              points={mapPoints}
+              locale={narrowLocale}
+              emptyLabel={tField('mapEmpty')}
+              pinOkLabel={tField('pinOk')}
+              pinWarnLabel={tField('pinWarn')}
+            />
+          </div>
+        </div>
+
+        <div className="lg:col-span-1">
+          <SectionHeader
+            kicker={tField('kicker')}
+            title={tActivity('title')}
+          />
+          <div className="h-[420px] overflow-hidden rounded-xl bg-white shadow-card ring-1 ring-black/5 md:h-[520px]">
+            <ActivityFeed
+              events={events}
+              locale={narrowLocale}
+              nowMs={nowMs}
+            />
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function SectionHeader({
+  kicker,
+  title,
+  linkLabel,
+  linkHref,
+  live = false,
+}: {
+  kicker: string;
+  title: string;
+  linkLabel?: string;
+  linkHref?: string;
+  live?: boolean;
+}) {
+  return (
+    <div className="mb-4 flex items-end justify-between gap-3">
+      <div>
+        <p className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-[0.14em] text-brand-cyan">
+          {live ? (
+            <span className="relative inline-flex h-2 w-2" aria-hidden>
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-accent-2 opacity-75" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-2" />
+            </span>
+          ) : null}
+          {kicker}
+        </p>
+        <h2 className="mt-1 text-xl font-bold tracking-tight text-fg">
+          {title}
+        </h2>
+      </div>
+      {linkLabel && linkHref ? (
+        <Link
+          href={linkHref}
+          className="text-sm font-medium text-brand-navy transition-colors hover:text-brand-cyan"
+        >
+          {linkLabel}
+        </Link>
+      ) : null}
     </div>
   );
 }

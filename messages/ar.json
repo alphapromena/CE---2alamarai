@@ -181,6 +181,28 @@
         "delta": {
           "vsYesterday": "مقارنة بالأمس"
         }
+      },
+      "fieldActivity": {
+        "kicker": "مباشر",
+        "title": "النشاط الميداني",
+        "viewFull": "عرض اللوحة المباشرة ←",
+        "mapEmpty": "لا تسجيلات حضور بعد اليوم",
+        "mapUnknownPromoter": "مروّج غير معروف",
+        "mapUnknownLocation": "موقع غير معروف",
+        "pinOk": "ضمن النطاق الجغرافي",
+        "pinWarn": "خارج النطاق الجغرافي"
+      },
+      "activity": {
+        "title": "آخر النشاطات",
+        "empty": "لا يوجد نشاط حديث",
+        "unknownUser": "مستخدم غير معروف",
+        "unknownLocation": "موقع غير معروف",
+        "justNow": "الآن",
+        "event": {
+          "checkIn": "{name} سجّل حضور في {location}",
+          "visit": "{name} سجّل زيارة في {location}",
+          "report": "{name} أرسل تقريراً يومياً"
+        }
       }
     },
     "stock": {
