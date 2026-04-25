@@ -3,6 +3,7 @@
 import { revalidatePath } from 'next/cache';
 import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
+import { updateProfileAsAdmin, type ProfileAdminPatch } from '@/lib/supabase/admin-helpers';
 import { requireAdmin } from '@/lib/auth/guards';
 import { logAuditEvent } from '@/lib/auth/audit';
 import { logError } from '@/lib/observability/logger';
@@ -132,15 +133,20 @@ export async function bulkImportAction(
         }
         // The handle_new_user trigger materialises the profile from
         // user_metadata; flip the temp-password flag and stamp the inviter.
-        const profileUpdate: Record<string, unknown> = {
+        // D-044/D-046: this UPDATE must go through updateProfileAsAdmin
+        // (SSR client). The previous implementation used the service-role
+        // admin client, which the profiles_self_update_guard_trg rejected
+        // every time — every bulk-imported user landed with created_by=NULL
+        // and must_change_password=false. (SEC-01.)
+        const profileUpdate: ProfileAdminPatch = {
           must_change_password: true,
           created_by: actor.id,
         };
         if (parsed.data.phone) profileUpdate.phone = parsed.data.phone;
-        const { error: updateError } = await admin
-          .from('profiles')
-          .update(profileUpdate)
-          .eq('id', data.user.id);
+        const { error: updateError } = await updateProfileAsAdmin(
+          data.user.id,
+          profileUpdate,
+        );
         if (updateError) {
           // The user exists; surface the partial failure to the admin so they
           // can manually flip the flag if they care.
