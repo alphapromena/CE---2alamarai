@@ -78,7 +78,11 @@ export async function countMyPingsForDate(
     .select('captured_at')
     .gte('captured_at', startIso)
     .lte('captured_at', endIso)
-    .order('captured_at', { ascending: false });
+    .order('captured_at', { ascending: false })
+    // Safety cap: 200 = ~2× the expected max (15-min cadence × 24h = 96 pings/day,
+    // D-042). Caps the displayed count if the date filter ever drifts; preserves
+    // the contract for normal usage. (DATA-01.)
+    .limit(200);
   if (error || !data) {
     if (error) {
       logError('countMyPingsForDate failed', {
