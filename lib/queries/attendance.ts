@@ -5,6 +5,7 @@ import {
   SHIFT_TZ_OFFSET_MINUTES,
   todayLocalDateString,
 } from '@/lib/attendance/shift-time';
+import { logError } from '@/lib/observability/logger';
 
 export type AttendanceRow = {
   id: string;
@@ -104,8 +105,11 @@ export async function listLiveAttendanceJoined(opts?: {
   let q = supabase
     .from('attendance')
     .select(
+      // attendance has two FKs into profiles (user_id, override_by); the
+      // !user_id hint is required or PostgREST returns embed error PGRST201
+      // and this whole join silently produces no rows.
       `${ATTENDANCE_COLS},
-       user:profiles ( full_name ),
+       user:profiles!user_id ( full_name ),
        campaign:campaigns ( name_i18n ),
        location:locations ( name_i18n )`,
     )
@@ -116,7 +120,13 @@ export async function listLiveAttendanceJoined(opts?: {
     ascending: false,
     nullsFirst: false,
   });
-  if (error) return [];
+  if (error) {
+    logError('listLiveAttendanceJoined failed', {
+      code: error.code,
+      message: error.message,
+    });
+    return [];
+  }
   type Raw = AttendanceRow & {
     user: { full_name: string } | null;
     campaign: { name_i18n: { ar?: string; en?: string } } | null;
