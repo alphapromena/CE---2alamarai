@@ -161,8 +161,8 @@
       },
       "kpi": {
         "promoters": {
-          "label": "Active promoters",
-          "sub": "Currently active on the platform"
+          "label": "Enabled promoters",
+          "sub": "Promoter accounts not deactivated"
         },
         "attendance": {
           "label": "Attendance today",
