@@ -37,7 +37,7 @@ insert into public.clients (id, name, name_i18n) values
   ('77777777-7777-7777-7777-777777775050','F5Client',
    jsonb_build_object('en','F5Client','ar','عميل ٥'));
 
-insert into public.campaigns (id, client_id, name_i18n, status, starts_on, ends_on)
+insert into public.campaigns (id, client_id, name_i18n, status, start_date, end_date)
 values
   ('55555555-5555-5555-5555-555555555050',
    '77777777-7777-7777-7777-777777775050',

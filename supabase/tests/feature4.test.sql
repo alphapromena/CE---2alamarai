@@ -44,7 +44,7 @@ insert into public.clients (id, name, name_i18n) values
    jsonb_build_object('en','F4Client','ar','عميل ٤'));
 
 -- Core campaign + location + link for the attendance/visit inserts.
-insert into public.campaigns (id, client_id, name_i18n, status, starts_on, ends_on)
+insert into public.campaigns (id, client_id, name_i18n, status, start_date, end_date)
 values
   ('55555555-5555-5555-5555-555555554040',
    '77777777-7777-7777-7777-777777774040',
