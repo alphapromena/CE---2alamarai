@@ -35,6 +35,7 @@ export type AlertRow = {
   resolution_note: string | null;
   created_at: string;
   updated_at: string;
+  promoter_name: string | null;
 };
 
 export const STOCK_ALERT_TYPES: readonly AlertType[] = [
@@ -45,7 +46,16 @@ export const STOCK_ALERT_TYPES: readonly AlertType[] = [
 ];
 
 const ALERT_COLS =
-  'id, alert_type, severity, status, user_id, attendance_id, campaign_id, location_id, message_key, message_params, acknowledged_by, acknowledged_at, resolved_by, resolved_at, resolution_note, created_at, updated_at';
+  'id, alert_type, severity, status, user_id, attendance_id, campaign_id, location_id, message_key, message_params, acknowledged_by, acknowledged_at, resolved_by, resolved_at, resolution_note, created_at, updated_at, user:profiles!user_id ( full_name )';
+
+type AlertRowRaw = Omit<AlertRow, 'promoter_name'> & {
+  user: { full_name: string | null } | null;
+};
+
+function mapAlertRow(r: AlertRowRaw): AlertRow {
+  const { user, ...rest } = r;
+  return { ...rest, promoter_name: user?.full_name ?? null };
+}
 
 /**
  * Open alerts in the caller's visible scope (RLS-filtered). Ordered newest
@@ -75,7 +85,7 @@ export async function listOpenAlerts(opts?: {
     });
     return [];
   }
-  return (data ?? []) as AlertRow[];
+  return ((data ?? []) as unknown as AlertRowRaw[]).map(mapAlertRow);
 }
 
 /**
@@ -99,7 +109,7 @@ export async function listAlertsForAttendance(
     });
     return [];
   }
-  return (data ?? []) as AlertRow[];
+  return ((data ?? []) as unknown as AlertRowRaw[]).map(mapAlertRow);
 }
 
 /**
@@ -128,5 +138,5 @@ export async function listOpenStockAlerts(opts?: {
     });
     return [];
   }
-  return (data ?? []) as AlertRow[];
+  return ((data ?? []) as unknown as AlertRowRaw[]).map(mapAlertRow);
 }

@@ -126,6 +126,9 @@ export function NotificationBell({
                       })}
                     </span>
                   </div>
+                  {n.promoter_name ? (
+                    <p className="mt-1 text-xs text-fg-secondary">{n.promoter_name}</p>
+                  ) : null}
                   {!n.read_at ? (
                     <button
                       type="button"
@@ -144,4 +147,3 @@ export function NotificationBell({
     </div>
   );
 }
-

@@ -174,6 +174,9 @@ export function LiveDashboardClient({ scope, locale, rows, alerts, campaignLinks
                       {formatTime(a.created_at, locale)}
                     </span>
                   </div>
+                  {a.promoter_name ? (
+                    <p className="mt-1.5 text-xs text-fg-secondary">{a.promoter_name}</p>
+                  ) : null}
                 </li>
               ))}
             </ul>
