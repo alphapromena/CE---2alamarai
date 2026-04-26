@@ -91,8 +91,8 @@ export function LiveCheckinsMapImpl({
       <MapContainer
         center={center}
         zoom={12}
-        scrollWheelZoom={false}
-        zoomControl={false}
+        scrollWheelZoom={true}
+        zoomControl={true}
         style={{ height: '100%', width: '100%' }}
       >
         <TileLayer

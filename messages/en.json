@@ -136,6 +136,7 @@
       "stock": "Stock",
       "performance": "Performance",
       "live": "Live",
+      "attendance": "Attendance history",
       "field_visits": "Field visits",
       "exports": "Exports",
       "imports": "Imports"
@@ -540,6 +541,48 @@
       "edit_description": "Update assignment details. Marking inactive removes it from the user's location set.",
       "empty_title": "No assignments yet",
       "empty_description": "Assign someone to a location to enable check-ins."
+    },
+    "attendance": {
+      "title": "Attendance history",
+      "description": "Browse promoter check-ins across all campaigns and locations from the last 30 days.",
+      "filters": {
+        "from": "From",
+        "to": "To",
+        "campaign": "Campaign",
+        "campaign_all": "All campaigns",
+        "location": "Location",
+        "location_all": "All locations",
+        "status": "Status",
+        "status_all": "All statuses"
+      },
+      "columns": {
+        "date": "Date",
+        "promoter": "Promoter",
+        "campaign": "Campaign",
+        "location": "Location",
+        "check_in": "Check-in",
+        "check_out": "Check-out",
+        "status": "Status",
+        "photos": "Photos"
+      },
+      "status": {
+        "checked_in": "Checked in",
+        "checked_out": "Checked out",
+        "late": "Late",
+        "absent": "Absent",
+        "early_leave": "Early leave",
+        "missing_checkout": "Missing check-out"
+      },
+      "view_photos": "View photos",
+      "dialog": {
+        "title": "Photos · {name}",
+        "check_in_label": "Check-in",
+        "check_out_label": "Check-out",
+        "no_photo": "No photo",
+        "close": "Close"
+      },
+      "empty_title": "No attendance records",
+      "empty_description": "No check-ins match the current filters. Try widening the date range or clearing a filter."
     },
     "locations": {
       "title": "Locations",
