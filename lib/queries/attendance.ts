@@ -184,6 +184,43 @@ export async function listAttendanceForUser(
 }
 
 /**
+ * Fetch the attendance row that corresponds to a given daily_report's
+ * (promoter, location, date) triple. Returns null if no check-in happened
+ * (or if the report's day predates the attendance feature).
+ *
+ * RLS-aware via createServerSupabase — admin sees all, supervisor sees rows
+ * at assigned locations, promoter sees own. Used by the report-detail page
+ * for both /admin/reports/[id] and /supervisor/reports/[id].
+ */
+export async function getAttendanceForReport(
+  promoterUserId: string,
+  locationId: string,
+  reportDate: string,
+): Promise<AttendanceRow | null> {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from('attendance')
+    .select(ATTENDANCE_COLS)
+    .eq('user_id', promoterUserId)
+    .eq('location_id', locationId)
+    .eq('attendance_date', reportDate)
+    .order('check_in_time', { ascending: false, nullsFirst: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) {
+    logError('getAttendanceForReport failed', {
+      code: error.code,
+      message: error.message,
+      promoter_user_id: promoterUserId,
+      location_id: locationId,
+      report_date: reportDate,
+    });
+    return null;
+  }
+  return (data as AttendanceRow | null) ?? null;
+}
+
+/**
  * Single attendance row. Admin client (service role); caller is responsible
  * for authorising access before calling this helper.
  */

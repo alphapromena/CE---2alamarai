@@ -63,7 +63,7 @@ export default async function AdminReportsPage({
         <ReportsTable
           locale={locale}
           rows={rows}
-          detailHrefPrefix={`/${locale}/supervisor/reports`}
+          detailHrefPrefix={`/${locale}/admin/reports`}
           emptyMessage={ts('empty')}
         />
       </div>

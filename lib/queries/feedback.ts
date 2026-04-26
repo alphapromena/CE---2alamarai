@@ -83,3 +83,54 @@ export async function listFeedback(filters: {
     competitor_brands: (r.competitor_mentions ?? []).map((c) => c.brand),
   }));
 }
+
+/**
+ * Feedback rows attached to a specific daily_report. Used by the
+ * /admin/reports/[id] and /supervisor/reports/[id] detail pages. RLS-aware:
+ * admin all, supervisor at assigned locations, promoter own rows. Clients
+ * cannot see raw feedback (RLS blocks).
+ */
+export async function listFeedbackForReport(
+  reportId: string,
+): Promise<ConsumerFeedbackListRow[]> {
+  const supabase = await createServerSupabase();
+  const { data, error } = await supabase
+    .from('consumer_feedback')
+    .select(
+      `id, created_at, updated_at, campaign_id, location_id, promoter_user_id,
+       daily_report_id, supervisor_visit_id, category, sentiment, body,
+       campaign:campaigns ( name_i18n ),
+       location:locations ( name_i18n ),
+       promoter:profiles!consumer_feedback_promoter_user_id_fkey ( full_name ),
+       competitor_mentions ( brand )`,
+    )
+    .eq('daily_report_id', reportId)
+    .order('created_at', { ascending: false });
+  if (error || !data) return [];
+  type Raw = Omit<
+    ConsumerFeedbackListRow,
+    'campaign_name_i18n' | 'location_name_i18n' | 'promoter_name' | 'competitor_brands'
+  > & {
+    campaign: RelOne<{ name_i18n: { ar?: string; en?: string } | null }>;
+    location: RelOne<{ name_i18n: { ar?: string; en?: string } | null }>;
+    promoter: RelOne<{ full_name: string | null }>;
+    competitor_mentions: { brand: string }[] | null;
+  };
+  return (data as unknown as Raw[]).map((r) => ({
+    id: r.id,
+    created_at: r.created_at,
+    updated_at: r.updated_at,
+    campaign_id: r.campaign_id,
+    location_id: r.location_id,
+    promoter_user_id: r.promoter_user_id,
+    daily_report_id: r.daily_report_id,
+    supervisor_visit_id: r.supervisor_visit_id,
+    category: r.category,
+    sentiment: r.sentiment,
+    body: r.body,
+    campaign_name_i18n: pickOne(r.campaign)?.name_i18n ?? null,
+    location_name_i18n: pickOne(r.location)?.name_i18n ?? null,
+    promoter_name: pickOne(r.promoter)?.full_name ?? null,
+    competitor_brands: (r.competitor_mentions ?? []).map((c) => c.brand),
+  }));
+}
