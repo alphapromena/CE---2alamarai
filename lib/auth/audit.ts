@@ -1,4 +1,5 @@
 import 'server-only';
+import type { Json } from '@/lib/supabase/database.types';
 import { headers } from 'next/headers';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { logError } from '@/lib/observability/logger';
@@ -55,8 +56,8 @@ export async function logAuditEvent(input: AuditEventInput): Promise<void> {
     action: input.action,
     entity: input.entity,
     entity_id: input.entity_id ?? null,
-    before_json: input.before === undefined ? null : redact(input.before),
-    after_json: input.after === undefined ? null : redact(input.after),
+   before_json: input.before === undefined ? null : (redact(input.before) as Json),
+    after_json: input.after === undefined ? null : (redact(input.after) as Json),
     ip,
     user_agent: userAgent,
   });

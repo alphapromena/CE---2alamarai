@@ -1,4 +1,5 @@
 import 'server-only';
+import type { Json } from '@/lib/supabase/database.types';
 
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { logDebug, logInfo, logWarn, reportError } from '@/lib/observability/logger';
@@ -134,7 +135,7 @@ export async function getIpReputation(ip: string | null | undefined): Promise<Ip
   }
 
   // 3) Upsert into the cache. Swallow errors — we still return the fresh result.
-  try {
+try {
     await admin
       .from('ip_reputation')
       .upsert(
@@ -146,7 +147,7 @@ export async function getIpReputation(ip: string | null | undefined): Promise<Ip
           fraud_score: result.fraud_score,
           reported_country: result.reported_country,
           reported_region: result.reported_region,
-          raw_response: result.raw_response,
+          raw_response: result.raw_response as Json,
           checked_at: new Date().toISOString(),
         },
         { onConflict: 'ip_address' },

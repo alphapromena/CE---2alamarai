@@ -212,8 +212,10 @@ export async function reallocateStock(
     p_to_entity_id: input.to_entity_id,
     p_quantity: input.quantity,
     p_user_id: input.user_id,
-    p_location_id: input.location_id,
-    p_reason: input.reason,
+    // Supabase gen-types treats RPC args as non-nullable; the SQL function
+    // tolerates null (params aren't STRICT). Cast keeps types honest.
+    p_location_id: input.location_id as string,
+    p_reason: input.reason as string,
     p_idempotency_key: input.idempotency_key,
   });
 
@@ -295,7 +297,7 @@ export async function correctStockMovement(
     p_original_movement_id: input.original_movement_id,
     p_new_quantity: input.new_quantity,
     p_user_id: input.user_id,
-    p_reason: input.reason,
+    p_reason: input.reason as string,
     p_idempotency_key: input.idempotency_key,
   });
 

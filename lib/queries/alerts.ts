@@ -115,7 +115,7 @@ export async function listOpenStockAlerts(opts?: {
   let q = supabase
     .from('alerts')
     .select(ALERT_COLS)
-    .in('alert_type', STOCK_ALERT_TYPES as string[])
+    .in('alert_type', STOCK_ALERT_TYPES)
     .in('status', ['open', 'acknowledged'])
     .order('created_at', { ascending: false });
   if (opts?.campaignId) q = q.eq('campaign_id', opts.campaignId);

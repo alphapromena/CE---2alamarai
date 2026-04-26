@@ -71,12 +71,12 @@ export async function clientGetCampaign(id: string): Promise<ClientCampaignDetai
 
   return {
     id: campaign.id,
-    name_i18n: campaign.name_i18n,
+    name_i18n: campaign.name_i18n as { ar?: string; en?: string },
     start_date: campaign.start_date,
     end_date: campaign.end_date,
     status: campaign.status,
     objectives: campaign.objectives,
-    kpi_config: campaign.kpi_config ?? {},
+    kpi_config: (campaign.kpi_config ?? {}) as { sampling_rate_denominator?: 'contacts' | 'engaged' },
     locations,
     skus: (skuRows ?? []) as ClientCampaignDetail['skus'],
   };

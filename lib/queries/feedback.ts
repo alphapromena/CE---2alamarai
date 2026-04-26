@@ -31,7 +31,7 @@ const pickOne = <T>(v: RelOne<T>): T | null => (Array.isArray(v) ? (v[0] ?? null
 export async function listFeedback(filters: {
   campaignId?: string | null;
   locationId?: string | null;
-  category?: string | null;
+  category?: 'service' | 'product' | 'complaint' | 'suggestion' | 'other' | null;
   fromDate?: string | null;
   toDate?: string | null;
   limit?: number;

@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import type { Database } from '@/lib/supabase/database.types';
 import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth/guards';
@@ -39,7 +40,7 @@ export async function markMyTaskStatusAction(input: unknown): Promise<PromoterTa
     (from === 'in_progress' && to === 'done');
   if (!allowed) return { error: 'invalid_transition' };
 
-  const patch: Record<string, unknown> = { status: to };
+  const patch: Database['public']['Tables']['tasks']['Update'] = { status: to };
   if (to === 'done') patch.completed_at = new Date().toISOString();
   else patch.completed_at = null;
 

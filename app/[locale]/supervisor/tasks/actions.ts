@@ -1,6 +1,7 @@
 'use server';
 
 import { revalidatePath } from 'next/cache';
+import type { Database } from '@/lib/supabase/database.types';
 import { getLocale } from 'next-intl/server';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { requireRole } from '@/lib/auth/guards';
@@ -163,7 +164,7 @@ export async function changeTaskStatusAction(input: unknown): Promise<TaskAction
   }
 
   const now = new Date().toISOString();
-  const patch: Record<string, unknown> = { status: parsed.data.status };
+  const patch: Database['public']['Tables']['tasks']['Update'] = { status: parsed.data.status };
   if (parsed.data.status === 'done') {
     patch.completed_at = now;
     patch.cancelled_at = null;

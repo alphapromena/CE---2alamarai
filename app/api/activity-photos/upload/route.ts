@@ -1,4 +1,7 @@
 import { NextResponse } from 'next/server';
+import type { Database } from '@/lib/supabase/database.types';
+
+type PhotoKind = Database['public']['Enums']['activity_photo_kind'];
 import { requireRole } from '@/lib/auth/guards';
 import { createAdminSupabase } from '@/lib/supabase/admin';
 import { isJpeg, parseJpegExifMinimal, stripJpegMetadata } from '@/lib/storage/exif';
@@ -27,7 +30,7 @@ export const runtime = 'nodejs';
 
 const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-const PHOTO_KINDS = new Set(['setup', 'during', 'end_of_shift']);
+const PHOTO_KINDS = new Set<PhotoKind>(['setup', 'during', 'end_of_shift']);
 
 function uuid(): string {
   return crypto.randomUUID();
@@ -48,9 +51,10 @@ export async function POST(req: Request) {
   if (!UUID_RE.test(dailyReportId)) {
     return NextResponse.json({ error: 'invalid_daily_report_id' }, { status: 400 });
   }
-  if (!PHOTO_KINDS.has(photoKind)) {
+  if (!PHOTO_KINDS.has(photoKind as PhotoKind)) {
     return NextResponse.json({ error: 'invalid_photo_kind' }, { status: 400 });
   }
+  const validPhotoKind = photoKind as PhotoKind;
   if (!(file instanceof Blob)) {
     return NextResponse.json({ error: 'missing_file' }, { status: 400 });
   }
@@ -115,7 +119,7 @@ export async function POST(req: Request) {
     .from('activity_photos')
     .select('storage_path')
     .eq('daily_report_id', dailyReportId)
-    .eq('photo_kind', photoKind)
+    .eq('photo_kind', validPhotoKind)
     .maybeSingle();
 
   const { error: rowErr } = await admin
@@ -123,7 +127,7 @@ export async function POST(req: Request) {
     .upsert(
       {
         daily_report_id: dailyReportId,
-        photo_kind: photoKind,
+        photo_kind: validPhotoKind,
         storage_path: storagePath,
         exif_minimal: exifMinimal,
         uploaded_by: actor.id,

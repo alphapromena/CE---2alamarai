@@ -13,6 +13,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js';
+import type { Database } from '@/lib/supabase/database.types';
 import type {
   AttendanceRaw,
   DailyReportRaw,
@@ -26,7 +27,7 @@ import type {
   SupervisorVisitRaw,
 } from './types';
 
-type AnyClient = SupabaseClient<Record<string, unknown>>;
+type AnyClient = SupabaseClient<Database>;
 
 type RelOne<T> = T | T[] | null;
 const pickOne = <T>(v: RelOne<T>): T | null => (Array.isArray(v) ? (v[0] ?? null) : v);

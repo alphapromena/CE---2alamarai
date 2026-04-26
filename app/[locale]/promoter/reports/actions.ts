@@ -15,6 +15,7 @@ import {
   registerActivityPhotoSchema,
   deleteActivityPhotoSchema,
 } from '@/lib/validations/reports';
+import type { Json } from '@/lib/supabase/database.types';
 
 /**
  * Promoter-side Server Actions for daily reports. All mutations carry a
@@ -331,7 +332,7 @@ export async function registerActivityPhotoAction(input: unknown): Promise<Actio
         daily_report_id: parsed.data.daily_report_id,
         photo_kind: parsed.data.photo_kind,
         storage_path: parsed.data.storage_path,
-        exif_minimal: parsed.data.exif_minimal ?? null,
+        exif_minimal: (parsed.data.exif_minimal ?? null) as Json | null,
         uploaded_by: actor.id,
       },
       { onConflict: 'daily_report_id,photo_kind' },

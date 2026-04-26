@@ -27,6 +27,7 @@ import {
 } from '@/lib/stock/ledger';
 import { logAuditEvent } from '@/lib/auth/audit';
 import { logError } from '@/lib/observability/logger';
+import type { Json } from '@/lib/supabase/database.types';
 
 export type StockActionState = {
   error: InsertMovementError | 'invalid_input' | 'location_not_assigned' | null;
@@ -349,7 +350,7 @@ export async function runReconcileAction(input: unknown): Promise<ReconcileActio
       entity_id: parsed.data.supervisor_id,
       reconciled_by: actor.id,
       status,
-      details: scoped as unknown as Record<string, unknown>[],
+      details: scoped as unknown as Json,
     })
     .select('id')
     .single();
