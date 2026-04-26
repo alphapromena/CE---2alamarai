@@ -954,6 +954,49 @@
         "rejected": "Rejected"
       },
       "rejected_heading": "Report rejected — reason:",
+      "detail": {
+        "attendance_heading": "Attendance",
+        "attendance_none": "No attendance recorded for this report.",
+        "attendance_check_in": "Check-in",
+        "attendance_check_out": "Check-out",
+        "attendance_within_geofence": "Within geofence",
+        "attendance_outside_geofence": "Outside geofence",
+        "attendance_distance": "Distance",
+        "attendance_metres": "m",
+        "attendance_no_photo": "No photo",
+        "attendance_override_heading": "Supervisor override applied",
+        "attendance_status": {
+          "checked_in": "Checked in",
+          "checked_out": "Checked out",
+          "late": "Late",
+          "absent": "Absent",
+          "early_leave": "Early leave",
+          "missing_checkout": "Missing check-out"
+        },
+        "visit_heading": "Supervisor visit",
+        "visit_none": "No supervisor visit recorded for this date.",
+        "visit_outcome": {
+          "ok": "OK",
+          "issue_found": "Issue found",
+          "coaching": "Coaching",
+          "other": "Other"
+        },
+        "feedback_heading": "Consumer feedback",
+        "feedback_none": "No consumer feedback attached to this report.",
+        "feedback_competitors": "Competitors mentioned",
+        "feedback_category": {
+          "service": "Service",
+          "product": "Product",
+          "complaint": "Complaint",
+          "suggestion": "Suggestion",
+          "other": "Other"
+        },
+        "feedback_sentiment": {
+          "positive": "Positive",
+          "neutral": "Neutral",
+          "negative": "Negative"
+        }
+      },
       "funnel_heading": "Funnel",
       "kpis_heading": "KPIs",
       "kpis_pending": "KPIs will be computed shortly after submit.",

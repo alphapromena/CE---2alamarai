@@ -954,6 +954,49 @@
         "rejected": "مرفوض"
       },
       "rejected_heading": "تم رفض التقرير — السبب:",
+      "detail": {
+        "attendance_heading": "الحضور",
+        "attendance_none": "لا يوجد تسجيل حضور لهذا التقرير.",
+        "attendance_check_in": "الحضور",
+        "attendance_check_out": "الانصراف",
+        "attendance_within_geofence": "ضمن النطاق الجغرافي",
+        "attendance_outside_geofence": "خارج النطاق الجغرافي",
+        "attendance_distance": "المسافة",
+        "attendance_metres": "م",
+        "attendance_no_photo": "لا توجد صورة",
+        "attendance_override_heading": "تم تطبيق تجاوز المشرف",
+        "attendance_status": {
+          "checked_in": "حاضر",
+          "checked_out": "انصرف",
+          "late": "متأخر",
+          "absent": "غائب",
+          "early_leave": "انصراف مبكر",
+          "missing_checkout": "بدون انصراف"
+        },
+        "visit_heading": "زيارة المشرف",
+        "visit_none": "لا توجد زيارة مشرف مسجّلة في هذا التاريخ.",
+        "visit_outcome": {
+          "ok": "بدون ملاحظات",
+          "issue_found": "تم رصد مشكلة",
+          "coaching": "توجيه",
+          "other": "أخرى"
+        },
+        "feedback_heading": "ملاحظات المستهلكين",
+        "feedback_none": "لا توجد ملاحظات مستهلكين مرتبطة بهذا التقرير.",
+        "feedback_competitors": "علامات منافسة مذكورة",
+        "feedback_category": {
+          "service": "الخدمة",
+          "product": "المنتج",
+          "complaint": "شكوى",
+          "suggestion": "اقتراح",
+          "other": "أخرى"
+        },
+        "feedback_sentiment": {
+          "positive": "إيجابي",
+          "neutral": "محايد",
+          "negative": "سلبي"
+        }
+      },
       "funnel_heading": "القمع",
       "kpis_heading": "مؤشرات الأداء",
       "kpis_pending": "ستُحسب المؤشرات بعد الإرسال بقليل.",

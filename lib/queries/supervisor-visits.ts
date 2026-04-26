@@ -90,6 +90,44 @@ export async function listSupervisorVisits(opts?: {
 }
 
 /**
+ * Visits relevant to a daily_report's context — same location + same date,
+ * either explicitly targeting this promoter (Feature 4 / D-041) or untargeted
+ * (Phase 3 visits where promoter_id was always null). RLS-aware: admin sees
+ * all, supervisor at assigned locations, promoter via own-promoter policy.
+ *
+ * `reportDate` is a YYYY-MM-DD string; expanded to a UTC day-window because
+ * `visited_at` is a timestamptz.
+ */
+export async function listSupervisorVisitsForReport(
+  promoterUserId: string,
+  locationId: string,
+  reportDate: string,
+): Promise<SupervisorVisitRow[]> {
+  const supabase = await createServerSupabase();
+  const startIso = `${reportDate}T00:00:00Z`;
+  const endIso = `${reportDate}T23:59:59.999Z`;
+  const { data, error } = await supabase
+    .from('supervisor_visits')
+    .select(VISIT_COLS)
+    .eq('location_id', locationId)
+    .gte('visited_at', startIso)
+    .lte('visited_at', endIso)
+    .or(`promoter_id.is.null,promoter_id.eq.${promoterUserId}`)
+    .order('visited_at', { ascending: false });
+  if (error) {
+    logError('listSupervisorVisitsForReport failed', {
+      code: error.code,
+      message: error.message,
+      promoter_user_id: promoterUserId,
+      location_id: locationId,
+      report_date: reportDate,
+    });
+    return [];
+  }
+  return ((data ?? []) as unknown as RawVisitRow[]).map(mapRaw);
+}
+
+/**
  * Feature 4 / D-041: visits where promoter_id = auth.uid(). RLS admits via
  * the supervisor_visits_select_promoter_self policy.
  */

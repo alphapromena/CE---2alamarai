@@ -1,7 +1,7 @@
 import { setRequestLocale } from 'next-intl/server';
 import { notFound } from 'next/navigation';
 import { createAdminSupabase } from '@/lib/supabase/admin';
-import { requireRole } from '@/lib/auth/guards';
+import { requireAdmin } from '@/lib/auth/guards';
 import {
   getKpiSnapshot,
   getReportById,
@@ -13,28 +13,18 @@ import { getAttendanceForReport } from '@/lib/queries/attendance';
 import { listSupervisorVisitsForReport } from '@/lib/queries/supervisor-visits';
 import { listFeedbackForReport } from '@/lib/queries/feedback';
 import { ReportDetailView } from '@/components/features/reports/report-detail-view';
-import { ReviewPanel } from './review-panel';
 
-export default async function SupervisorReportDetailPage({
+export default async function AdminReportDetailPage({
   params,
 }: {
   params: Promise<{ locale: string; id: string }>;
 }) {
   const { locale, id } = await params;
   setRequestLocale(locale);
-  const actor = await requireRole('supervisor', 'admin');
+  await requireAdmin();
 
   const report = await getReportById(id);
   if (!report) notFound();
-
-  // Enforce supervisor scope early; RLS will also block but a friendly 404
-  // is nicer than a blank page.
-  if (
-    actor.role === 'supervisor' &&
-    !actor.assigned_locations.includes(report.location_id)
-  ) {
-    notFound();
-  }
 
   const [entries, photos, kpis, skus, attendance, visits, feedback] = await Promise.all([
     listSalesEntries(id),
@@ -50,8 +40,6 @@ export default async function SupervisorReportDetailPage({
     listFeedbackForReport(id),
   ]);
 
-  // Look up i18n display metadata for the header. Service-role read is fine
-  // here; the page itself is gated by requireRole + scope check above.
   const admin = createAdminSupabase();
   const { data: metaRaw } = await admin
     .from('daily_reports')
@@ -74,6 +62,8 @@ export default async function SupervisorReportDetailPage({
     promoter_name: m?.promoter?.full_name ?? null,
   };
 
+  // Admin view is read-only — no reviewSlot. Approve/reject lives on the
+  // supervisor surface today; admins triage via the live ops dashboard.
   return (
     <ReportDetailView
       locale={locale}
@@ -86,7 +76,6 @@ export default async function SupervisorReportDetailPage({
       attendance={attendance}
       visits={visits}
       feedback={feedback}
-      reviewSlot={report.status === 'submitted' ? <ReviewPanel reportId={id} /> : null}
     />
   );
 }
