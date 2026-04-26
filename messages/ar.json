@@ -136,6 +136,7 @@
       "stock": "المخزون",
       "performance": "الأداء",
       "live": "مباشر",
+      "attendance": "سجل الحضور",
       "field_visits": "الزيارات الميدانية",
       "exports": "التصدير",
       "imports": "الاستيراد"
@@ -540,6 +541,48 @@
       "edit_description": "تحديث تفاصيل التعيين. التعطيل يزيله من قائمة مواقع المستخدم.",
       "empty_title": "لا توجد تعيينات بعد",
       "empty_description": "عيّن شخصًا لموقع لتفعيل تسجيل الحضور."
+    },
+    "attendance": {
+      "title": "سجل الحضور",
+      "description": "تصفّح تسجيلات حضور المروّجين عبر جميع الحملات والمواقع خلال آخر ٣٠ يومًا.",
+      "filters": {
+        "from": "من",
+        "to": "إلى",
+        "campaign": "الحملة",
+        "campaign_all": "جميع الحملات",
+        "location": "الموقع",
+        "location_all": "جميع المواقع",
+        "status": "الحالة",
+        "status_all": "جميع الحالات"
+      },
+      "columns": {
+        "date": "التاريخ",
+        "promoter": "المروّج",
+        "campaign": "الحملة",
+        "location": "الموقع",
+        "check_in": "الحضور",
+        "check_out": "الانصراف",
+        "status": "الحالة",
+        "photos": "الصور"
+      },
+      "status": {
+        "checked_in": "حاضر",
+        "checked_out": "انصرف",
+        "late": "متأخر",
+        "absent": "غائب",
+        "early_leave": "انصراف مبكر",
+        "missing_checkout": "بدون انصراف"
+      },
+      "view_photos": "عرض الصور",
+      "dialog": {
+        "title": "الصور · {name}",
+        "check_in_label": "الحضور",
+        "check_out_label": "الانصراف",
+        "no_photo": "لا توجد صورة",
+        "close": "إغلاق"
+      },
+      "empty_title": "لا توجد سجلات حضور",
+      "empty_description": "لا تطابق أي تسجيلات الحضور المرشّحات الحالية. جرّب توسيع الفترة الزمنية أو إزالة أحد المرشّحات."
     },
     "locations": {
       "title": "المواقع",

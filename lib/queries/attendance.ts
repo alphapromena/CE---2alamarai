@@ -331,3 +331,94 @@ export async function listTodaysPromoterAssignments(
   }
   return out;
 }
+
+/**
+ * Admin-facing attendance history. Defaults to the last 30 days inclusive of
+ * today, ordered newest-first. All filters are optional; pass YYYY-MM-DD
+ * date strings (Asia/Amman wall-clock per `todayLocalDateString`).
+ *
+ * Uses the SSR client so RLS still applies — but the caller is admin, so
+ * the admin SELECT policy admits everything. The choice of SSR vs. service-
+ * role here is consistency with the rest of the live-attendance helpers
+ * above; it does not gate access.
+ */
+export async function listAttendanceForAdmin(opts?: {
+  fromDate?: string;
+  toDate?: string;
+  campaignId?: string;
+  locationId?: string;
+  status?: AttendanceRow['status'];
+  limit?: number;
+}): Promise<LiveAttendanceJoined[]> {
+  const supabase = await createServerSupabase();
+
+  // Default window: 30 days inclusive of today (today minus 29 days → today).
+  const today = todayLocalDateString();
+  const fromDate =
+    opts?.fromDate ??
+    (() => {
+      const [y, m, d] = today.split('-').map(Number);
+      const ms = Date.UTC(y ?? 1970, (m ?? 1) - 1, d ?? 1) - 29 * 24 * 60 * 60 * 1000;
+      const local = new Date(ms);
+      const ly = local.getUTCFullYear();
+      const lm = String(local.getUTCMonth() + 1).padStart(2, '0');
+      const ld = String(local.getUTCDate()).padStart(2, '0');
+      return `${ly}-${lm}-${ld}`;
+    })();
+  const toDate = opts?.toDate ?? today;
+
+  let q = supabase
+    .from('attendance')
+    .select(
+      // Same hint as listLiveAttendanceJoined — attendance has two FKs into
+      // profiles (user_id, override_by); without !user_id PostgREST raises
+      // PGRST201 and silently drops every row.
+      `${ATTENDANCE_COLS},
+       user:profiles!user_id ( full_name ),
+       campaign:campaigns ( name_i18n ),
+       location:locations ( name_i18n )`,
+    )
+    .gte('attendance_date', fromDate)
+    .lte('attendance_date', toDate);
+  if (opts?.campaignId) q = q.eq('campaign_id', opts.campaignId);
+  if (opts?.locationId) q = q.eq('location_id', opts.locationId);
+  if (opts?.status) q = q.eq('status', opts.status);
+
+  const { data, error } = await q
+    .order('attendance_date', { ascending: false })
+    .order('check_in_time', { ascending: false, nullsFirst: false })
+    .limit(opts?.limit ?? 500);
+
+  if (error) {
+    logError('listAttendanceForAdmin failed', {
+      code: error.code,
+      message: error.message,
+      from_date: fromDate,
+      to_date: toDate,
+    });
+    return [];
+  }
+
+  // PostgREST embeds can return T | T[] | null depending on the FK shape.
+  // Normalise via pickOne before flattening so the mapped row is uniform.
+  type RelOne<T> = T | T[] | null;
+  type Raw = AttendanceRow & {
+    user: RelOne<{ full_name: string }>;
+    campaign: RelOne<{ name_i18n: { ar?: string; en?: string } }>;
+    location: RelOne<{ name_i18n: { ar?: string; en?: string } }>;
+  };
+  const pickOne = <T,>(v: RelOne<T>): T | null =>
+    Array.isArray(v) ? (v[0] ?? null) : v;
+
+  return (data as unknown as Raw[]).map((r) => {
+    const user = pickOne(r.user);
+    const campaign = pickOne(r.campaign);
+    const location = pickOne(r.location);
+    return {
+      ...(r as AttendanceRow),
+      user_full_name: user?.full_name ?? null,
+      campaign_name_i18n: campaign?.name_i18n ?? null,
+      location_name_i18n: location?.name_i18n ?? null,
+    };
+  });
+}
