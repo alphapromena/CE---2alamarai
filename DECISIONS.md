@@ -1151,3 +1151,32 @@ A running log of decisions made during the build. When an ambiguity is resolved 
 - **Verification:** `git grep -n "createAdminSupabase" app/ | grep -A2 "from('profiles')"` followed by `.update(` should return zero matches.
 - **Revisit when:** The guard trigger is replaced by RLS-only enforcement, a SECURITY DEFINER RPC absorbs the admin-write surface, or `supabase gen types` lands and the `patch` parameter can be replaced with the generated `Database['public']['Tables']['profiles']['Update']` type.
 
+---
+
+## D-047 — Supabase generated types (`database.types.ts`) are the source of truth for all client typing
+
+- **Date:** 2026-04-26
+- **Phase:** Type safety hardening (TS-01 from audit/02-type-safety.md)
+- **Question:** The four Supabase clients (`admin`, `browser`, `server`, `middleware`) were instantiated without a `<Database>` generic, so every `.from(...)`, `.update(...)`, `.insert(...)`, `.in(...)`, `.eq(...)`, and `.rpc(...)` call returned `any`/`unknown` shapes. How do we restore strict typing across the data access layer without a multi-day refactor?
+- **Decision:** A single generated file, `lib/supabase/database.types.ts`, exports `Database` and `Json` and is wired into all four client factories via `createClient<Database>(...)` / `createBrowserClient<Database>(...)` / `createServerClient<Database>(...)`. The file is regenerated from production schema with `pnpm db:types` (script in `package.json`), which runs `supabase gen types typescript --linked --schema public`. It is checked into the repo so CI typecheck does not require Supabase CLI auth. Hand-rolled row interfaces and ad-hoc `Record<string, unknown>` shapes elsewhere in the codebase are migrated to `Database['public']['Tables'][T]['Row' | 'Insert' | 'Update']` or `Database['public']['Enums'][E]` where they touch the data access layer.
+- **Rationale:**
+  - Generated types catch class-of-bug regressions at compile time: enum drift (`photo_kind`, `alert_type`, `feedback.category`), JSON column shape mismatches (`audit_log.before_json/after_json`, `ip_reputation.raw_response`, `stock_reconciliations.details`), and patch object widening (`tasks.update()` previously typed as `Record<string, unknown>`, lost all column safety). All three classes were latent in the codebase before TS-01 and surfaced as the first 16 typecheck errors when the generic was wired in.
+  - Regeneration via `pnpm db:types` keeps the file synchronized with the linked project (`CEAlmarai`) — no manual editing, no schema drift between code and DB.
+  - The four-client wiring is the single chokepoint: once `<Database>` flows through the factories, every consumer downstream inherits the typing without per-call-site annotation.
+- **Alternatives considered:**
+  - **Per-query manual typing with `as` casts at call sites.** Rejected: scales linearly with the codebase, every new query is a fresh opportunity to drift, and casts hide the kind of bugs (enum mismatch, JSON shape) the generic catches for free.
+  - **Skip generation, hand-write `Database` interface.** Rejected: must be re-edited on every migration, and historical evidence (the existing `ConsumerFeedbackListRow`, `ClientCampaignDetail`, etc.) shows hand-written shapes drift from schema within weeks.
+  - **Defer adoption until a "bigger refactor."** Rejected: the audit's TS-01 estimate was one full day; actual cost was ~1.5 hours because the codebase already used Supabase idioms cleanly. Deferring would have let the bug classes accumulate.
+- **Patterns adopted during migration:**
+  - **RPC null args:** Postgres functions tolerate `null` for non-`STRICT` params, but `gen-types` emits all RPC args as required strings. Cast at call site (`p_location_id: input.location_id as string`) with a comment referencing this decision rather than weakening the runtime contract.
+  - **JSON columns receiving `Record<string, unknown>`:** Cast to `Json` (`raw_response: result.raw_response as Json`). The application layer guarantees the shape; the column type is intentionally `Json` in the schema.
+  - **JSON columns read with known shapes (`name_i18n`, `kpi_config`):** Cast at the read site (`as { ar?: string; en?: string }`). Same rationale — schema is `Json`, application enforces shape.
+  - **Mutable patch objects:** Type as `Database['public']['Tables'][T]['Update']` instead of `Record<string, unknown>`.
+  - **String narrowing through `Set` membership:** Type the `Set` as `Set<EnumType>` and capture the narrowed value (`const validPhotoKind = photoKind as PhotoKind`) for use in `.eq()` / `.upsert()` calls.
+- **Reference:**
+  - Generated file: `lib/supabase/database.types.ts`.
+  - Regeneration: `pnpm db:types`.
+  - Wiring: `lib/supabase/{admin,browser,server,middleware}.ts`.
+  - Migration commit: `refactor(types): adopt Supabase generated database types (TS-01)`.
+- **Verification:** `pnpm typecheck` returns zero errors; `pnpm build` compiles; `pnpm lint` is clean.
+- **Revisit when:** Supabase changes the generator output format, a CI guard is added to fail builds when `database.types.ts` is stale relative to the linked schema (Phase 5 follow-up), or the application moves to a typed query builder that subsumes the generated types.
