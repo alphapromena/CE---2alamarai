@@ -92,3 +92,7 @@ playwright/.cache/
 # Rebrand reference materials (local only)
 .rebrand-materials/
 .claude/settings.local.json
+
+# Claude / typecheck artifacts (local only)
+.claude/
+typecheck-baseline.txt
